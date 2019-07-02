@@ -120,13 +120,19 @@ void setup(void) {
   }*/
 }
 
+bool flag = true;
 void loop(void) 
 {
-  if(millis()%5000 == 0)
+  if(millis()%10000 == 0 && flag)
   {
     Serial.print("Free after: ");
     Serial.println(ESP.getFreeHeap());
+    flag = false;
+  } else if (millis()%10000 == 1 && !flag)
+  {
+    flag = true;
   }
+  
   server.handleClient();
 
   // display touched point with colored dot

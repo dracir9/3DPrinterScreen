@@ -48,10 +48,12 @@ protected:
 public:
     canvas(bool updt=true):
     widget(updt){}
+    ~canvas(){delete child;}
 
     void getSize(tftLCD *tft, int16_t &w, int16_t &h);
     void render(tftLCD *tft, int16_t x=0, int16_t y=0, int16_t w=0, int16_t h=0);
     void attachComponent(widget *chld);
+    void clear();
 };
 
 /**************************************************************************
@@ -74,6 +76,10 @@ public:
     }
     ~verticalBox()
     {
+        for (uint8_t i = 0; i < elNum; i++)
+        {
+            delete child[i];
+        }
         delete child;
     }
 
@@ -91,11 +97,12 @@ protected:
     uint8_t padding;
     uint8_t size;
     uint16_t color;
-    GFXfont *font;
+
 
 public:
-    textBox(String txt, fillMode arr, uint8_t padding, uint16_t color, uint8_t textSize = 2, bool updt = true):
-    widget(updt), text(txt), arrange(arr), padding(padding), size(textSize), color(color) {}
+    const GFXfont *font;
+    textBox(String txt, fillMode arr, uint8_t padding, uint16_t color, const GFXfont *font = NULL, uint8_t textSize = 2, bool updt = true):
+    widget(updt), text(txt), arrange(arr), padding(padding), size(textSize), color(color), font(font) {}
 
     void getSize(tftLCD *tft, int16_t &w, int16_t &h);
     void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h);

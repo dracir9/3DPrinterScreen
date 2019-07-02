@@ -21,33 +21,70 @@ void canvas::attachComponent(widget *chld)
     child=chld;
 }
 
+void canvas::clear()
+{
+    if(child) delete child;
+}
+
 /* Vertical Box */
 void verticalBox::getSize(tftLCD *tft, int16_t &w, int16_t &h)
 {
-    int16_t x, y;
-    w=h=x=y=0;
+    int16_t x = 0, y = 0;
+    w = h = 0;
+    bool fillX = false, fillY = false;
     for (uint8_t i = 0; i < elNum; i++)
     {
         if(!child[i]) continue;
         child[i]->getSize(tft, x, y);
-        if(x > w) w = x;
-        h += y;
+        if (x == 0)
+        {
+            w = 0;
+            fillX = true;
+        } else if (!fillX)
+        {
+            if (x > 0)
+            {
+                if (w < 0)
+                {
+                    w = 0;
+                    fillX = true;
+                } else if (x > w)
+                {
+                    w = x;
+                }
+            }else if (x < 0)
+            {
+                if (w > 0)
+                {
+                    w = 0;
+                    fillX = true;
+                } else if (x < w)
+                {
+                    w = x;
+                }
+            }
+        }
+        if (y == 0)
+        {
+            h = 0;
+        }
+        else if (!fillY)
+        {
+            if (y > 0 && h < 0)
+            {
+                h = 0;
+                fillY = true;
+            }else if (y < 0 && h > 0)
+            {
+                h = 0;
+                fillY = true;
+            } else
+            {
+                h += y;
+            }
+        }
     }
-    
 }
-
-/* bool verticalBox::attachComponent(widget *chld, uint8_t idx)
-{
-    if (idx >= elNum)    
-    {
-        return false;
-    }
-    else
-    {
-        child[idx] = chld;
-    }
-    return true;
-} */
 
 bool verticalBox::attachComponent(widget *chld)
 {
@@ -90,13 +127,11 @@ void verticalBox::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h
             {
                 a = x;
                 c = w;
-            }
-            else if (wi > 0)
+            } else if (wi > 0)
             {
                 a = x;
                 c = wi;
-            }
-            else
+            } else
             {
                 a = x + w + wi;
                 c = -wi;
@@ -105,12 +140,10 @@ void verticalBox::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h
             if (he == 0)
             {
                 d = (h-resHeight)/fillNum;
-            }
-            else if (he > 0)
+            } else if (he > 0)
             {
                 d = he;
-            }
-            else
+            } else
             {
                 d = -he;
                 if (!fillNum)
@@ -128,10 +161,10 @@ void verticalBox::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h
 
 void textBox::getSize(tftLCD *tft, int16_t &w, int16_t &h)
 {
-    int16_t x,y;
-    uint16_t wi, he;
+    int16_t wi, he;
     tft->setTextSize(size);
-    tft->getTextBounds(text, 0, 0, &x, &y, &wi, &he);
+    tft->setFont(font);
+    tft->getTextBounds(text, &wi, &he);
     switch (arrange)
     {
     case fillMode::TopLeft:
@@ -186,16 +219,14 @@ void textBox::getSize(tftLCD *tft, int16_t &w, int16_t &h)
 void textBox::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
 {
     if (!update && init) return;
-    int16_t x1, y1;
-    uint16_t w1,h1;
+    int16_t w1, h1;
     tft->setTextSize(size);
     tft->setTextColor(color);
     tft->setFont(font);
-    tft->getTextBounds(text, 0, 0, &x1, &y1, &w1, &h1);
-    //tft->getTextBounds(text, &w1, &h1);
+    tft->getTextBounds(text, &w1, &h1);
     tft->drawRect(x, y, w, h, TFT_RED);
     tft->drawRect(x+(w-w1)/2, y+(h-h1)/2, w1, h1, TFT_BLUE);
-    tft->setCursor(x+(w-w1)/2, y+(h-h1)/2);
-    tft->print(text);
+    tft->setCursor(x+w/2, y+h/2);
+    tft->printCenter(text);
     init = true;
 }

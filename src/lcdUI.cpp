@@ -3,55 +3,6 @@
 
 /**************************************************************************/
 /*!
-    @brief  Return Top-Left coordinates of a cell (Not constrained tot the actual size of the grid)
-    @param  x    Where the X coordinate will be stored
-    @param  y    Where the Y coordinate will be stored
-    @param  c    Column index
-    @param  r    Row index
-*/
-/**************************************************************************/
-void grid::getTLPoint(int16_t *x, int16_t *y, uint8_t c, uint8_t r) const
-{
-    *x = gridX + cellW*c + space*c;
-    *y = gridY + cellH*r + space*r;
-}
-
-/**************************************************************************/
-/*!
-    @brief  Return center coordinates of a cell (Not constrained tot the actual size of the grid)
-    @param  x    Where the X coordinate will be stored
-    @param  x    Where the Y coordinate will be stored
-    @param  c    Column index
-    @param  r    Row index
-*/
-/**************************************************************************/
-void grid::getCenterPoint(int16_t *x, int16_t *y, uint8_t c, uint8_t r) const
-{
-    *x = gridX + cellW*c + space*c + cellW/2;
-    *y = gridY + cellH*r + space*r + cellH/2;
-}
-
-/**************************************************************************/
-/*!
-    @brief  Print a string centered at cursor location
-    @param  String to print
-*/
-/**************************************************************************/
-template <class text>
-void lcdUI::printCenter(text s)
-{
-    int16_t x;
-    int16_t y;
-    uint16_t w;
-    uint16_t h;
-    getTextBounds(s, 0, 0, &x, &y, &w, &h);
-    setCursor(getCursorX()-w/2, getCursorY()-h/2);
-    print(s);
-    
-}
-
-/**************************************************************************/
-/*!
     @brief  Update the LCD display with new information
     @param  ID of the screen to be displayed/updated
 */
@@ -211,14 +162,15 @@ void lcdUI::drawInfo(bool init)
 {
     if(init) 
     {
-        //static verticalBox list = verticalBox(3, false);
-        static verticalBox list = verticalBox(3, false);
-        static textBox txt1 = textBox("Pri\nmer", fillMode::CenterCenter, 8, TFT_WHITE);
-        static textBox txt2 = textBox("Segon", fillMode::BotCenter, 8, TFT_WHITE);
-        static textBox txt3 = textBox("Tercer", fillMode::BotCenter, 8, TFT_WHITE);
+        static verticalBox list = verticalBox(4, false);
+        static textBox txt1 = textBox("Segom", fillMode::BotLeft, 8, TFT_WHITE, NULL, 1);
+        static textBox txt2 = textBox("Pirmera\nSegona\n1\n2\n3\n4", fillMode::BotLeft, 8, TFT_WHITE, &FreeMono12pt7b, 1);
+        static textBox txt3 = textBox("Segom", fillMode::BotLeft, 8, TFT_WHITE, NULL, 3);
+        static textBox txt4 = textBox("Segom", fillMode::BotLeft, 8, TFT_WHITE, NULL, 4);
         if(list.attachComponent(&txt1)) Serial.println("Succes!");
         if(list.attachComponent(&txt2)) Serial.println("Succes!");
         if(list.attachComponent(&txt3)) Serial.println("Succes!");
+        if(list.attachComponent(&txt4)) Serial.println("Succes!");
         base.attachComponent(&list);
     }
 }

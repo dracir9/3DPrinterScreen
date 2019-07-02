@@ -2,62 +2,22 @@
 #include "tftLCD.h"
 #include <Adafruit_GFX.cpp>
 
-void tftLCD::charBounds(char c, int16_t *x, int16_t *y)
-{
-    if(gfxFont)
-    {
-        if(c == '\n') 
-        { // Newline?
-            *x = 0;    // Reset x to zero, advance y by one line
-            *y += textsize * (uint8_t)pgm_read_byte(&gfxFont->yAdvance);
-        } else if(c != '\r')
-        { // Not a carriage return; is normal char
-            uint8_t first = pgm_read_byte(&gfxFont->first),
-                    last  = pgm_read_byte(&gfxFont->last);
-            if((c >= first) && (c <= last)) // Char present in this font?
-            {
-                GFXglyph *glyph = &(((GFXglyph *)pgm_read_pointer(
-                &gfxFont->glyph))[c - first]);
-                uint8_t gw = pgm_read_byte(&glyph->width),
-                        xa = pgm_read_byte(&glyph->xAdvance);
-                int8_t  xo = pgm_read_byte(&glyph->xOffset);
-                if(wrap && ((*x+(((int16_t)xo+gw)*textsize)) > _width))
-                {
-                    *x  = 0; // Reset x to zero, advance y by one line
-                    *y += textsize * (uint8_t)pgm_read_byte(&gfxFont->yAdvance);
-                }
-                *x += xa * textsize;
-            }
-        }
-    }
-    else
-    {
-        if(c == '\n') // Newline?
-        {
-            *x = 0;                        // Reset x to zero,
-            *y += textsize * 8;             // advance y one line
-        } else if(c != '\r') // Normal char; ignore carriage returns
-        {
-            if(wrap && ((*x + textsize * 6) > _width)) // Off right?
-            {
-                *x  = 0;                    // Reset x to zero,
-                *y += textsize * 8;         // advance y one line
-            }
-            *x += textsize * 6;
-        }
-    }
-}
-
 void tftLCD::getTextBounds(const char *str, int16_t *w, int16_t *h)
 {
     uint8_t c; // Current character
-    w=h=0;
+    int16_t x=0, y=0, minx = _width, miny = _height, maxx = -1, maxy = -1;
     while ((c = *str++))
     {
-        charBounds(c, w, h);
+        charBounds(c, &x, &y, &minx, &miny, &maxx, &maxy);
     }
-    *w -= textsize;
-    //*h -= textsize;
+    if (maxx >= minx)
+    {
+        *w  = maxx - minx + 1;
+    }
+    if (maxy >= miny)
+    {
+        *h  = maxy - miny + 1;
+    }
 }
 
 void tftLCD::getTextBounds(const String &str, int16_t *w, int16_t *h)
@@ -66,4 +26,43 @@ void tftLCD::getTextBounds(const String &str, int16_t *w, int16_t *h)
     {
         getTextBounds(const_cast<char*>(str.c_str()), w, h);
     }
+}
+
+/**************************************************************************/
+/*!
+    @brief  Print a string centered at cursor location
+    @param  String to print
+*/
+/**************************************************************************/
+void tftLCD::printCenter(const String &str)
+{
+    int16_t x,y;
+    uint16_t w, h;
+    int16_t center = getCursorX();
+    getTextBounds(str, 0, 0, &x, &y, &w, &h);
+    setCursor(getCursorX()-w/2-x, getCursorY()-h/2-y);
+    if (str.indexOf('\n') == -1)
+    {
+        print(str);
+    } else
+    {
+        String buf;
+        int a = 0;
+        int b = str.indexOf('\n');
+        while (a < str.length())
+        {
+            buf = str.substring(a, b)+'\n';
+            getTextBounds(buf, 0, 0, &x, &y, &w, &h);
+            setCursor(center-w/2-x, getCursorY());
+            print(buf);
+            a = b+1;
+            b = str.indexOf('\n', a);
+            if (b == -1) b = str.length();
+        }
+    }
+}
+
+void tftLCD::printCenter(const char *str)
+{
+    printCenter(String(str));
 }
