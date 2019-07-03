@@ -14,23 +14,27 @@ class lcdUI : public tftLCD
 public:
     enum menu : uint8_t
     {
-        info=1,
+        black=0,
+        info,
         main,
         settings,
         SDmenu,
         control
     };
 private:
-    uint8_t state=0;
+    uint8_t id = 0;
+    uint8_t state = 255;
 
 public:
     canvas base;
 
     // Functions
-    void updateDisplay(uint8_t id);
+    void updateDisplay();
+    bool setScreen(menu idx);
     
 private:
     void drawInfo(bool init);
+    void drawBlack(bool init);
 };
 
 #endif

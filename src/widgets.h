@@ -2,7 +2,7 @@
 #define WIDGETS_H
 
 #include <Arduino.h>
-//#include <Adafruit_GFX.h>
+//#include <Adafruit>
 #include "tftLCD.h"
 
 enum fillMode : int8_t
@@ -48,7 +48,7 @@ protected:
 public:
     canvas(bool updt=true):
     widget(updt){}
-    ~canvas(){delete child;}
+    ~canvas(){ delete child;}
 
     void getSize(tftLCD *tft, int16_t &w, int16_t &h);
     void render(tftLCD *tft, int16_t x=0, int16_t y=0, int16_t w=0, int16_t h=0);
@@ -63,7 +63,7 @@ class verticalBox : public widget
 {
 protected:
     uint8_t elNum = 1;
-    widget **child;
+    widget **child = NULL;
 
 public:
     verticalBox(uint8_t elem, bool updt = true):
@@ -76,16 +76,20 @@ public:
     }
     ~verticalBox()
     {
-        for (uint8_t i = 0; i < elNum; i++)
+        if (child)
         {
-            delete child[i];
-        }
-        delete child;
+            for (uint8_t i = 0; i < elNum; i++)
+            {
+                if(child[i]) delete child[i];
+                child[i] = NULL;
+            }
+            delete[] child;
+            child = NULL;
+        } 
     }
 
     void getSize(tftLCD *tft, int16_t &w, int16_t &h);
     void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h);
-    //bool attachComponent(widget *chld, uint8_t idx);
     bool attachComponent(widget *chld);
 };
 
@@ -93,19 +97,20 @@ class textBox : public widget
 {
 protected:
     String text;
-    fillMode arrange;
-    uint8_t padding;
-    uint8_t size;
-    uint16_t color;
-
+    fillMode arrange = fillMode::CenterCenter;
+    uint8_t padding = 8;
+    uint8_t size = 1;
+    uint16_t color = TFT_WHITE;
+    const GFXfont *font = NULL;
 
 public:
-    const GFXfont *font;
-    textBox(String txt, fillMode arr, uint8_t padding, uint16_t color, const GFXfont *font = NULL, uint8_t textSize = 2, bool updt = true):
+    textBox(String txt, fillMode arr = fillMode::CenterCenter, uint8_t padding = 8, uint16_t color = TFT_WHITE,
+                                            const GFXfont *font = NULL, uint8_t textSize = 2, bool updt = true):
     widget(updt), text(txt), arrange(arr), padding(padding), size(textSize), color(color), font(font) {}
 
     void getSize(tftLCD *tft, int16_t &w, int16_t &h);
     void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h);
+    void updateText(String txt);
 };
 
 /* class grid : public widget

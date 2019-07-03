@@ -13,7 +13,7 @@ void canvas::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
 {
     if (w <= 0) w = tft->width()-x;
     if (h <= 0) h = tft->height()-y;
-    child->render(tft, x, y, w, h);
+    if (child) child->render(tft, x, y, w, h);
 }
 
 void canvas::attachComponent(widget *chld)
@@ -23,7 +23,11 @@ void canvas::attachComponent(widget *chld)
 
 void canvas::clear()
 {
-    if(child) delete child;
+    if(child)
+    {
+        delete child;
+    }
+    child = NULL;
 }
 
 /* Vertical Box */
@@ -229,4 +233,9 @@ void textBox::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
     tft->setCursor(x+w/2, y+h/2);
     tft->printCenter(text);
     init = true;
+}
+
+void textBox::updateText(String txt)
+{
+    text = txt;
 }

@@ -7,18 +7,35 @@
     @param  ID of the screen to be displayed/updated
 */
 /**************************************************************************/
-void lcdUI::updateDisplay(uint8_t id)
+void lcdUI::updateDisplay()
 {
     bool init=false;
-    if(id!=state) init=true;
+    if(id != state)
+    {
+        init=true;
+        base.clear();
+    }
     switch (id)
     {
+        case menu::black:
+            drawBlack(init);
+            break;
         case menu::info:
             drawInfo(init);
+            break;
     }
-
     base.render(this);
     state=id;
+}
+
+bool lcdUI::setScreen(menu idx)
+{
+    if (id != idx)
+    {
+        id = idx;
+        return true;
+    }
+    return false;
 }
 
 /**************************************************************************/
@@ -162,15 +179,23 @@ void lcdUI::drawInfo(bool init)
 {
     if(init) 
     {
-        static verticalBox list = verticalBox(4, false);
-        static textBox txt1 = textBox("Segom", fillMode::BotLeft, 8, TFT_WHITE, NULL, 1);
-        static textBox txt2 = textBox("Pirmera\nSegona\n1\n2\n3\n4", fillMode::BotLeft, 8, TFT_WHITE, &FreeMono12pt7b, 1);
-        static textBox txt3 = textBox("Segom", fillMode::BotLeft, 8, TFT_WHITE, NULL, 3);
-        static textBox txt4 = textBox("Segom", fillMode::BotLeft, 8, TFT_WHITE, NULL, 4);
-        if(list.attachComponent(&txt1)) Serial.println("Succes!");
-        if(list.attachComponent(&txt2)) Serial.println("Succes!");
-        if(list.attachComponent(&txt3)) Serial.println("Succes!");
-        if(list.attachComponent(&txt4)) Serial.println("Succes!");
-        base.attachComponent(&list);
+        verticalBox *list = new verticalBox(4, false);
+        textBox *txt1 = new textBox("Segom", fillMode::BotLeft, 8, TFT_WHITE, NULL, 1);
+        textBox *txt2 = new textBox("Pirmera\nSegona\n1\n2\n3\n4", fillMode::BotLeft, 8, TFT_WHITE, &FreeMono12pt7b, 1);
+        textBox *txt3 = new textBox("Segom", fillMode::BotLeft, 8, TFT_WHITE, NULL, 3);
+        textBox *txt4 = new textBox("Segom", fillMode::BotLeft, 8, TFT_WHITE, NULL, 4);
+        if(!list->attachComponent(txt1)) Serial.println("Fail!");
+        if(!list->attachComponent(txt2)) Serial.println("Fail!");
+        if(!list->attachComponent(txt3)) Serial.println("Fail!");
+        if(!list->attachComponent(txt4)) Serial.println("Fail!");
+        base.attachComponent(list);
+    }
+}
+
+void lcdUI::drawBlack(bool init)
+{
+    if (init)
+    {
+        fillScreen(TFT_BLACK);
     }
 }
