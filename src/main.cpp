@@ -125,9 +125,11 @@ void setup(void)
 }
 
 bool flag = true;
+bool render = true;
+unsigned long cnt = 0;
 void loop(void)
 {
-    if (millis() % 10000 == 0 && flag)
+    if (millis() % 10000 < 100 && flag)
     {
         Serial.print("Free Heap: ");
         Serial.print(ESP.getFreeHeap());
@@ -135,18 +137,17 @@ void loop(void)
         Serial.println(ESP.getHeapSize());
 
         if (!tft.setScreen(tft.info))
-          tft.setScreen(tft.black);
+            tft.setScreen(tft.black);
 
+        Serial.print("FPS: ");
+        Serial.println(cnt/10);
+        cnt = 0;
         flag = false;
     }
-    else if (millis() % 10000 == 1 && !flag)
+    else if (millis() % 10000 > 1000 && !flag)
     {
         flag = true;
     }
-    /*   else if (millis()%10000 == 5000)
-    {
-      tft.setScreen(tft.black);
-    } */
 
     server.handleClient();
 
@@ -166,5 +167,5 @@ void loop(void)
     }
 
     // Keep this at the end of the loop
-    tft.updateDisplay();
+    if (tft.updateDisplay(60)) cnt++;
 }

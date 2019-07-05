@@ -22,17 +22,19 @@ public:
         control
     };
 private:
-    uint8_t id = 0;
+    menu menuid = menu::black;
     uint8_t state = 255;
+    bool rendered = false;
 
 public:
     canvas base;
 
     // Functions
-    void updateDisplay();
+    bool updateDisplay(uint8_t fps);
     bool setScreen(menu idx);
     
 private:
+    bool updateObjects(menu id, bool init);
     void drawInfo(bool init);
     void drawBlack(bool init);
 };

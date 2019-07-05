@@ -1,9 +1,17 @@
 
 #include "widgets.h"
 
-
-
 /* Canvas */
+canvas::canvas(bool updt):
+    widget(updt)
+{
+}
+
+canvas::~canvas()
+{
+    delete child;
+}
+
 void canvas::getSize(tftLCD *tft, int16_t &w, int16_t &h)
 {
     w=h=0;
@@ -31,6 +39,29 @@ void canvas::clear()
 }
 
 /* Vertical Box */
+verticalBox::verticalBox(uint8_t elem, bool updt):
+    widget(updt), elNum(elem), child(new widget*[elem])
+{
+    for (uint8_t i = 0; i < elNum; i++)
+    {
+        child[i] = NULL;
+    }
+}
+
+verticalBox::~verticalBox()
+{
+    if (child)
+    {
+        for (uint8_t i = 0; i < elNum; i++)
+        {
+            if(child[i]) delete child[i];
+            child[i] = NULL;
+        }
+        delete[] child;
+        child = NULL;
+    } 
+}
+
 void verticalBox::getSize(tftLCD *tft, int16_t &w, int16_t &h)
 {
     int16_t x = 0, y = 0;
@@ -160,6 +191,26 @@ void verticalBox::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h
             b += d;
         }
     }
+
+#ifdef DEBUG_LINES
+    getSize(tft, wi, he);
+    if (wi == 0)
+    {
+        wi = w;
+    } else if (wi < 0)
+    {
+        x += w + wi;
+    }
+    if (he == 0)
+    {
+        he = h;
+    } else if (he < 0)
+    {
+        y += h + he;
+    }
+    tft->drawRect(x, y, abs(wi), abs(he), TFT_GREEN);
+#endif
+
     init = true;
 }
 
@@ -168,7 +219,7 @@ void textBox::getSize(tftLCD *tft, int16_t &w, int16_t &h)
     int16_t wi, he;
     tft->setTextSize(size);
     tft->setFont(font);
-    tft->getTextBounds(text, &wi, &he);
+    tft->getTextBounds(*text, &wi, &he);
     switch (arrange)
     {
     case fillMode::TopLeft:
@@ -227,15 +278,14 @@ void textBox::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
     tft->setTextSize(size);
     tft->setTextColor(color);
     tft->setFont(font);
-    tft->getTextBounds(text, &w1, &h1);
+    tft->getTextBounds(*text, &w1, &h1);
+    tft->setCursor(x+w/2, y+h/2);
+    tft->printCenter(*text);
+
+#ifdef DEBUG_LINES
     tft->drawRect(x, y, w, h, TFT_RED);
     tft->drawRect(x+(w-w1)/2, y+(h-h1)/2, w1, h1, TFT_BLUE);
-    tft->setCursor(x+w/2, y+h/2);
-    tft->printCenter(text);
-    init = true;
-}
+#endif
 
-void textBox::updateText(String txt)
-{
-    text = txt;
+    init = true;
 }

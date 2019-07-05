@@ -7,14 +7,41 @@
     @param  ID of the screen to be displayed/updated
 */
 /**************************************************************************/
-void lcdUI::updateDisplay()
+bool lcdUI::updateDisplay(uint8_t fps)
 {
-    bool init=false;
-    if(id != state)
+    if (millis() % (1000/fps) == 0 && !rendered)
     {
-        init=true;
-        base.clear();
+        bool init=false;
+        if(menuid != state)
+        {
+            init=true;
+            base.clear();
+        }
+        updateObjects(menuid, init);
+        base.render(this);
+        state=menuid;
+        rendered = true;
+        return true;
     }
+    else if(millis() % (1000/fps) != 0 && rendered)
+    {
+        rendered = false;
+    }
+    return false;
+}
+
+bool lcdUI::setScreen(menu idx)
+{
+    if (menuid != idx)
+    {
+        menuid = idx;
+        return true;
+    }
+    return false;
+}
+
+bool lcdUI::updateObjects(menu id, bool init)
+{
     switch (id)
     {
         case menu::black:
@@ -23,19 +50,16 @@ void lcdUI::updateDisplay()
         case menu::info:
             drawInfo(init);
             break;
+        case menu::main:
+            break;
+        case menu::SDmenu:
+            break;
+        case menu::settings:
+            break;
+        case menu::control:
+            break;
     }
-    base.render(this);
-    state=id;
-}
-
-bool lcdUI::setScreen(menu idx)
-{
-    if (id != idx)
-    {
-        id = idx;
-        return true;
-    }
-    return false;
+    return true;
 }
 
 /**************************************************************************/
@@ -177,19 +201,25 @@ bool lcdUI::setScreen(menu idx)
 
 void lcdUI::drawInfo(bool init)
 {
+    static String label0 = "Segom";
+    static String label1 = "Pirmera\nSegona\n1\n2\n3\n4";
+    static String label2 = "Segom";
+    static String label3 = "Segom";
     if(init) 
     {
-        verticalBox *list = new verticalBox(4, false);
-        textBox *txt1 = new textBox("Segom", fillMode::BotLeft, 8, TFT_WHITE, NULL, 1);
-        textBox *txt2 = new textBox("Pirmera\nSegona\n1\n2\n3\n4", fillMode::BotLeft, 8, TFT_WHITE, &FreeMono12pt7b, 1);
-        textBox *txt3 = new textBox("Segom", fillMode::BotLeft, 8, TFT_WHITE, NULL, 3);
-        textBox *txt4 = new textBox("Segom", fillMode::BotLeft, 8, TFT_WHITE, NULL, 4);
+        verticalBox *list = new verticalBox(4, true);
+        textBox *txt0 = new textBox(&label0, fillMode::BotLeft, 8, TFT_WHITE, NULL, 1, false);
+        textBox *txt1 = new textBox(&label1, fillMode::BotLeft, 8, TFT_WHITE, &FreeMono12pt7b, 1, false);
+        textBox *txt2 = new textBox(&label2, fillMode::BotLeft, 8, TFT_WHITE, NULL, 3);
+        textBox *txt3 = new textBox(&label3, fillMode::BotLeft, 8, TFT_WHITE, NULL, 4, false);
+        if(!list->attachComponent(txt0)) Serial.println("Fail!");
         if(!list->attachComponent(txt1)) Serial.println("Fail!");
         if(!list->attachComponent(txt2)) Serial.println("Fail!");
         if(!list->attachComponent(txt3)) Serial.println("Fail!");
-        if(!list->attachComponent(txt4)) Serial.println("Fail!");
         base.attachComponent(list);
     }
+
+    label2 = String(millis());
 }
 
 void lcdUI::drawBlack(bool init)

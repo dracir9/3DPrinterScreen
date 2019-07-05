@@ -1,8 +1,10 @@
 #ifndef WIDGETS_H
 #define WIDGETS_H
 
+#define DEBUG_LINES
+
 #include <Arduino.h>
-//#include <Adafruit>
+#include <Adafruit_ImageReader.h>
 #include "tftLCD.h"
 
 enum fillMode : int8_t
@@ -46,9 +48,8 @@ protected:
     widget *child = NULL;
 
 public:
-    canvas(bool updt=true):
-    widget(updt){}
-    ~canvas(){ delete child;}
+    canvas(bool updt=true);
+    ~canvas();
 
     void getSize(tftLCD *tft, int16_t &w, int16_t &h);
     void render(tftLCD *tft, int16_t x=0, int16_t y=0, int16_t w=0, int16_t h=0);
@@ -66,27 +67,8 @@ protected:
     widget **child = NULL;
 
 public:
-    verticalBox(uint8_t elem, bool updt = true):
-    widget(updt), elNum(elem), child(new widget*[elem])
-    {
-        for (uint8_t i = 0; i < elNum; i++)
-        {
-            child[i] = NULL;
-        }
-    }
-    ~verticalBox()
-    {
-        if (child)
-        {
-            for (uint8_t i = 0; i < elNum; i++)
-            {
-                if(child[i]) delete child[i];
-                child[i] = NULL;
-            }
-            delete[] child;
-            child = NULL;
-        } 
-    }
+    verticalBox(uint8_t elem, bool updt = true);
+    ~verticalBox();
 
     void getSize(tftLCD *tft, int16_t &w, int16_t &h);
     void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h);
@@ -96,7 +78,7 @@ public:
 class textBox : public widget
 {
 protected:
-    String text;
+    String *text;
     fillMode arrange = fillMode::CenterCenter;
     uint8_t padding = 8;
     uint8_t size = 1;
@@ -104,13 +86,12 @@ protected:
     const GFXfont *font = NULL;
 
 public:
-    textBox(String txt, fillMode arr = fillMode::CenterCenter, uint8_t padding = 8, uint16_t color = TFT_WHITE,
+    textBox(String *txt, fillMode arr = fillMode::CenterCenter, uint8_t padding = 8, uint16_t color = TFT_WHITE,
                                             const GFXfont *font = NULL, uint8_t textSize = 2, bool updt = true):
     widget(updt), text(txt), arrange(arr), padding(padding), size(textSize), color(color), font(font) {}
 
     void getSize(tftLCD *tft, int16_t &w, int16_t &h);
     void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h);
-    void updateText(String txt);
 };
 
 /* class grid : public widget
