@@ -35,7 +35,7 @@ public:
     {}
     virtual ~widget() = default;
 
-    virtual void getSize(tftLCD *tft, int16_t &w, int16_t &h) = 0;
+    virtual vector2<int16_t> getSize(tftLCD *tft) = 0;
     virtual void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) = 0;
 };
 
@@ -51,7 +51,7 @@ public:
     canvas(bool updt=true);
     ~canvas();
 
-    void getSize(tftLCD *tft, int16_t &w, int16_t &h);
+    virtual vector2<int16_t> getSize(tftLCD *tft);
     void render(tftLCD *tft, int16_t x=0, int16_t y=0, int16_t w=0, int16_t h=0);
     void attachComponent(widget *chld);
     void clear();
@@ -70,11 +70,51 @@ public:
     verticalBox(uint8_t elem, bool updt = true);
     ~verticalBox();
 
-    void getSize(tftLCD *tft, int16_t &w, int16_t &h);
+    virtual vector2<int16_t> getSize(tftLCD *tft);
     void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h);
     bool attachComponent(widget *chld);
 };
 
+/**************************************************************************
+    Arrange widgets horizontally
+**************************************************************************/
+class horizontalBox : public widget
+{
+protected:
+    uint8_t elNum = 1;
+    widget **child = NULL;
+
+public:
+    horizontalBox(uint8_t elem, bool updt = true);
+    ~horizontalBox();
+
+    virtual vector2<int16_t> getSize(tftLCD *tft);
+    void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h);
+    bool attachComponent(widget *chld);
+};
+
+/**************************************************************************
+    Box
+**************************************************************************/
+class box : public widget
+{
+protected:
+    widget *child = NULL;
+    uint16_t bgColor = TFT_BLACK;
+    uint8_t padding = 0;
+
+public:
+    box(bool updt = true);
+    ~box();
+
+    virtual vector2<int16_t> getSize(tftLCD *tft);
+    void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h);
+    bool attachComponent(widget *chld);
+};
+
+/**************************************************************************
+    Draw text
+**************************************************************************/
 class textBox : public widget
 {
 protected:
@@ -82,15 +122,16 @@ protected:
     fillMode arrange = fillMode::CenterCenter;
     uint8_t padding = 8;
     uint8_t size = 1;
-    uint16_t color = TFT_WHITE;
+    uint16_t txtcolor = TFT_WHITE;
+    uint16_t bgcolor = TFT_BLACK;
     const GFXfont *font = NULL;
 
 public:
     textBox(String *txt, fillMode arr = fillMode::CenterCenter, uint8_t padding = 8, uint16_t color = TFT_WHITE,
                                             const GFXfont *font = NULL, uint8_t textSize = 2, bool updt = true):
-    widget(updt), text(txt), arrange(arr), padding(padding), size(textSize), color(color), font(font) {}
+    widget(updt), text(txt), arrange(arr), padding(padding), size(textSize), txtcolor(color), font(font) {}
 
-    void getSize(tftLCD *tft, int16_t &w, int16_t &h);
+    virtual vector2<int16_t> getSize(tftLCD *tft);
     void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h);
 };
 
