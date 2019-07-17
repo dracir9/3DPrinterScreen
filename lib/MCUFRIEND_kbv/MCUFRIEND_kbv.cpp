@@ -110,19 +110,30 @@ void MCUFRIEND_kbv::reset(void)
 	WriteCmdData(0xB0, 0x0000);   //R61520 needs this to read ID
 }
 
+static uint16_t cscount = 0;
+void startwrite()
+{
+    if (cscount++ == 0) CS_ACTIVE;
+}
+
+void endwrite()
+{
+    if(--cscount == 0) CS_IDLE;
+}
+
 static void writecmddata(uint16_t cmd, uint16_t dat)
 {
-    CS_ACTIVE;
+    startwrite();
     WriteCmd(cmd);
     WriteData(dat);
-    CS_IDLE;
+    endwrite();
 }
 
 void MCUFRIEND_kbv::WriteCmdData(uint16_t cmd, uint16_t dat) { writecmddata(cmd, dat); }
 
 static void WriteCmdParamN(uint16_t cmd, int8_t N, uint8_t * block)
 {
-    CS_ACTIVE;
+    startwrite();
     WriteCmd(cmd);
     while (N-- > 0) {
         uint8_t u8 = *block++;
@@ -132,7 +143,7 @@ static void WriteCmdParamN(uint16_t cmd, int8_t N, uint8_t * block)
             WriteCmd(cmd);
         }
     }
-    CS_IDLE;
+    endwrite();
 }
 
 static inline void WriteCmdParam4(uint8_t cmd, uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4)
@@ -145,13 +156,13 @@ static inline void WriteCmdParam4(uint8_t cmd, uint8_t d1, uint8_t d2, uint8_t d
 	}
 	else
 	{
-		CS_ACTIVE;
+		startwrite();
 		WriteCmd(cmd);
 		write8(d1);
 		write8(d2);
 		write8(d3);
 		write8(d4);
-		CS_IDLE;
+		endwrite();
 	}
 }
 
@@ -179,14 +190,14 @@ uint16_t MCUFRIEND_kbv::readReg(uint16_t reg, int8_t index)
     uint16_t ret;
     if (!done_reset)
         reset();
-    CS_ACTIVE;
+    startwrite();
     WriteCmd(reg);
     setReadDir();
     delay(1);    //1us should be adequate
     //    READ_16(ret);
     do { ret = read16bits(); }while (--index >= 0);  //need to test with SSD1963
     RD_IDLE;
-    CS_IDLE;
+    endwrite();
     setWriteDir();
     return ret;
 }
@@ -311,7 +322,7 @@ int16_t MCUFRIEND_kbv::readGRAM(int16_t x, int16_t y, uint16_t * block, int16_t 
             WriteCmdData(_MC, x + col);
             WriteCmdData(_MP, y + row);
         }
-        CS_ACTIVE;
+        startwrite();
         WriteCmd(_MR);
         setReadDir();
         if (_lcd_capable & READ_NODUMMY) {
@@ -352,7 +363,7 @@ int16_t MCUFRIEND_kbv::readGRAM(int16_t x, int16_t y, uint16_t * block, int16_t 
                 row = 0;
         }
         RD_IDLE;
-        CS_IDLE;
+        endwrite();
         setWriteDir();
     }
     if (!(_lcd_capable & MIPI_DCS_REV1))
@@ -523,6 +534,28 @@ void MCUFRIEND_kbv::setRotation(uint8_t r)
     vertScroll(0, HEIGHT, 0);   //reset scrolling after a rotation
 }
 
+void MCUFRIEND_kbv::startWrite()
+{
+    startwrite();
+}
+
+void MCUFRIEND_kbv::writePixel(uint16_t x, uint16_t y, uint16_t color)
+{
+    // MCUFRIEND just plots at edge if you try to write outside of the box:
+    if (x >= width() || y >= height())
+        return;
+#if defined(SUPPORT_9488_555)
+    if (is555) color = color565_to_555(color);
+#endif
+    setAddrWindow(x, y, x, y);
+    WriteCmd(_MW); write16(color);
+}
+
+void MCUFRIEND_kbv::endWrite()
+{
+    endwrite();
+}
+
 void MCUFRIEND_kbv::drawPixel(int16_t x, int16_t y, uint16_t color)
 {
     // MCUFRIEND just plots at edge if you try to write outside of the box:
@@ -649,7 +682,7 @@ void MCUFRIEND_kbv::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_
         end = height();
     h = end - y;
     setAddrWindow(x, y, x + w - 1, y + h - 1);
-    CS_ACTIVE;
+    startwrite();
     WriteCmd(_MW);
     if (h > w) {
         end = h;
@@ -699,7 +732,7 @@ void MCUFRIEND_kbv::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_
 		}
 #endif
     }
-    CS_IDLE;
+    endwrite();
     if (!(_lcd_capable & MIPI_DCS_REV1) || ((_lcd_ID == 0x1526) && (rotation & 1)))
         setAddrWindow(0, 0, width() - 1, height() - 1);
 }
@@ -710,7 +743,7 @@ static void pushColors_any(uint16_t cmd, uint8_t * block, int16_t n, bool first,
     uint8_t h, l;
 	bool isconst = flags & 1;
 	bool isbigend = (flags & 2) != 0;
-    CS_ACTIVE;
+    startwrite();
     if (first) {
         WriteCmd(cmd);
     }
@@ -728,7 +761,7 @@ static void pushColors_any(uint16_t cmd, uint8_t * block, int16_t n, bool first,
 #endif
         write16(color);
     }
-    CS_IDLE;
+    endwrite();
 }
 
 void MCUFRIEND_kbv::pushColors(uint16_t * block, int16_t n, bool first)

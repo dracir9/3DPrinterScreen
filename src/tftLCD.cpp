@@ -125,7 +125,7 @@ void tftLCD::drawCharBg(vector2<int16_t> pos, uint8_t c, uint16_t color, uint16_
         h *= size.y;
         xo *= size.x;
         yo *= size.y;
-        maxx = w, maxy = h, xmax = w, ymax = h;
+        maxx = xmax = w, maxy = ymax = h;
 
         if (dim.x != 0) 
         {
@@ -185,10 +185,17 @@ void tftLCD::drawCharBg(vector2<int16_t> pos, uint8_t c, uint16_t color, uint16_
                 }
                 else if (xx >= minx && xx < maxx && yy >= miny && yy < maxy)
                 {
-                    if (yy < miny || yy >= maxy)
+                    if (yy < 0)
                     {
-                        drawFastHLine(pos.x+xo+xx, pos.y+yo+yy, dim.x, bg);
+                        fillRect(pos.x+xo+xx, pos.y+yo+yy, maxx-xx, maxy-yy > -yy ? -yy : maxy-yy, TFT_PINK);
                         xx = xmax;
+                        yy = -1;
+                    }
+                    else if(yy >= h)
+                    {
+                        fillRect(pos.x+xo+xx, pos.y+yo+yy, maxx-xx, ymax-yy, TFT_GREEN);
+                        xx = xmax;
+                        yy = ymax;
                     }
                     else
                     {
@@ -304,11 +311,12 @@ void tftLCD::printBg(const String &str, vector2<uint8_t> pad)
         uint16_t w = 0, h = 0;
         getTextBounds(str, 0, 0, &x, &y, &w, &h);
         vector2<int16_t> pos(x + cursor_x - pad.x, y + cursor_y - pad.y);
+        h += 2*pad.y;
         for (unsigned int i = 0; i < str.length(); i++)
         {
-            writeBg(str[i], &pos, vector2<int16_t>(0, h + 2*pad.y));
+            writeBg(str[i], &pos, vector2<int16_t>(0, h));
         }
-        fillRect(pos.x, pos.y, pad.x, h + 2*pad.y, textbgcolor);
+        fillRect(pos.x, pos.y, pad.x, h, textbgcolor);
     }
     else
     {

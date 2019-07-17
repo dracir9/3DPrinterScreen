@@ -138,7 +138,6 @@ void loop(void)
 
         if (!tft.setScreen(tft.info))
             tft.setScreen(tft.black);
-        
         Serial.print("FPS: ");
         Serial.println(cnt/5);
         cnt = 0;

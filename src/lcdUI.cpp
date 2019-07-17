@@ -218,9 +218,9 @@ void lcdUI::drawInfo(bool init)
         if(!list->attachComponent(txt3)) Serial.println("Fail!");
         base.attachComponent(list);
         setFont(&FreeMono12pt7b);
-        vector2<int16_t> vec(230, 5);
+        vector2<int16_t> vec(230, 5);//230,5
         unsigned long start = micros();
-        drawCharBg(vector2<int16_t>(240,50), 'H', TFT_WHITE, TFT_BLUE, vector2<uint8_t>(3,3), &vec, vector2<int16_t>(64,50)); //7535 us
+        drawCharBg(vector2<int16_t>(240,50), 'H', TFT_WHITE, TFT_RED, vector2<uint8_t>(3,3), &vec, vector2<int16_t>(64, 50)); //6638 us |64,50 6648
         Serial.print(micros()-start);
         Serial.println("us <-Time");
         fillCircle(262, 50, 1, TFT_GREEN);

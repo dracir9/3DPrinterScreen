@@ -23,6 +23,9 @@ class MCUFRIEND_kbv : public Adafruit_GFX {
 	MCUFRIEND_kbv(int CS=0, int RS=0, int WR=0, int RD=0, int RST=0);  //dummy arguments 
 	void     reset(void);                                       // you only need the constructor
 	void     begin(uint16_t ID = 0x9341);                       // you only need the constructor
+	virtual void 	 startWrite();
+	virtual void	 writePixel(uint16_t x, uint16_t y, uint16_t color);
+	virtual void 	 endWrite();
 	virtual void     drawPixel(int16_t x, int16_t y, uint16_t color);  // and these three
 	void     WriteCmdData(uint16_t cmd, uint16_t dat);                 // ?public methods !!!
     void     pushCommand(uint16_t cmd, uint8_t * block, int8_t N);
