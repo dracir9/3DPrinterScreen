@@ -9,8 +9,6 @@
 
 class lcdUI : public tftLCD
 {
-
-    // Variables
 public:
     enum menu : uint8_t
     {
@@ -21,12 +19,7 @@ public:
         SDmenu,
         control
     };
-private:
-    menu menuid = menu::black;
-    uint8_t state = 255;
-    bool rendered = false;
 
-public:
     canvas base;
 
     // Functions
@@ -34,6 +27,11 @@ public:
     bool setScreen(menu idx);
     
 private:
+    menu menuid = menu::black;
+    uint8_t state = 255;
+    bool rendered = false;
+
+
     bool updateObjects(menu id, bool init);
     void drawInfo(bool init);
     void drawBlack(bool init);

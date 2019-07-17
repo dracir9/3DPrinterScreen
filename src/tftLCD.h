@@ -25,8 +25,11 @@ struct vector2
 class tftLCD : public MCUFRIEND_kbv
 {
 public:
-    void drawCharCF(vector2<int16_t> pos, unsigned char c, uint16_t color, uint16_t bg, vector2<uint8_t> size);
-    size_t writeCF(uint8_t c);
+    void drawCharBg(vector2<int16_t> pos, uint8_t c, uint16_t color, uint16_t bg, vector2<uint8_t> size, vector2<int16_t> *start, vector2<int16_t> dim);
+    size_t writeBg(uint8_t c, vector2<int16_t> *pos, vector2<int16_t> dim);
+    void printBg(const String &str);
+    void printBg(const String &str, vector2<uint8_t> pad);
+    void printBg(const String &str, vector2<uint16_t> pos, vector2<uint16_t> dim);
 
     using Adafruit_GFX::getTextBounds;
     vector2<int16_t> getTextBounds(const char *str);

@@ -1,7 +1,7 @@
 #ifndef WIDGETS_H
 #define WIDGETS_H
 
-#define DEBUG_LINES
+//#define DEBUG_LINES
 
 #include <Arduino.h>
 #include <Adafruit_ImageReader.h>
@@ -123,7 +123,7 @@ protected:
     uint8_t padding = 8;
     uint8_t size = 1;
     uint16_t txtcolor = TFT_WHITE;
-    uint16_t bgcolor = TFT_BLACK;
+    uint16_t bgcolor = TFT_BLUE;
     const GFXfont *font = NULL;
 
 public:
