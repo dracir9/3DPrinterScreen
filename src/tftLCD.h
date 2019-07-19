@@ -29,7 +29,8 @@ public:
     size_t writeBg(uint8_t c, vector2<int16_t> *pos, vector2<int16_t> dim);
     void printBg(const String &str);
     void printBg(const String &str, vector2<uint8_t> pad);
-    void printBg(const String &str, vector2<uint16_t> pos, vector2<uint16_t> dim);
+    void printBg(const String &str, uint8_t pad);
+    void printBg(const String &str, vector2<int16_t> pos, vector2<uint16_t> dim);
 
     using Adafruit_GFX::getTextBounds;
     vector2<int16_t> getTextBounds(const char *str);
