@@ -209,7 +209,7 @@ void lcdUI::drawInfo(bool init)
     {
         verticalBox *list = new verticalBox(4, true);
         textBox *txt0 = new textBox(&label0, fillMode::BotLeft, 8, TFT_WHITE, NULL, 1, false);
-        textBox *txt1 = new textBox(&label1, fillMode::BotCenter, 8, TFT_WHITE, &FreeMono12pt7b, 1);
+        textBox *txt1 = new textBox(&label1, fillMode::BotCenter, 8, TFT_WHITE, FM12, 1);
         textBox *txt2 = new textBox(&label2, fillMode::BotLeft, 8, TFT_WHITE, NULL, 3);
         textBox *txt3 = new textBox(&label3, fillMode::BotLeft, 8, TFT_WHITE, NULL, 4, false);
         if(!list->attachComponent(txt0)) Serial.println("Fail!");
@@ -217,18 +217,17 @@ void lcdUI::drawInfo(bool init)
         if(!list->attachComponent(txt2)) Serial.println("Fail!");
         if(!list->attachComponent(txt3)) Serial.println("Fail!");
         base.attachComponent(list);
-        setFont(&FreeMono12pt7b);
-        vector2<int16_t> vec(230, 5);//230,5
+        setTextColor(TFT_WHITE, TFT_BLUE);
+        setTextSize(3);
+        setCursor(50,50);
+        setFreeFont(FM12);
+        vector2<int16_t> vec(230,5);
         unsigned long start = micros();
-        drawCharBg(vector2<int16_t>(240,50), 'H', TFT_WHITE, TFT_RED, vector2<uint8_t>(3,3), &vec, vector2<int16_t>(64, 50)); //6638 us |64,50 6648
+        drawCharBg(vector2<int16_t>(240,50), 'H', TFT_WHITE, TFT_RED, 3, &vec, vector2<int16_t>(64, 50)); //2799 us
         Serial.print(micros()-start);
         Serial.println("us <-Time");
-        fillCircle(262, 50, 1, TFT_GREEN);
-        setTextColor(TFT_WHITE, TFT_BLUE);
-        setTextSize(1);
-        setCursor(50,50);
-        printBg("kokogege", vector2<uint8_t>(4,4));
-        fillCircle(50,50,1,TFT_YELLOW);
+        //printBg("kokogege", vector2<int16_t>(50,5), vector2<uint16_t>(100,40));
+        drawRect(50,5,100,40,TFT_RED);
     }
 
     label1 = String("Hola\noo\ng\nl\n") + String(millis());

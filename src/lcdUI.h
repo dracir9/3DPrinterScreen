@@ -5,7 +5,6 @@
 #include <Arduino.h>
 #include "tftLCD.h"
 #include "widgets.h"
-#include "Fonts/FreeMono12pt7b.h"
 
 class lcdUI : public tftLCD
 {

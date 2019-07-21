@@ -88,13 +88,7 @@ void setup(void)
     Serial.println(ESP.getHeapSize());
     Serial.println();
 
-    // MCUFRIEND_kbv library only
-    uint16_t ID = tft.readID();
-    Serial.print("TFT ID = 0x");
-    Serial.println(ID, HEX);
-    if (ID == 0xD3D3)
-        ID = 0x9486; // write-only shield
-    tft.begin(ID);
+    tft.begin();
     tft.setRotation(1);
     tft.fillScreen(BLACK);
     tft.print("(0,0)");

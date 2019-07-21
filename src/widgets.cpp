@@ -14,16 +14,24 @@ canvas::~canvas()
     delete child;
 }
 
-vector2<int16_t>  canvas::getSize(tftLCD *tft)
+vector2<int16_t> canvas::getSize(tftLCD *tft)
 {
     return vector2<int16_t>();
 }
 
 void canvas::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
 {
+#ifdef DEBUG_MODE
+    Serial.println("Canvas render start");
+#endif
+
     if (w <= 0) w = tft->width()-x;
     if (h <= 0) h = tft->height()-y;
     if (child) child->render(tft, x, y, w, h);
+
+#ifdef DEBUG_MODE
+    Serial.println("Canvas render end");
+#endif
 }
 
 void canvas::attachComponent(widget *chld)
@@ -140,6 +148,9 @@ bool verticalBox::attachComponent(widget *chld)
 
 void verticalBox::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
 {
+#ifdef DEBUG_MODE
+    Serial.println("vertical Box render start");
+#endif
     if (!update && init) return;
     vector2<int16_t> size;
     uint16_t resHeight = 0;
@@ -215,6 +226,10 @@ void verticalBox::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h
     #endif
 
     init = true;
+
+#ifdef DEBUG_MODE
+    Serial.println("vertical Box render end");
+#endif
 }
 
 /********************************************************************************
@@ -228,8 +243,13 @@ void verticalBox::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h
 ********************************************************************************/
 vector2<int16_t>  textBox::getSize(tftLCD *tft)
 {
+#ifdef DEBUG_MODE
+    Serial.println("text Box get Size start");
+#endif
+
     tft->setTextSize(size);
-    tft->setFont(font);
+    if (font) tft->setFreeFont(font);
+    else tft->setTextFont(GLCD);
     vector2<int16_t> size1 = tft->getTextBounds(*text);
     vector2<int16_t> size0;
     switch (arrange)
@@ -283,14 +303,23 @@ vector2<int16_t>  textBox::getSize(tftLCD *tft)
         break;
     }
     return size0;
+
+#ifdef DEBUG_MODE
+    Serial.println("text Box get Size end");
+#endif
 }
 
 void textBox::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
 {
+#ifdef DEBUG_MODE
+    Serial.println("text Box render start");
+#endif
+
     if (!update && init) return;
     tft->setTextSize(size);
     tft->setTextColor(txtcolor, bgcolor);
-    tft->setFont(font);
+    if (font) tft->setFreeFont(font);
+    else tft->setTextFont(GLCD);
     tft->setCursor(x+w/2, y+h/2);
     tft->printCenter(*text);
 #ifdef DEBUG_LINES
@@ -298,5 +327,10 @@ void textBox::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
     tft->drawRect(x, y, w, h, TFT_RED);
     tft->drawRect(x+(w-size.x)/2, y+(h-size.y)/2, size.x, size.y, TFT_BLUE);
 #endif
+
     init = true;
+
+#ifdef DEBUG_MODE
+    Serial.println("text Box render end");
+#endif
 }

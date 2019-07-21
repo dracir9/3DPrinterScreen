@@ -1,10 +1,8 @@
 #ifndef WIDGETS_H
 #define WIDGETS_H
 
-//#define DEBUG_LINES
-
 #include <Arduino.h>
-#include <Adafruit_ImageReader.h>
+#include "Configuration.h"
 #include "tftLCD.h"
 
 enum fillMode : int8_t
@@ -123,7 +121,7 @@ protected:
     uint8_t padding = 8;
     uint8_t size = 1;
     uint16_t txtcolor = TFT_WHITE;
-    uint16_t bgcolor = TFT_BLUE;
+    uint16_t bgcolor = TFT_RED;
     const GFXfont *font = NULL;
 
 public:
