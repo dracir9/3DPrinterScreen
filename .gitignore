@@ -118,6 +118,7 @@ vc-fileutils.settings
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/*.db
+.code-workspace
 
 #cmake
 CMakeLists.txt
@@ -126,3 +127,5 @@ CMakeListsPrivate.txt
 
 #CLion
 cmake-build-*
+BetsyScreen.code-workspace
+BetsyScreen.code-workspace
