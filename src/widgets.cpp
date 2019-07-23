@@ -38,7 +38,7 @@ vector2<int16_t> arrangeSize(vector2<int16_t> size, fillMode arrange)
 
     case fillMode::BotCenter:
         size.x = 0;
-        size.y = -1;
+        size.y *= -1;
         break;
 
     case fillMode::BotRight:
@@ -306,6 +306,7 @@ vector2<int16_t> textBox::getSize(tftLCD *tft)
     size.x = max(paddingX, size.x);
     size.y = max(paddingY, size.y);
     return arrangeSize(size, arrange);
+ 
 
 #ifdef DEBUG_MODE
     Serial.println("text Box get Size end");
@@ -318,14 +319,25 @@ void textBox::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
     Serial.println("text Box render start");
 #endif
 
-    if (!update && init) return;
+    if (!update && init) return; // Render only once?
 
-    tft->setTextSize(size);
-    tft->setTextColor(txtcolor, bgcolor);
-    if (font) tft->setFreeFont(font);
-    else tft->setTextFont(GLCD);
-    tft->setCursor(x+w/2, y+h/2);
-    tft->printCenter(*text);
+    vector2<int16_t> dim = tft->getTextBounds(*text);
+    dim.x = max(paddingX, dim.x);
+    dim.y = max(paddingY, dim.y);
+    tft->img.setColorDepth(1);
+    tft->img.createSprite(dim.x, dim.y);
+
+    tft->img.setTextSize(size);
+    tft->img.setTextColor(txtcolor);
+    if (font) tft->img.setFreeFont(font);
+    else tft->img.setTextFont(GLCD);
+    tft->img.setCursor(dim.x/2, dim.y/2);
+    tft->img.printCenter(*text);
+
+    tft->img.setBitmapColor(txtcolor, bgcolor);
+    tft->img.pushSprite(x+(w-dim.x)/2, y+(h-dim.y)/2);
+
+    tft->img.deleteSprite();
 
 #ifdef DEBUG_LINES
     vector2<int16_t> size = tft->getTextBounds(*text);

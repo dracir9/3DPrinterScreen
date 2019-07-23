@@ -26,9 +26,9 @@ inline uint8_t * pgm_read_bitmap_ptr(const GFXfont *gfxFont)
     #endif //__AVR__
 }
 
-/*****************************************************
+/*####################################################
     Vector temp
-*****************************************************/
+####################################################*/
 template <class T>
 bool vector2<T>::operator==(vector2 v1)
 {
@@ -75,9 +75,68 @@ vector2<T> vector2<T>::operator*(size_t num)
     return vector2(x * num, y * num);
 }
 
-/*****************************************************
+/*####################################################
+    tft Sprite class
+####################################################*/
+
+/**************************************************************************/
+/*!
+    @brief  Print a string centered at cursor location (supports multy-line text)
+    @param  String to print
+*/
+/**************************************************************************/
+void tftSprite::printCenter(const String &str)
+{
+    uint8_t h = 1;
+    for (unsigned int i = 0; i < str.length(); i++)
+    {
+        if(str[i] == '\n') h++;
+    }
+    h *= fontHeight();
+    cursor_y -= h/2;
+    int16_t center = cursor_x;
+    setTextDatum(TC_DATUM);
+    if (str.indexOf('\n') == -1)
+    {
+        drawString(str, cursor_x, cursor_y);
+    }
+    else
+    {
+        int a = 0;
+        int b = str.indexOf('\n');
+        while (a < str.length())
+        {
+            drawString(str.substring(a, b), center, cursor_y);
+            print('\n');
+            a = b+1;
+            b = str.indexOf('\n', a);
+            if (b == -1) b = str.length();
+        }
+    }
+}
+
+void tftSprite::printCenter(const char *str)
+{
+    printCenter(String(str));
+}
+
+/*####################################################
     tft LCD class
-*****************************************************/
+####################################################*/
+
+/**************************************************************************/
+/*!
+    @brief    Draw single character over any rectangle without flickering (Only free fonts supported yet)
+            May be slower than using sprites but less RAM intesive.
+    @param    pos   Cursor position (2D vector)
+    @param    c     Character to draw
+    @param    color Text color
+    @param    bg    Rectangle color
+    @param    size  Text size
+    @param    start Upper Left corner of the rectagle (2D vector)
+    @param    dim   Width and height of the rectangle (2D vector)
+*/
+/**************************************************************************/
 void tftLCD::drawCharBg(vector2<int16_t> pos, uint8_t c, uint16_t color, uint16_t bg, uint8_t size, vector2<int16_t> *start, vector2<int16_t> dim)
 {
     int16_t minx = 0, miny = 0, maxx = 5, maxy = 8;
@@ -241,6 +300,15 @@ void tftLCD::drawCharBg(vector2<int16_t> pos, uint8_t c, uint16_t color, uint16_
     } // End classic vs custom font
 }
 
+/**************************************************************************/
+/*!
+    @brief    Draw single character over any rectangle without flickering (Only free fonts supported yet)
+            May be slower than using sprites but less RAM intesive.
+    @param    c     Character to draw
+    @param    pos   Upper Left corner of the rectagle (2D vector)
+    @param    dim   Width and height of the rectangle (2D vector)
+*/
+/**************************************************************************/
 size_t tftLCD::writeBg(uint8_t c, vector2<int16_t> *pos, vector2<int16_t> dim)
 {
     if(!gfxFont) 
@@ -290,48 +358,41 @@ size_t tftLCD::writeBg(uint8_t c, vector2<int16_t> *pos, vector2<int16_t> dim)
     return 1;
 }
 
+/**************************************************************************/
+/*!
+    @brief    Draw string with filled background without flickering (Support multy-line)
+            May be slower than using sprites but less RAM intesive.
+    @param    str   String to draw
+*/
+/**************************************************************************/
 void tftLCD::printBg(const String &str)
 {
     printBg(str, vector2<uint8_t>());
-/*     if (str.indexOf('\n') == -1)
-    {
-        int16_t x = 0, y = 0;
-        uint16_t w = 0, h = 0;
-        
-        getTextBounds(str, 0, 0, &x, &y, &w, &h);
-        vector2<int16_t> pos(x + cursor_x, y + cursor_y);
-        for (unsigned int i = 0; i < str.length(); i++)
-        {
-            writeBg(str[i], &pos, vector2<int16_t>(0, h));
-        }
-    }
-    else
-    {
-        String buf;
-        int a = 0;
-        int b = str.indexOf('\n');
-        while (a < str.length())
-        {
-            buf = str.substring(a, b);
-            printBg(buf);
-            print('\n');
-            a = b+1;
-            b = str.indexOf('\n', a);
-            if (b == -1) b = str.length();
-        }
-    } */
 }
 
+/**************************************************************************/
+/*!
+    @brief    Draw string with filled background without flickering (Support multy-line)
+            May be slower than using sprites but less RAM intesive.
+    @param    str   String to draw
+    @param    pad   Border width arround text
+*/
+/**************************************************************************/
 void tftLCD::printBg(const String &str, uint8_t pad)
 {
     printBg(str, vector2<uint8_t>(pad, pad));
 }
 
+/**************************************************************************/
+/*!
+    @brief    Draw string with filled background without flickering (Support multy-line)
+            May be slower than using sprites but less RAM intesive.
+    @param    str   String to draw
+    @param    pad   Border width arround text in X and Y directions (2D vector)
+*/
+/**************************************************************************/
 void tftLCD::printBg(const String &str, vector2<uint8_t> pad)
 {
-    //int16_t x = 0, y = 0;
-    //uint16_t w = 0, h = 0;
-    //getTextBounds(str, 0, 0, &x, &y, &w, &h); 
     if (str.indexOf('\n') == -1)
     {
         int16_t x = 0, y = 0;
@@ -361,40 +422,17 @@ void tftLCD::printBg(const String &str, vector2<uint8_t> pad)
     }
 }
 
+/**************************************************************************/
+/*!
+    @brief    Draw string over any rectangle without flickering (Support multy-line) ########## TO DO: -Add multy line, -Fix some single line issues
+            May be slower than using sprites but less RAM intesive.
+    @param    str   String to draw
+    @param    pos   Upper Left corner of the rectagle (2D vector)
+    @param    dim   Width and height of the rectangle (2D vector)
+*/
+/**************************************************************************/
 void tftLCD::printBg(const String &str, vector2<int16_t> pos, vector2<uint16_t> dim)
 {
-    //drawRect(pos.x, pos.y, dim.x, dim.y, TFT_RED);
-/*     int16_t x = 0, y = 0;
-    vector2<int16_t> size = getTextBounds(str, &x, &y);
-    x += cursor_x;
-    y += cursor_y;
-    drawRect(x, y, size.x, size.y, TFT_GREEN);
-    
-    size.x = max(pos.x+dim.x, x+size.x);
-    size.y = max(pos.y+dim.y, y+size.y);
-    drawCircle(size.x, size.y, 2, TFT_BLUE);
-    vector2<int16_t>imgpos(min(pos.x, x), min(pos.y, y));
-    size -= imgpos;
-    pos -= imgpos;
-
-    drawRect(imgpos.x, imgpos.y, size.x, size.y, TFT_YELLOW);
-
-    img.setColorDepth(1);
-    img.createSprite(size.x, size.y);
-    img.fillRect(pos.x, pos.y, dim.x, dim.y, 0);
-    img.setTextSize(textsize);
-    if(gfxFont) img.setFreeFont(gfxFont);
-    else img.setTextFont(textfont);
-    img.cursor_x = cursor_x-imgpos.x;
-    img.cursor_y = cursor_y-imgpos.y;
-    img.print(str);
-
-    img.setBitmapColor(textcolor, textbgcolor);
-    img.pushSprite(imgpos.x, imgpos.y);
-
-    img.deleteSprite(); */
-
-    //int16_t x = cursor_x, y = cursor_y;
     int16_t x = 0, y = 0;
     vector2<int16_t> start = pos;
     vector2<int16_t> end(0, 0);
@@ -405,8 +443,12 @@ void tftLCD::printBg(const String &str, vector2<int16_t> pos, vector2<uint16_t> 
         x += cursor_x;
         y += cursor_y;
         //charBounds(str[i], &x, &y, &minx, &miny, &maxx, &maxy);
-        drawRect(x, y, size.x, size.y, TFT_CYAN);
-        if (x < pos.x + dim.x && x+size.x > pos.x && y < pos.y + dim.y && y+size.y > pos.y)
+
+        #ifdef DEBUG_LINES  // Debugging
+        drawRect(x, y, size.x, size.y, TFT_CYAN); 
+        #endif
+
+        if (x < pos.x + dim.x && x+size.x > pos.x && y < pos.y + dim.y && y+size.y > pos.y) // Check for character and rectangle overlap
         {
             if (pos.x+dim.x < x+size.x || i == str.length()-1) end.x = pos.x+dim.x-start.x;
             if (pos.y+dim.y < y+size.y) end.y = pos.y+dim.y-start.y;
@@ -417,7 +459,6 @@ void tftLCD::printBg(const String &str, vector2<int16_t> pos, vector2<uint16_t> 
             write(str[i]);
         }
     }
-    //fillRect(pos.x, pos.y, pad.x, h, textbgcolor);
 }
 
 /**************************************************************************/
@@ -503,18 +544,18 @@ void tftLCD::charBounds(char c, int16_t *x, int16_t *y, int16_t *minx, int16_t *
 
 /**************************************************************************/
 /*!
-    @brief  Return a vector with the width and height of the text
-    @param  String to evaluate
+    @brief  Return a vector with the width and height of a text
+    @param  str     String to evaluate
 */
 /**************************************************************************/
 vector2<int16_t> tftLCD::getTextBounds(const String &str)
 {
     int b = str.indexOf('\n');
-    if (b == -1)
+    if (b == -1) // Single line
     {
         return vector2<int16_t>(textWidth(str), fontHeight());
     }
-    else
+    else // Multy-line
     {
         int16_t w = 0, h = 0;
         String buf;
@@ -522,16 +563,15 @@ vector2<int16_t> tftLCD::getTextBounds(const String &str)
         while (a < str.length())
         {
             buf = str.substring(a, b)+'\n';
-            w = max(textWidth(buf), w);
+            w = max(textWidth(buf), w);         // Find the widest line
             a = b+1;
             b = str.indexOf('\n', a);
             if (b == -1) b = str.length();
-            h++;
+            h++;                                // number of lines
         }
-        h *= fontHeight();
+        h *= fontHeight();                      // Total height
         return vector2<int16_t>(w,h);
     }
-
     return vector2<int16_t>();
 }
 
@@ -553,6 +593,14 @@ vector2<int16_t> tftLCD::getTextBounds(const char *str)
     return getTextBounds(String(str));
 }
 
+/**************************************************************************/
+/*!
+    @brief  Return the bounding box of a text
+    @param  str     String to evaluate
+    @param  x       X offset from cursor X position
+    @param  y       Y offset from cursor Y position
+*/
+/**************************************************************************/
 vector2<int16_t> tftLCD::getTextBounds(const char *str, int16_t *x, int16_t *y)
 {
     if (textfont != 1)
@@ -587,7 +635,7 @@ vector2<int16_t> tftLCD::getTextBounds(const char *str, int16_t *x, int16_t *y)
 
 /**************************************************************************/
 /*!
-    @brief  Print a string centered at cursor location
+    @brief  Print a string centered at cursor location (supports multy-line text)
     @param  String to print
 */
 /**************************************************************************/
@@ -596,23 +644,21 @@ void tftLCD::printCenter(const String &str)
     int16_t x,y;
     int16_t center;
 
-    center = cursor_x;
-    vector2<int16_t> size = getTextBounds(str, &x, &y);
+    center = cursor_x; // Save central X position for later
+    vector2<int16_t> size = getTextBounds(str, &x, &y); // Get bounding box
     int b = str.indexOf('\n');
-    if (b == -1)
+    if (b == -1) // Single line text
     {
         setCursor(getCursorX()-size.x/2-x, getCursorY()-size.y/2-y);
         printBg(str);
 
     }
-    else
+    else // Multy-line text
     {
         String buf;
-        img.setColorDepth(1);
-        img.createSprite(size.x, size.y);
         cursor_y -= size.y/2+y;
         int a = 0;
-        while (a < str.length())
+        while (a < str.length()) // handle each line at once
         {
             buf = str.substring(a, b)+'\n';
             size = getTextBounds(buf, &x, &y);

@@ -26,6 +26,15 @@ struct vector2
     vector2 operator*(size_t num);
 };
 
+class tftSprite : public TFT_eSprite
+{
+public:
+    tftSprite(TFT_eSPI* tft): TFT_eSprite(tft){}    
+
+    void printCenter(const String &str);
+    void printCenter(const char *str);
+};
+
 class tftLCD : public TFT_eSPI
 {
 public:
@@ -45,14 +54,7 @@ public:
     void printCenter(const String &str);
     void printCenter(const char *str);
 
-    TFT_eSprite img = TFT_eSprite(this);
-};
-
-class tftSprite : public TFT_eSprite
-{
-public:
-    void printCenter(const String &str);
-    void printCenter(const char *str);
+    tftSprite img = tftSprite(this);
 };
 
 #endif
