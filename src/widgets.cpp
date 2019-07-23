@@ -1,6 +1,58 @@
 
 #include "widgets.h"
 
+vector2<int16_t> arrangeSize(vector2<int16_t> size, fillMode arrange)
+{
+    size.x = abs(size.x);
+    size.y = abs(size.y);
+    switch (arrange)
+    {
+    case fillMode::TopLeft:
+        break;
+
+    case fillMode::TopCenter:
+        size.x = 0;
+        break;
+
+    case fillMode::TopRight:
+        size.x *= -1;
+        break;
+
+    case fillMode::CenterLeft:
+        size.y = 0;
+        break;
+    
+    case fillMode::CenterCenter:
+        size.x = 0;
+        size.y = 0;
+        break;
+
+    case fillMode::CenterRight:
+        size.x *= -1;
+        size.y = 0;
+        break;
+
+    case fillMode::BotLeft:
+        size.y *= -1;
+        break;
+
+    case fillMode::BotCenter:
+        size.x = 0;
+        size.y = -1;
+        break;
+
+    case fillMode::BotRight:
+        size.x *= -1;
+        size.y *= -1;
+        break;
+
+    default:
+        break;
+    }
+
+    return size;
+}
+
 /********************************************************************************
     Canvas 
 ********************************************************************************/
@@ -241,7 +293,7 @@ void verticalBox::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h
 /********************************************************************************
     Text Box 
 ********************************************************************************/
-vector2<int16_t>  textBox::getSize(tftLCD *tft)
+vector2<int16_t> textBox::getSize(tftLCD *tft)
 {
 #ifdef DEBUG_MODE
     Serial.println("text Box get Size start");
@@ -250,59 +302,10 @@ vector2<int16_t>  textBox::getSize(tftLCD *tft)
     tft->setTextSize(size);
     if (font) tft->setFreeFont(font);
     else tft->setTextFont(GLCD);
-    vector2<int16_t> size1 = tft->getTextBounds(*text);
-    vector2<int16_t> size0;
-    switch (arrange)
-    {
-    case fillMode::TopLeft:
-        size0.x=size1.x+2*padding;
-        size0.y=size1.y+2*padding;
-        break;
-
-    case fillMode::TopCenter:
-        size0.x=0;
-        size0.y=size1.y+2*padding;
-        break;
-
-    case fillMode::TopRight:
-        size0.x=-size1.x-2*padding;
-        size0.y=size1.y+2*padding;
-        break;
-
-    case fillMode::CenterLeft:
-        size0.x=size1.x+2*padding;
-        size0.y=0;
-        break;
-    
-    case fillMode::CenterCenter:
-        size0.x=0;
-        size0.y=0;
-        break;
-
-    case fillMode::CenterRight:
-        size0.x=-size1.x-2*padding;
-        size0.y=0;
-        break;
-
-    case fillMode::BotLeft:
-        size0.x=size1.x+2*padding;
-        size0.y=-size1.y-2*padding;
-        break;
-
-    case fillMode::BotCenter:
-        size0.x=0;
-        size0.y=-size1.y-2*padding;
-        break;
-
-    case fillMode::BotRight:
-        size0.x=-size1.x-2*padding;
-        size0.y=-size1.y-2*padding;
-        break;
-
-    default:
-        break;
-    }
-    return size0;
+    vector2<int16_t> size = tft->getTextBounds(*text);
+    size.x = max(paddingX, size.x);
+    size.y = max(paddingY, size.y);
+    return arrangeSize(size, arrange);
 
 #ifdef DEBUG_MODE
     Serial.println("text Box get Size end");
@@ -316,12 +319,14 @@ void textBox::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
 #endif
 
     if (!update && init) return;
+
     tft->setTextSize(size);
     tft->setTextColor(txtcolor, bgcolor);
     if (font) tft->setFreeFont(font);
     else tft->setTextFont(GLCD);
     tft->setCursor(x+w/2, y+h/2);
     tft->printCenter(*text);
+
 #ifdef DEBUG_LINES
     vector2<int16_t> size = tft->getTextBounds(*text);
     tft->drawRect(x, y, w, h, TFT_RED);

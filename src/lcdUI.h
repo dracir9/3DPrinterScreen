@@ -24,12 +24,13 @@ public:
     // Functions
     bool updateDisplay(uint8_t fps);
     bool setScreen(menu idx);
+    uint32_t getUpdateTime();
     
 private:
     menu menuid = menu::black;
     uint8_t state = 255;
     bool rendered = false;
-
+    unsigned long updateTime = 0;
 
     bool updateObjects(menu id, bool init);
     void drawInfo(bool init);

@@ -130,10 +130,13 @@ void loop(void)
         Serial.print(" of ");
         Serial.println(ESP.getHeapSize());
 
-        if (!tft.setScreen(tft.info))
-            tft.setScreen(tft.black);
+/*         if (!tft.setScreen(tft.info))
+            tft.setScreen(tft.black); */
         Serial.print("FPS: ");
         Serial.println(cnt/5);
+        Serial.print("Frame update time: ");
+        Serial.print(tft.getUpdateTime());
+        Serial.println(" us");
         cnt = 0;
         flag = false;
     }

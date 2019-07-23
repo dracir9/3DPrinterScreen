@@ -11,6 +11,7 @@ bool lcdUI::updateDisplay(uint8_t fps)
 {
     if (millis() % (1000/fps) == 0 && !rendered)
     {
+        updateTime = micros();
         bool init=false;
         if(menuid != state)
         {
@@ -21,6 +22,7 @@ bool lcdUI::updateDisplay(uint8_t fps)
         base.render(this);
         state=menuid;
         rendered = true;
+        updateTime = micros()-updateTime;
         return true;
     }
     else if(millis() % (1000/fps) != 0 && rendered)
@@ -60,6 +62,11 @@ bool lcdUI::updateObjects(menu id, bool init)
             break;
     }
     return true;
+}
+
+uint32_t lcdUI::getUpdateTime()
+{
+    return updateTime;
 }
 
 /**************************************************************************/
@@ -208,26 +215,27 @@ void lcdUI::drawInfo(bool init)
     if(init) 
     {
         verticalBox *list = new verticalBox(4, true);
-        textBox *txt0 = new textBox(&label0, fillMode::BotLeft, 8, TFT_WHITE, NULL, 1, false);
-        textBox *txt1 = new textBox(&label1, fillMode::BotCenter, 8, TFT_WHITE, FM12, 1);
-        textBox *txt2 = new textBox(&label2, fillMode::BotLeft, 8, TFT_WHITE, NULL, 3);
-        textBox *txt3 = new textBox(&label3, fillMode::BotLeft, 8, TFT_WHITE, NULL, 4, false);
+        textBox *txt0 = new textBox(&label0, fillMode::BotLeft, TFT_WHITE, NULL, 1, false);
+        textBox *txt1 = new textBox(&label1, fillMode::BotRight, TFT_WHITE, FM12, 1);
+        textBox *txt2 = new textBox(&label2, fillMode::BotLeft, TFT_WHITE, NULL, 3);
+        textBox *txt3 = new textBox(&label3, fillMode::BotLeft, TFT_WHITE, NULL, 4, false);
         if(!list->attachComponent(txt0)) Serial.println("Fail!");
         if(!list->attachComponent(txt1)) Serial.println("Fail!");
         if(!list->attachComponent(txt2)) Serial.println("Fail!");
         if(!list->attachComponent(txt3)) Serial.println("Fail!");
         base.attachComponent(list);
         setTextColor(TFT_WHITE, TFT_BLUE);
-        setTextSize(3);
+        setTextSize(1);
         setCursor(50,50);
         setFreeFont(FM12);
         vector2<int16_t> vec(230,5);
         unsigned long start = micros();
-        drawCharBg(vector2<int16_t>(240,50), 'H', TFT_WHITE, TFT_RED, 3, &vec, vector2<int16_t>(64, 50)); //2799 us
+        drawCharBg(vector2<int16_t>(240,50), 'H', TFT_WHITE, TFT_RED, 3, &vec, vector2<int16_t>(64, 50)); //2663 us
         Serial.print(micros()-start);
         Serial.println("us <-Time");
-        //printBg("kokogege", vector2<int16_t>(50,5), vector2<uint16_t>(100,40));
-        drawRect(50,5,100,40,TFT_RED);
+        setCursor(50,50);
+        printBg("kokogege", vector2<int16_t>(100,5), vector2<uint16_t>(100,40));
+        //drawRect(50,5,100,40,TFT_RED);
     }
 
     label1 = String("Hola\noo\ng\nl\n") + String(millis());

@@ -48,9 +48,25 @@ vector2<T> vector2<T>::operator+(vector2 v1)
 }
 
 template <class T>
+vector2<T> vector2<T>::operator+=(vector2 v1)
+{
+    x += v1.x;
+    y += v1.y;
+    return vector2(x, y);
+}
+
+template <class T>
 vector2<T> vector2<T>::operator-(vector2 v1)
 {
     return vector2(v1.x - x, v1.y - y);
+}
+
+template <class T>
+vector2<T> vector2<T>::operator-=(vector2 v1)
+{
+    x -= v1.x;
+    y -= v1.y;
+    return vector2(x, y);
 }
 
 template <class T>
@@ -120,10 +136,13 @@ void tftLCD::drawCharBg(vector2<int16_t> pos, uint8_t c, uint16_t color, uint16_
                  bit = 0,
                  oldbit = 0;
         uint16_t oldbo = bo;
-        w *= size.x;
-        h *= size.y;
-        xo *= size.x;
-        yo *= size.y;
+        if (size > 1)
+        {
+            w *= size;
+            h *= size;
+            xo *= size;
+            yo *= size;
+        }
         maxx =  w, maxy = h;
 
         if (dim.x != 0) 
@@ -175,7 +194,7 @@ void tftLCD::drawCharBg(vector2<int16_t> pos, uint8_t c, uint16_t color, uint16_
         {
             for(uint16_t xx = 0; xx < w; xx++)
             {
-                if (xx % size.x == 0)
+                if (xx % size == 0)
                 {
                     if(!(bit++ & 7))
                     {
@@ -183,14 +202,14 @@ void tftLCD::drawCharBg(vector2<int16_t> pos, uint8_t c, uint16_t color, uint16_
                     }
                     if(bits & 0x80)
                     {
-                        if(size.x == 1 && size.y == 1)
+                        if(size == 1)
                         {
                             drawPixel(pos.x+xo+xx, pos.y+yo+yy, color);
                         }
                         else
                         {
-                            drawFastHLine(pos.x+xo+xx, pos.y+yo+yy, size.x, color);
-                            xx += size.x-1;
+                            drawFastHLine(pos.x+xo+xx, pos.y+yo+yy, size, color);
+                            xx += size-1;
                         }
                     }
                     else if (bg != color &&  xx >= minx && xx < maxx && yy >= miny && yy < maxy)
@@ -204,7 +223,7 @@ void tftLCD::drawCharBg(vector2<int16_t> pos, uint8_t c, uint16_t color, uint16_
                     drawPixel(pos.x+xo+xx, pos.y+yo+yy, bg);
                 }
             }
-            if (yy % size.y == (size.y-1))
+            if (yy % size == (size-1))
             {
                 oldbit = bit;
                 oldbo = bo;
@@ -262,7 +281,7 @@ size_t tftLCD::writeBg(uint8_t c, vector2<int16_t> *pos, vector2<int16_t> dim)
                         cursor_y += (int16_t)textsize *
                           (uint8_t)pgm_read_byte(&gfxFont->yAdvance);
                     }
-                    drawCharBg(vector2<int16_t>(cursor_x, cursor_y), c, textcolor, textbgcolor, vector2<uint8_t>(textsize, textsize), pos, dim);
+                    drawCharBg(vector2<int16_t>(cursor_x, cursor_y), c, textcolor, textbgcolor, textsize, pos, dim);
                 }
                 cursor_x += (uint8_t)pgm_read_byte(&glyph->xAdvance) * (int16_t)textsize;
             }
@@ -271,9 +290,10 @@ size_t tftLCD::writeBg(uint8_t c, vector2<int16_t> *pos, vector2<int16_t> dim)
     return 1;
 }
 
-/* void tftLCD::print(const String &str)
+void tftLCD::printBg(const String &str)
 {
-    if (str.indexOf('\n') == -1)
+    printBg(str, vector2<uint8_t>());
+/*     if (str.indexOf('\n') == -1)
     {
         int16_t x = 0, y = 0;
         uint16_t w = 0, h = 0;
@@ -299,15 +319,15 @@ size_t tftLCD::writeBg(uint8_t c, vector2<int16_t> *pos, vector2<int16_t> dim)
             b = str.indexOf('\n', a);
             if (b == -1) b = str.length();
         }
-    }
-} */
+    } */
+}
 
-/* void tftLCD::print(const String &str, uint8_t pad)
+void tftLCD::printBg(const String &str, uint8_t pad)
 {
     printBg(str, vector2<uint8_t>(pad, pad));
-} */
+}
 
-/* void tftLCD::print(const String &str, vector2<uint8_t> pad)
+void tftLCD::printBg(const String &str, vector2<uint8_t> pad)
 {
     //int16_t x = 0, y = 0;
     //uint16_t w = 0, h = 0;
@@ -315,15 +335,14 @@ size_t tftLCD::writeBg(uint8_t c, vector2<int16_t> *pos, vector2<int16_t> dim)
     if (str.indexOf('\n') == -1)
     {
         int16_t x = 0, y = 0;
-        uint16_t w = 0, h = 0;
-        getTextBounds(str, 0, 0, &x, &y, &w, &h);
+        vector2<int16_t> size = getTextBounds(str, &x, &y);
         vector2<int16_t> pos(x + cursor_x - pad.x, y + cursor_y - pad.y);
-        h += 2*pad.y;
+        size.y += 2*pad.y;
         for (unsigned int i = 0; i < str.length(); i++)
         {
-            writeBg(str[i], &pos, vector2<int16_t>(0, h));
+            writeBg(str[i], &pos, vector2<int16_t>(0, size.y));
         }
-        fillRect(pos.x, pos.y, pad.x, h, textbgcolor);
+        fillRect(pos.x, pos.y, pad.x, size.y, textbgcolor);
     }
     else
     {
@@ -340,26 +359,57 @@ size_t tftLCD::writeBg(uint8_t c, vector2<int16_t> *pos, vector2<int16_t> dim)
             if (b == -1) b = str.length();
         }
     }
-} */
+}
 
-/* void tftLCD::printBg(const String &str, vector2<int16_t> pos, vector2<uint16_t> dim)
+void tftLCD::printBg(const String &str, vector2<int16_t> pos, vector2<uint16_t> dim)
 {
+    //drawRect(pos.x, pos.y, dim.x, dim.y, TFT_RED);
+/*     int16_t x = 0, y = 0;
+    vector2<int16_t> size = getTextBounds(str, &x, &y);
+    x += cursor_x;
+    y += cursor_y;
+    drawRect(x, y, size.x, size.y, TFT_GREEN);
+    
+    size.x = max(pos.x+dim.x, x+size.x);
+    size.y = max(pos.y+dim.y, y+size.y);
+    drawCircle(size.x, size.y, 2, TFT_BLUE);
+    vector2<int16_t>imgpos(min(pos.x, x), min(pos.y, y));
+    size -= imgpos;
+    pos -= imgpos;
+
+    drawRect(imgpos.x, imgpos.y, size.x, size.y, TFT_YELLOW);
+
+    img.setColorDepth(1);
+    img.createSprite(size.x, size.y);
+    img.fillRect(pos.x, pos.y, dim.x, dim.y, 0);
+    img.setTextSize(textsize);
+    if(gfxFont) img.setFreeFont(gfxFont);
+    else img.setTextFont(textfont);
+    img.cursor_x = cursor_x-imgpos.x;
+    img.cursor_y = cursor_y-imgpos.y;
+    img.print(str);
+
+    img.setBitmapColor(textcolor, textbgcolor);
+    img.pushSprite(imgpos.x, imgpos.y);
+
+    img.deleteSprite(); */
 
     //int16_t x = cursor_x, y = cursor_y;
     int16_t x = 0, y = 0;
-    uint16_t w = 0, h = 0;
     vector2<int16_t> start = pos;
     vector2<int16_t> end(0, 0);
 
     for (unsigned int i = 0; i < str.length(); i++)
     {        
-        getTextBounds(String(str[i]), cursor_x, cursor_y, &x, &y, &w, &h);
+        vector2<int16_t> size = getTextBounds(String(str[i]), &x, &y);
+        x += cursor_x;
+        y += cursor_y;
         //charBounds(str[i], &x, &y, &minx, &miny, &maxx, &maxy);
-        drawRect(x, y, w, h, TFT_CYAN);
-        if (x < pos.x + dim.x && x+w > pos.x && y < pos.y + dim.y && y+h > pos.y)
+        drawRect(x, y, size.x, size.y, TFT_CYAN);
+        if (x < pos.x + dim.x && x+size.x > pos.x && y < pos.y + dim.y && y+size.y > pos.y)
         {
-            if (pos.x+dim.x < x+w) end.x = pos.x+dim.x-start.x;
-            if (pos.y+dim.y < y+h) end.y = pos.y+dim.y-start.y;
+            if (pos.x+dim.x < x+size.x || i == str.length()-1) end.x = pos.x+dim.x-start.x;
+            if (pos.y+dim.y < y+size.y) end.y = pos.y+dim.y-start.y;
             writeBg(str[i], &start, end);
         }
         else
@@ -368,7 +418,88 @@ size_t tftLCD::writeBg(uint8_t c, vector2<int16_t> *pos, vector2<int16_t> dim)
         }
     }
     //fillRect(pos.x, pos.y, pad.x, h, textbgcolor);
-} */
+}
+
+/**************************************************************************/
+/*!
+    @brief    Helper to determine size of a character with current font/size.
+       Broke this out as it's used by both the PROGMEM- and RAM-resident getTextBounds() functions.
+    @param    c     The ascii character in question
+    @param    x     Pointer to x location of character
+    @param    y     Pointer to y location of character
+    @param    minx  Minimum clipping value for X
+    @param    miny  Minimum clipping value for Y
+    @param    maxx  Maximum clipping value for X
+    @param    maxy  Maximum clipping value for Y
+*/
+/**************************************************************************/
+#if defined(LOAD_GFXFF) || defined(LOAD_GLCD)
+void tftLCD::charBounds(char c, int16_t *x, int16_t *y, int16_t *minx, int16_t *miny, int16_t *maxx, int16_t *maxy)
+{
+    if(gfxFont)
+    {
+        if(c == '\n')
+        { // Newline?
+            *x  = 0;    // Reset x to zero, advance y by one line
+            *y += textsize * (uint8_t)pgm_read_byte(&gfxFont->yAdvance);
+        }
+        else if(c != '\r')
+        { // Not a carriage return; is normal char
+            uint8_t first = pgm_read_byte(&gfxFont->first),
+                    last  = pgm_read_byte(&gfxFont->last);
+            if((c >= first) && (c <= last)) { // Char present in this font?
+                GFXglyph *glyph = pgm_read_glyph_ptr(gfxFont, c - first);
+                uint8_t gw = pgm_read_byte(&glyph->width),
+                        gh = pgm_read_byte(&glyph->height),
+                        xa = pgm_read_byte(&glyph->xAdvance);
+                int8_t  xo = pgm_read_byte(&glyph->xOffset),
+                        yo = pgm_read_byte(&glyph->yOffset);
+                if(textwrapX && ((*x+(((int16_t)xo+gw)*textsize)) > _width))
+                {
+                    *x  = 0; // Reset x to zero, advance y by one line
+                    *y += textsize * (uint8_t)pgm_read_byte(&gfxFont->yAdvance);
+                }
+                int16_t tsx = (int16_t)textsize,
+                        tsy = (int16_t)textsize,
+                        x1 = *x + xo * tsx,
+                        y1 = *y + yo * tsy,
+                        x2 = x1 + gw * tsx - 1,
+                        y2 = y1 + gh * tsy - 1;
+                if(x1 < *minx) *minx = x1;
+                if(y1 < *miny) *miny = y1;
+                if(x2 > *maxx) *maxx = x2;
+                if(y2 > *maxy) *maxy = y2;
+                *x += xa * tsx;
+            }
+        }
+
+    }
+    else
+    { // Default font
+
+        if(c == '\n')
+        {                     // Newline?
+            *x  = 0;                        // Reset x to zero,
+            *y += textsize * 8;           // advance y one line
+            // min/max x/y unchaged -- that waits for next 'normal' character
+        } else if(c != '\r')
+        {  // Normal char; ignore carriage returns
+            if(textwrapX && ((*x + textsize * 6) > _width))
+            { // Off right?
+                *x  = 0;                    // Reset x to zero,
+                *y += textsize * 8;       // advance y one line
+            }
+            int x2 = *x + textsize * 6 - 1, // Lower-right pixel of char
+                y2 = *y + textsize * 8 - 1;
+            if(x2 > *maxx) *maxx = x2;      // Track max x, y
+            if(y2 > *maxy) *maxy = y2;
+            if(*x < *minx) *minx = *x;      // Track min x, y
+            if(*y < *miny) *miny = *y;
+            *x += textsize * 6;             // Advance x one char
+        }
+    }
+}
+#endif
 
 /**************************************************************************/
 /*!
@@ -376,39 +507,82 @@ size_t tftLCD::writeBg(uint8_t c, vector2<int16_t> *pos, vector2<int16_t> dim)
     @param  String to evaluate
 */
 /**************************************************************************/
+vector2<int16_t> tftLCD::getTextBounds(const String &str)
+{
+    int b = str.indexOf('\n');
+    if (b == -1)
+    {
+        return vector2<int16_t>(textWidth(str), fontHeight());
+    }
+    else
+    {
+        int16_t w = 0, h = 0;
+        String buf;
+        int a = 0;
+        while (a < str.length())
+        {
+            buf = str.substring(a, b)+'\n';
+            w = max(textWidth(buf), w);
+            a = b+1;
+            b = str.indexOf('\n', a);
+            if (b == -1) b = str.length();
+            h++;
+        }
+        h *= fontHeight();
+        return vector2<int16_t>(w,h);
+    }
+
+    return vector2<int16_t>();
+}
+
+vector2<int16_t> tftLCD::getTextBounds(const String &str, int16_t *x, int16_t *y)
+{
+    if(str.length() != 0)
+    {
+        return getTextBounds(str.c_str(), x, y);
+    }
+    return vector2<int16_t>();
+}
+
 vector2<int16_t> tftLCD::getTextBounds(const char *str)
 {
 #ifdef DEBUG_MODE
     Serial.println("getTextBounds start");
 #endif
 
-    uint8_t c; // Current character
-    //int16_t x=0, y=0, minx = _width, miny = _height, maxx = -1, maxy = -1;
-    vector2<int16_t> size(textWidth(str), 1);
-    while ((c = *str++))
-    {
-        if (c == '\n') size.y++;
-        //charBounds(c, &x, &y, &minx, &miny, &maxx, &maxy);
-    }
-/*     if (maxx >= minx)
-    {
-        size.x  = maxx - minx + 1;
-    }
-    if (maxy >= miny)
-    {
-        size.y  = maxy - miny + 1;
-    } */
-    size.y *= fontHeight();
-    return size;
+    return getTextBounds(String(str));
 }
 
-vector2<int16_t> tftLCD::getTextBounds(const String &str)
+vector2<int16_t> tftLCD::getTextBounds(const char *str, int16_t *x, int16_t *y)
 {
-    if(str.length() != 0)
+    if (textfont != 1)
     {
-        return getTextBounds(const_cast<char*>(str.c_str()));
+        return getTextBounds(str);
     }
-    return vector2<int16_t>();
+    #if defined(LOAD_GFXFF) || defined(LOAD_GLCD)
+        uint8_t c; // Current character
+
+        *x = 0;
+        *y = 0;
+        vector2<int16_t> size = vector2<int16_t>();
+
+        int16_t minx = _width, miny = _height, maxx = -1, maxy = -1;
+
+        while((c = *str++))
+            charBounds(c, x, y, &minx, &miny, &maxx, &maxy);
+
+        if(maxx >= minx) {
+            *x = minx;
+            size.x  = maxx - minx + 1;
+        }
+        if(maxy >= miny) {
+            *y = miny;
+            size.y  = maxy - miny + 1;
+        }
+        return size;
+    #else
+        return vector2<int16_t>();
+    #endif
 }
 
 /**************************************************************************/
@@ -419,21 +593,31 @@ vector2<int16_t> tftLCD::getTextBounds(const String &str)
 /**************************************************************************/
 void tftLCD::printCenter(const String &str)
 {
-    cursor_y -= getTextBounds(str).y/2;
-    setTextDatum(TC_DATUM);
-    int16_t center = cursor_x;
-    if (str.indexOf('\n') == -1)
+    int16_t x,y;
+    int16_t center;
+
+    center = cursor_x;
+    vector2<int16_t> size = getTextBounds(str, &x, &y);
+    int b = str.indexOf('\n');
+    if (b == -1)
     {
-        drawString(str, cursor_x, cursor_y);
+        setCursor(getCursorX()-size.x/2-x, getCursorY()-size.y/2-y);
+        printBg(str);
+
     }
     else
     {
+        String buf;
+        img.setColorDepth(1);
+        img.createSprite(size.x, size.y);
+        cursor_y -= size.y/2+y;
         int a = 0;
-        int b = str.indexOf('\n');
         while (a < str.length())
         {
-            drawString(str.substring(a, b), center, cursor_y);
-            print('\n');
+            buf = str.substring(a, b)+'\n';
+            size = getTextBounds(buf, &x, &y);
+            cursor_x = center-size.x/2-x;
+            printBg(buf);
             a = b+1;
             b = str.indexOf('\n', a);
             if (b == -1) b = str.length();

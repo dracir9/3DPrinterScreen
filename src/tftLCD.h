@@ -20,7 +20,9 @@ struct vector2
     bool operator==(vector2 v1);
     bool operator!=(vector2 v1);
     vector2 operator+(vector2 v1);
+    vector2 operator+=(vector2 v1);
     vector2 operator-(vector2 v1);
+    vector2 operator-=(vector2 v1);
     vector2 operator*(size_t num);
 };
 
@@ -29,14 +31,26 @@ class tftLCD : public TFT_eSPI
 public:
     void drawCharBg(vector2<int16_t> pos, uint8_t c, uint16_t color, uint16_t bg, uint8_t size, vector2<int16_t> *start, vector2<int16_t> dim);
     size_t writeBg(uint8_t c, vector2<int16_t> *pos, vector2<int16_t> dim);
-    //void printBg(const String &str);
-    //void printBg(const String &str, vector2<uint8_t> pad);
-    //void printBg(const String &str, uint8_t pad);
-    //void printBg(const String &str, vector2<int16_t> pos, vector2<uint16_t> dim);
+    void printBg(const String &str);
+    void printBg(const String &str, vector2<uint8_t> pad);
+    void printBg(const String &str, uint8_t pad);
+    void printBg(const String &str, vector2<int16_t> pos, vector2<uint16_t> dim);
     
+    void charBounds(char c, int16_t *x, int16_t *y, int16_t *minx, int16_t *miny, int16_t *maxx, int16_t *maxy);
     vector2<int16_t> getTextBounds(const char *str);
     vector2<int16_t> getTextBounds(const String &str);
+    vector2<int16_t> getTextBounds(const char *str, int16_t *x, int16_t *y);
+    vector2<int16_t> getTextBounds(const String &str, int16_t *x, int16_t *y);
 
+    void printCenter(const String &str);
+    void printCenter(const char *str);
+
+    TFT_eSprite img = TFT_eSprite(this);
+};
+
+class tftSprite : public TFT_eSprite
+{
+public:
     void printCenter(const String &str);
     void printCenter(const char *str);
 };
