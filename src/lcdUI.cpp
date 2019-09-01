@@ -214,7 +214,7 @@ void lcdUI::drawInfo(bool init)
     static String label3 = "Segom";
     if(init) 
     {
-        verticalBox *list = new verticalBox(4, true);
+        horizontalBox<4> *list = new horizontalBox<4>(true);
         textBox *txt0 = new textBox(&label0, fillMode::BotLeft, TFT_WHITE, NULL, 1, false);
         textBox *txt1 = new textBox(&label1, fillMode::BotCenter, TFT_WHITE, FM12, 1);
         textBox *txt2 = new textBox(&label2, fillMode::BotLeft, TFT_WHITE, NULL, 3);

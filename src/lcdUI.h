@@ -6,6 +6,7 @@
 #include "tftLCD.h"
 #include "widgets.h"
 #include "Widgets/verticalBox.h"
+#include "Widgets/horizontalBox.h"
 #include "Widgets/textBox.h"
 
 class lcdUI : public tftLCD
