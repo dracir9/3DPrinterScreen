@@ -56,8 +56,7 @@ vector2<int16_t> arrangeSize(vector2<int16_t> size, fillMode arrange)
 /********************************************************************************
     Canvas 
 ********************************************************************************/
-canvas::canvas(bool updt):
-    widget(updt)
+canvas::canvas(bool updt)
 {
     #ifdef DEBUG_MODE
     Serial.println("Created canvas");
@@ -69,26 +68,15 @@ canvas::~canvas()
     #ifdef DEBUG_MODE
     Serial.println("Delete canvas");
     #endif
-
-    delete child;
-    Serial.println("Deleted child");
-    child = NULL;
 }
 
-vector2<int16_t> canvas::getSize(tftLCD *tft)
-{
-    return vector2<int16_t>();
-}
-
-void canvas::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
+void canvas::render(tftLCD *tft)
 {
 #ifdef DEBUG_MODE
     Serial.println("Canvas render start");
 #endif
 
-    if (w <= 0) w = tft->width()-x;
-    if (h <= 0) h = tft->height()-y;
-    if (child) child->render(tft, x, y, w, h);
+    if (child) child->render(tft, 0, 0, tft->width(), tft->height());
 
 #ifdef DEBUG_MODE
     Serial.println("Canvas render end");
@@ -100,32 +88,7 @@ void canvas::attachComponent(widget *chld)
     child=chld;
 }
 
-void canvas::clear()
-{
-    if(child)
-    {
-        delete child;
-    }
-    child = NULL;
-}
-
-/**************************************************************************/
-/*!
-    @brief  Set all "child" variables to NULL
-*/
-/**************************************************************************/
-void canvas::nullify()
-{
-    child->nullify();
-    child = NULL;
-}
-
 /********************************************************************************
     Box 
 ********************************************************************************/
 
-void box::nullify()
-{
-    child->nullify();
-    child = NULL;
-}

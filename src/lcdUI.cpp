@@ -1,6 +1,56 @@
 
 #include "lcdUI.h"
 
+/*####################################################
+    Info widget
+####################################################*/
+info_W::info_W()
+{
+    #ifdef DEBUG_MODE
+        Serial.println("Create info");
+    #endif
+
+    if(!list.attachComponent(&txt0)) Serial.println("Fail!");
+    if(!list.attachComponent(&txt1)) Serial.println("Fail!");
+    if(!list.attachComponent(&txt2)) Serial.println("Fail!");
+    if(!list.attachComponent(&txt3)) Serial.println("Fail!");
+    attachComponent(&list);
+}
+
+void info_W::update()
+{
+    label1 = String("Hola\noo\ng\nl\n") + String(millis());
+    label2 = String(millis());
+}
+
+/*####################################################
+    Black screen widget
+####################################################*/
+black_W::black_W(tftLCD* tft)
+{
+    tft->fillScreen(TFT_BLACK);
+}
+
+void black_W::update()
+{
+
+}
+
+/*####################################################
+    lcdUI class
+    Screen and user input managing
+####################################################*/
+lcdUI::lcdUI()
+{
+    menuid = menu::info;
+    setScreen(menu::black);
+}
+
+lcdUI::~lcdUI()
+{
+    delete base;
+}
+
 /**************************************************************************/
 /*!
     @brief  Update the LCD display with new information
@@ -12,15 +62,10 @@ bool lcdUI::updateDisplay(uint8_t fps)
     if (millis() % (1000/fps) == 0 && !rendered)
     {
         updateTime = micros();
-        bool init=false;
-        if(menuid != state)
-        {
-            init=true;
-            base.clear();
-        }
-        updateObjects(menuid, init);
-        base.render(this);
-        state=menuid;
+        if(!base) return false;
+        base->update();     // Update logic
+        base->render(this); // Render frame
+
         rendered = true;
         updateTime = micros()-updateTime;
         return true;
@@ -36,21 +81,31 @@ bool lcdUI::setScreen(menu idx)
 {
     if (menuid != idx)
     {
+        #ifdef DEBUG_MODE
+        Serial.println("change!");
+        #endif
+
+        delete base;
+        base = updateObjects(idx);
         menuid = idx;
         return true;
     }
     return false;
 }
 
-bool lcdUI::updateObjects(menu id, bool init)
+canvas* lcdUI::updateObjects(menu id)
 {
+    #ifdef DEBUG_MODE
+        Serial.println("create new class!");
+    #endif
+
     switch (id)
     {
         case menu::black:
-            drawBlack(init);
+            return new black_W(this);
             break;
         case menu::info:
-            drawInfo(init);
+            return new info_W();
             break;
         case menu::main:
             break;
@@ -61,7 +116,7 @@ bool lcdUI::updateObjects(menu id, bool init)
         case menu::control:
             break;
     }
-    return true;
+    return NULL;
 }
 
 uint32_t lcdUI::getUpdateTime()
@@ -206,7 +261,7 @@ uint32_t lcdUI::getUpdateTime()
     } 
 } */
 
-void lcdUI::drawInfo(bool init)
+/* void lcdUI::drawInfo(bool init)
 {
     static String label0 = "Segom";
     static String label1 = "Pirmera\nSegona\n1\n2\n3\n4";
@@ -214,7 +269,7 @@ void lcdUI::drawInfo(bool init)
     static String label3 = "Segom";
     if(init) 
     {
-        horizontalBox<4> *list = new horizontalBox<4>(true);
+        verticalBox *list = new verticalBox(4, true);
         textBox *txt0 = new textBox(&label0, fillMode::BotLeft, TFT_WHITE, NULL, 1, false);
         textBox *txt1 = new textBox(&label1, fillMode::BotCenter, TFT_WHITE, FM12, 1);
         textBox *txt2 = new textBox(&label2, fillMode::BotLeft, TFT_WHITE, NULL, 3);
@@ -223,7 +278,7 @@ void lcdUI::drawInfo(bool init)
         if(!list->attachComponent(txt1)) Serial.println("Fail!");
         if(!list->attachComponent(txt2)) Serial.println("Fail!");
         if(!list->attachComponent(txt3)) Serial.println("Fail!");
-        base.attachComponent(list);
+        base->attachComponent(list);
         setTextColor(TFT_WHITE, TFT_BLUE);
         setTextSize(1);
         setCursor(50,50);
@@ -248,4 +303,4 @@ void lcdUI::drawBlack(bool init)
     {
         fillScreen(TFT_BLACK);
     }
-}
+} */

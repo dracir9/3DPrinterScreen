@@ -21,7 +21,6 @@ public:
 
     virtual vector2<int16_t> getSize(tftLCD *tft);
     virtual void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h);
-    void nullify();
     bool attachComponent(widget *chld);
 };
 
@@ -45,21 +44,6 @@ verticalBox<NUM>::~verticalBox()
     #ifdef DEBUG_MODE
     Serial.println("Delete verticalBox");
     #endif
-
-    //delete[] child;
-}
-
-template<uint8_t NUM>
-void verticalBox<NUM>::nullify()
-{
-    for (uint8_t i = 0; i < NUM; i++)
-    {
-        if (child[i])
-        {
-            child[i]->nullify();
-            child[i] = NULL;
-        }
-    }
 }
 
 template<uint8_t NUM>
@@ -102,6 +86,7 @@ vector2<int16_t> verticalBox<NUM>::getSize(tftLCD *tft)
         if (size1.y == 0)
         {
             size0.y = 0;
+            fillY = true;
         }
         else if (!fillY)
         {
@@ -188,7 +173,7 @@ void verticalBox<NUM>::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int1
                 d = -size.y;
                 if (!fillNum)
                 {
-                    b = h - resHeight + b;
+                    b = h - resHeight + b; // b += h-resHeight
                     fillNum = 1;
                 }
             }

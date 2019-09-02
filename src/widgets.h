@@ -36,16 +36,14 @@ public:
     update(updt)
     {}
     virtual ~widget() = default;
-    static void afas();
     virtual vector2<int16_t> getSize(tftLCD *tft) = 0;
     virtual void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) = 0;
-    virtual void nullify() = 0;
 };
 
 /**************************************************************************
     Base frame of the UI
 **************************************************************************/
-class canvas : public widget
+class canvas //: public widget
 {
 protected:
     widget *child = NULL;
@@ -54,12 +52,9 @@ public:
     canvas(bool updt=true);
     virtual ~canvas();
 
-    vector2<int16_t> getSize(tftLCD *tft);
-    void render(tftLCD *tft, int16_t x=0, int16_t y=0, int16_t w=0, int16_t h=0);
+    void render(tftLCD *tft);
     void attachComponent(widget *chld);
-    void clear();
-    void nullify();
-    //virtual void update() = 0;
+    virtual void update() = 0;
 };
 
 /**************************************************************************
@@ -78,7 +73,6 @@ public:
 
     vector2<int16_t> getSize(tftLCD *tft);
     void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h);
-    void nullify();
     bool attachComponent(widget *chld);
 };
 

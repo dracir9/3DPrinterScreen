@@ -39,51 +39,52 @@ vector2<int16_t> horizontalBox<NUM>::getSize(tftLCD *tft)
     {
         if(!verticalBox<NUM>::child[i]) continue;
         vector2<int16_t> size1 = verticalBox<NUM>::child[i]->getSize(tft);
+        if (size1.y == 0) // Calculate Y
+        {
+            size0.y = 0;
+            fillY = true;
+        } else if (!fillY)
+        {
+            if (size1.y > 0)
+            {
+                if (size0.y < 0)
+                {
+                    size0.y = 0;
+                    fillY = true;
+                } else if (size1.y > size0.y)
+                {
+                    size0.y = size1.y;
+                }
+            }else if (size1.y < 0)
+            {
+                if (size0.y > 0)
+                {
+                    size0.y = 0;
+                    fillY = true;
+                } else if (size1.y < size0.y)
+                {
+                    size0.y = size1.y;
+                }
+            }
+        }
         if (size1.x == 0) // Calculate X
         {
             size0.x = 0;
             fillX = true;
-        } else if (!fillX)
-        {
-            if (size1.x > 0)
-            {
-                if (size0.x < 0)
-                {
-                    size0.x = 0;
-                    fillX = true;
-                } else if (size1.x > size0.x)
-                {
-                    size0.x = size1.x;
-                }
-            }else if (size1.x < 0)
-            {
-                if (size0.x > 0)
-                {
-                    size0.x = 0;
-                    fillX = true;
-                } else if (size1.x < size0.x)
-                {
-                    size0.x = size1.x;
-                }
-            }
         }
-        if (size1.y == 0) // Calculate Y
+        else if (!fillX)
         {
-            size0.y = 0;
-        }
-        else if (!fillY)
-        {
-            if (size1.y > 0 && size0.y < 0)
+            if (size1.x > 0 && size0.x < 0)
             {
-                size0.y = 0;
-                fillY = true;
-            }else if (size1.y < 0 && size0.y > 0)
+                size0.x = 0;
+                fillX = true;
+            }else if (size1.x < 0 && size0.x > 0)
             {
-                size0.y = 0;
-                fillY = true;
+                size0.x = 0;
+                fillX = true;
             } else
             {
-                size0.y += size1.y;
+                size0.x += size1.x;
             }
         }
     }
@@ -96,22 +97,24 @@ void horizontalBox<NUM>::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, in
     #ifdef DEBUG_MODE
     Serial.println("horizontal Box render start");
     #endif
+
     if (!verticalBox<NUM>::update && verticalBox<NUM>::init) return;
+
     vector2<int16_t> size;
-    uint16_t resHeight = 0;
+    uint16_t resWidth = 0;
     uint8_t fillNum = 0;
     for (uint8_t i = 0; i < NUM; i++)
     {
         if(verticalBox<NUM>::child[i])
         {
             size = verticalBox<NUM>::child[i]->getSize(tft);
-            size.y == 0 ? fillNum++ : resHeight += abs(size.y) ;
+            size.x == 0 ? fillNum++ : resWidth += abs(size.x);
         }
     }
 
-    int16_t a,b,c,d;
-    a=c=d=0;
-    b=y;
+    int16_t x0, y0, w0, h0;
+    x0 = x;
+    y0 = w0 = h0 = 0;
     for (uint8_t i = 0; i < NUM; i++)
     {
         if(verticalBox<NUM>::child[i])
@@ -119,35 +122,36 @@ void horizontalBox<NUM>::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, in
             size = verticalBox<NUM>::child[i]->getSize(tft);
             if (size.x == 0)
             {
-                a = x;
-                c = w;
+                w0 = (w-resWidth)/fillNum;
+                
             } else if (size.x > 0)
             {
-                a = x;
-                c = size.x;
+                w0 = size.x;
             } else
             {
-                a = x + w + size.x;
-                c = -size.x;
+                w0 = -size.x;
+                if(fillNum == 0)
+                {
+                    x0 = w - resWidth + x0; // x0 += w - resWidth
+                    fillNum = 1;
+                }
             }
 
             if (size.y == 0)
             {
-                d = (h-resHeight)/fillNum;
+                y0 = y;
+                h0 = h;
             } else if (size.y > 0)
             {
-                d = size.y;
+                y0 = y;
+                h0 = size.y;
             } else
             {
-                d = -size.y;
-                if (!fillNum)
-                {
-                    b = h - resHeight + b;
-                    fillNum = 1;
-                }
+                y0 = y + h + size.y;
+                h0 = -size.y;
             }
-            verticalBox<NUM>::child[i]->render(tft, a, b, c, d);
-            b += d;
+            verticalBox<NUM>::child[i]->render(tft, x0, y0, w0, h0);
+            x0 += w0;
         }
     }
 
@@ -167,7 +171,7 @@ void horizontalBox<NUM>::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, in
         {
             y += h + size.y;
         }
-        tft->drawRect(x, y, abs(size.x), abs(size.y), TFT_GREEN);
+        tft->drawRect(x, y, tft->width(), abs(size.y), TFT_GREEN);
     #endif
 
     verticalBox<NUM>::init = true;
