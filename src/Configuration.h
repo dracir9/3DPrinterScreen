@@ -3,6 +3,6 @@
 #define CONFIGURATION_H
 
 //#define DEBUG_MODE
-#define DEBUG_LINES
+//#define DEBUG_LINES
 
 #endif

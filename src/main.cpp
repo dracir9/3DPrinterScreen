@@ -82,7 +82,7 @@ bool touchMapXY(uint16_t *x, uint16_t *y)
 void setup(void)
 {
     Serial.begin(115200);
-    Serial.print("Free Heap at start: ");
+    Serial.print("Free Heap at start: "); //390000 +
     Serial.print(ESP.getFreeHeap());
     Serial.print(" of ");
     Serial.println(ESP.getHeapSize());
