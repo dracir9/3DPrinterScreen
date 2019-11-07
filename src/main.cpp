@@ -121,9 +121,10 @@ void setup(void)
 bool flag = true;
 bool render = true;
 unsigned long cnt = 0;
+
 void loop(void)
 {
-    if (millis() % 5000 < 100 && flag)
+    if (flag && millis() % 5000 < 100)
     {
         Serial.print("Free Heap: ");
         Serial.print(ESP.getFreeHeap());
@@ -140,7 +141,7 @@ void loop(void)
         cnt = 0;
         flag = false;
     }
-    else if (millis() % 5000 > 500 && !flag)
+    else if (!flag && millis() % 5000 > 500)
     {
         flag = true;
     }

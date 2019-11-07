@@ -16,7 +16,7 @@ public:
     horizontalBox(bool updt = true);
 
     vector2<int16_t> getSize(tftLCD *tft);
-    void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h);
+    void draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) const;
 };
 
 /********************************************************************************
@@ -92,13 +92,11 @@ vector2<int16_t> horizontalBox<NUM>::getSize(tftLCD *tft)
 }
 
 template<uint8_t NUM>
-void horizontalBox<NUM>::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
+void horizontalBox<NUM>::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) const
 {
     #ifdef DEBUG_MODE
     Serial.println("horizontal Box render start");
     #endif
-
-    if (!verticalBox<NUM>::update && verticalBox<NUM>::init) return;
 
     vector2<int16_t> size;
     uint16_t resWidth = 0;
@@ -173,8 +171,6 @@ void horizontalBox<NUM>::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, in
         }
         tft->drawRect(x, y, tft->width(), abs(size.y), TFT_GREEN);
     #endif
-
-    verticalBox<NUM>::init = true;
 
     #ifdef DEBUG_MODE
     Serial.println("vertical Box render end");

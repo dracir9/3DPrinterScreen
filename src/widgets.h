@@ -36,14 +36,15 @@ public:
     update(updt)
     {}
     virtual ~widget() = default;
-    virtual vector2<int16_t> getSize(tftLCD *tft) = 0;
-    virtual void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) = 0;
+    virtual vector2<int16_t> getSize(tftLCD *tft) const = 0;
+    void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h);
+    virtual void draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) const = 0;
 };
 
 /**************************************************************************
     Base frame of the UI
 **************************************************************************/
-class canvas //: public widget
+class canvas
 {
 protected:
     widget *child = NULL;
@@ -53,7 +54,7 @@ public:
     virtual ~canvas();
 
     void render(tftLCD *tft);
-    void attachComponent(widget *chld);
+    void attachToRoot(widget *chld);
     virtual void update() = 0;
 };
 

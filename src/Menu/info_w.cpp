@@ -14,7 +14,7 @@ info_W::info_W()
     if(!list.attachComponent(&txt1)) Serial.println("Fail!");
     if(!list.attachComponent(&txt2)) Serial.println("Fail!");
     if(!list.attachComponent(&txt3)) Serial.println("Fail!");
-    attachComponent(&list);
+    attachToRoot(&list);
 }
 
 void info_W::update()

@@ -54,6 +54,16 @@ vector2<int16_t> arrangeSize(vector2<int16_t> size, fillMode arrange)
 }
 
 /********************************************************************************
+    Widget 
+********************************************************************************/
+void widget::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
+{
+    if (!update && init) return; // Render only once?
+    draw(tft, x, y, w, h);
+    init = true;
+}
+
+/********************************************************************************
     Canvas 
 ********************************************************************************/
 canvas::canvas(bool updt)
@@ -83,7 +93,7 @@ void canvas::render(tftLCD *tft)
 #endif
 }
 
-void canvas::attachComponent(widget *chld)
+void canvas::attachToRoot(widget *chld)
 {
     child=chld;
 }

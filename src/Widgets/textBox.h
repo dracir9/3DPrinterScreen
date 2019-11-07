@@ -25,8 +25,8 @@ public:
                                             const GFXfont *font = NULL, uint8_t textSize = 2, bool updt = true):
     widget(updt), text(txt), arrange(arr), size(textSize), txtcolor(color), font(font) {}
 
-    vector2<int16_t> getSize(tftLCD *tft);
-    void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h);
+    vector2<int16_t> getSize(tftLCD *tft) const;
+    void draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) const;
 };
 
 #endif

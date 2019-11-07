@@ -17,14 +17,14 @@ lcdUI::~lcdUI()
 }
 
 /**************************************************************************/
-/*!
+/*
     @brief  Update the LCD display with new information
     @param  ID of the screen to be displayed/updated
 */
 /**************************************************************************/
 bool lcdUI::updateDisplay(uint8_t fps)
 {
-    if (millis() % (1000/fps) == 0 && !rendered)
+    if (!rendered && millis() % (1000/fps) == 0)
     {
         updateTime = micros();
         if(!base) return false;
@@ -35,7 +35,7 @@ bool lcdUI::updateDisplay(uint8_t fps)
         updateTime = micros()-updateTime;
         return true;
     }
-    else if(millis() % (1000/fps) != 0 && rendered)
+    else if(rendered && millis() % (1000/fps) != 0)
     {
         rendered = false;
     }
@@ -84,7 +84,7 @@ canvas* lcdUI::updateObjects(menu id)
     return NULL;
 }
 
-uint32_t lcdUI::getUpdateTime()
+uint32_t lcdUI::getUpdateTime() const
 {
     return updateTime;
 }

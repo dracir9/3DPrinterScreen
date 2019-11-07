@@ -19,8 +19,8 @@ public:
     verticalBox(bool updt = true);
     ~verticalBox();
 
-    virtual vector2<int16_t> getSize(tftLCD *tft);
-    virtual void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h);
+    virtual vector2<int16_t> getSize(tftLCD *tft) const;
+    virtual void draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) const;
     bool attachComponent(widget *chld);
 };
 
@@ -47,7 +47,7 @@ verticalBox<NUM>::~verticalBox()
 }
 
 template<uint8_t NUM>
-vector2<int16_t> verticalBox<NUM>::getSize(tftLCD *tft)
+vector2<int16_t> verticalBox<NUM>::getSize(tftLCD *tft) const
 {
     vector2<int16_t> size0;
     bool fillX = false, fillY = false;
@@ -122,12 +122,11 @@ bool verticalBox<NUM>::attachComponent(widget *chld)
 }
 
 template<uint8_t NUM>
-void verticalBox<NUM>::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
+void verticalBox<NUM>::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) const
 {
     #ifdef DEBUG_MODE
     Serial.println("vertical Box render start");
     #endif
-    if (!update && init) return;
     vector2<int16_t> size;
     uint16_t resHeight = 0;
     uint8_t fillNum = 0;
@@ -200,8 +199,6 @@ void verticalBox<NUM>::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int1
         }
         tft->drawRect(x, y, abs(size.x), abs(size.y), TFT_GREEN);
     #endif
-
-    init = true;
 
     #ifdef DEBUG_MODE
     Serial.println("vertical Box render end");

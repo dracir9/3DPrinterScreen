@@ -24,14 +24,14 @@ public:
         control
     };
 
-    canvas* base = NULL;
-
     // Functions
     bool updateDisplay(uint8_t fps);
     bool setScreen(menu idx);
-    uint32_t getUpdateTime();
+    uint32_t getUpdateTime() const;
     
 private:
+    canvas* base = NULL;
+
     uint8_t state = 255;
     menu menuid = menu::black;
     bool rendered = false;
