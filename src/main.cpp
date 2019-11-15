@@ -46,14 +46,16 @@ bool touchMapXY(uint16_t *x, uint16_t *y)
     //-X  +X
     //-Y  +Y
     static const uint16_t mappingXread[TOUCH_GRID_X] = {3700, 1900, 600};
-    static const uint16_t mappingXpos[TOUCH_GRID_X] = {0, 200, 320};
+    static const uint16_t mappingXpos[TOUCH_GRID_X] = {320, 100, 0};
     static const uint16_t mappingYread[TOUCH_GRID_Y] = {4000, 2900, 1200, 400};
     static const uint16_t mappingYpos[TOUCH_GRID_Y] = {0, 160, 400, 480};
+    digitalWrite(TFT_CS, HIGH);
     TSPoint p = ts.getPoint();
     pinMode(YP, OUTPUT); //restore shared pins
     pinMode(XM, OUTPUT);
     digitalWrite(YP, HIGH); //because TFT control pins
     digitalWrite(XM, HIGH);
+    digitalWrite(TFT_CS, LOW);
 
     if (p.z > MINPRESSURE && p.z < MAXPRESSURE)
     {
