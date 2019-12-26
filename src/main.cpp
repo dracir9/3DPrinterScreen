@@ -15,11 +15,10 @@
 //############################################################
 
 // Touch Screen
-#define MINPRESSURE 200
+#define MINPRESSURE 500
 #define MAXPRESSURE 6400
 #define TOUCH_GRID_X 3
 #define TOUCH_GRID_Y 4
-const int XP = 27, XM = 15, YP = 4, YM = 14;
 #define BLACK 0x0000
 #define BLUE 0x001F
 #define RED 0xF800
@@ -35,47 +34,26 @@ uint16_t brushColor = YELLOW;
 //###########################################################
 
 lcdUI tft;
-TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
+TouchScreen ts = TouchScreen(TOUCH_PIN_XP, TOUCH_PIN_YP, TOUCH_PIN_XM, TOUCH_PIN_YM, 300);
 
 //###########################################################
 //  FUNCTIONS
 //###########################################################
 
-bool touchMapXY(uint16_t *x, uint16_t *y)
+bool touchMapXY(uint16_t &x, uint16_t &y)
 {
-    //-X  +X
-    //-Y  +Y
-    static const uint16_t mappingXread[TOUCH_GRID_X] = {3700, 1900, 600};
-    static const uint16_t mappingXpos[TOUCH_GRID_X] = {320, 100, 0};
-    static const uint16_t mappingYread[TOUCH_GRID_Y] = {4000, 2900, 1200, 400};
-    static const uint16_t mappingYpos[TOUCH_GRID_Y] = {0, 160, 400, 480};
     digitalWrite(TFT_CS, HIGH);
     TSPoint p = ts.getPoint();
-    pinMode(YP, OUTPUT); //restore shared pins
-    pinMode(XM, OUTPUT);
-    digitalWrite(YP, HIGH); //because TFT control pins
-    digitalWrite(XM, HIGH);
+    pinMode(TOUCH_PIN_YP, OUTPUT); //restore shared pins
+    pinMode(TOUCH_PIN_XM, OUTPUT);
+    digitalWrite(TOUCH_PIN_YP, HIGH); //because TFT control pins
+    digitalWrite(TOUCH_PIN_XM, HIGH);
     digitalWrite(TFT_CS, LOW);
 
     if (p.z > MINPRESSURE && p.z < MAXPRESSURE)
     {
-        for (uint8_t i = 0; i < TOUCH_GRID_X - 1; i++)
-        {
-            if (p.x > mappingXread[i + 1])
-            {
-                *y = map(p.x, mappingXread[i], mappingXread[i + 1], mappingXpos[i], mappingXpos[i + 1]);
-                break;
-            }
-        }
-
-        for (uint8_t i = 0; i < TOUCH_GRID_Y - 1; i++)
-        {
-            if (p.y > mappingYread[i + 1])
-            {
-              *x = map(p.y, mappingYread[i], mappingYread[i + 1], mappingYpos[i], mappingYpos[i + 1]);
-              break;
-            }
-        }
+        x = map(p.y, 0, 4095, 0, 480);
+        y = map(p.x, 0, 4095, 320, 0);
         return true;
     }
     return false;
@@ -123,6 +101,7 @@ void setup(void)
 bool flag = true;
 bool render = true;
 unsigned long cnt = 0;
+unsigned long touchTime = 0;
 
 void loop(void)
 {
@@ -152,13 +131,18 @@ void loop(void)
 
     // display touched point with colored dot
     uint16_t pixel_x, pixel_y;
-    if (touchMapXY(&pixel_x, &pixel_y))
+    unsigned long start = micros();
+    bool valid = touchMapXY(pixel_x, pixel_y);
+    unsigned long end = micros();
+    if (valid)
     {
         tft.fillCircle(pixel_x, pixel_y, 2, brushColor);
 /*         Serial.print("X: ");
         Serial.print(pixel_x);
         Serial.print("Y: ");
         Serial.println(pixel_y); */
+        touchTime = max(end-start, touchTime);
+        Serial.println(touchTime);
     }
     if (Serial.available())
     {
