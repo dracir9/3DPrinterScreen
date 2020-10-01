@@ -587,7 +587,7 @@ vector2<int16_t> tftLCD::getTextBounds(const String &str, int16_t *x, int16_t *y
 vector2<int16_t> tftLCD::getTextBounds(const char *str)
 {
 #ifdef DEBUG_MODE
-    Serial.println("getTextBounds start");
+    printf("getTextBounds start\n");
 #endif
 
     return getTextBounds(String(str));

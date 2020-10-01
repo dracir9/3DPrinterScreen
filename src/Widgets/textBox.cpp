@@ -7,7 +7,7 @@
 vector2<int16_t> textBox::getSize(tftLCD *tft) const
 {
 #ifdef DEBUG_MODE
-    Serial.println("text Box get Size start");
+    printf("text Box get Size start\n");
 #endif
 
     tft->setTextSize(size);
@@ -20,14 +20,14 @@ vector2<int16_t> textBox::getSize(tftLCD *tft) const
  
 
 #ifdef DEBUG_MODE
-    Serial.println("text Box get Size end");
+    printf("text Box get Size end\n");
 #endif
 }
 
 void textBox::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) const
 {
 #ifdef DEBUG_MODE
-    Serial.println("text Box render start");
+    printf("text Box render start\n");
 #endif
     vector2<int16_t> dim = tft->getTextBounds(*text);
     dim.x = max(paddingX, dim.x);
@@ -54,6 +54,6 @@ void textBox::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) cons
 #endif
 
 #ifdef DEBUG_MODE
-    Serial.println("text Box render end");
+    printf("text Box render end\n");
 #endif
 }

@@ -35,7 +35,6 @@ uint16_t brushColor = YELLOW;
 
 lcdUI tft;
 TouchScreen ts = TouchScreen(TOUCH_PIN_XP, TOUCH_PIN_YP, TOUCH_PIN_XM, TOUCH_PIN_YM, 300);
-unsigned long startTime = 0;
 
 //###########################################################
 //  FUNCTIONS
@@ -57,11 +56,7 @@ bool touchMapXY(uint16_t &x, uint16_t &y)
 void setup(void)
 {
     Serial.begin(115200);
-    Serial.print("Free Heap at start: "); //390000 +
-    Serial.print(ESP.getFreeHeap());
-    Serial.print(" of ");
-    Serial.println(ESP.getHeapSize());
-    Serial.println();
+    printf("Free Heap at start: %d of %d\n", ESP.getFreeHeap(), ESP.getHeapSize());
 
     tft.begin();
     tft.setRotation(1);
@@ -87,12 +82,11 @@ void setup(void)
     /*  if (SD.begin())
     {
         tft.println("SD Card initialized.");
-        Serial.println("SD Card initialized.");
+        printfln("SD Card initialized.");
         hasSD = true;
     }*/
-
-    Serial.print("Free end setup: ");
-    Serial.println(ESP.getFreeHeap());
+    String eltext = "holakase";
+    printf("Free end setup: %d\n", ESP.getFreeHeap());
 }
 
 bool flag = true;
@@ -104,18 +98,12 @@ void loop(void)
 {
     if (flag && millis() % 5000 < 100)
     {
-        Serial.print("Free Heap: ");
-        Serial.print(ESP.getFreeHeap());
-        Serial.print(" of ");
-        Serial.println(ESP.getHeapSize());
+        printf("Free Heap: %d of %d\n", ESP.getFreeHeap(), ESP.getHeapSize());
 
         if (!tft.setScreen(tft.info))
             tft.setScreen(tft.black);
-        Serial.print("FPS: ");
-        Serial.println(cnt/5);
-        Serial.print("Frame update time: ");
-        Serial.print(tft.getUpdateTime());
-        Serial.println(" us");
+        printf("FPS: %lu\n", cnt/5);
+        printf("Frame update time: %d us\n", tft.getUpdateTime());
         cnt = 0;
         flag = false;
     }
@@ -134,12 +122,9 @@ void loop(void)
     if (valid)
     {
         tft.fillCircle(pixel_x, pixel_y, 2, brushColor);
-/*         Serial.print("X: ");
-        Serial.print(pixel_x);
-        Serial.print("Y: ");
-        Serial.println(pixel_y); */
+        //printf("X: %d, Y: %d\n", pixel_x, pixel_y);
         touchTime = max(end-start, touchTime);
-        Serial.println(touchTime);
+        printf("%lu\n", touchTime);
     }
 
     if (Serial.available())

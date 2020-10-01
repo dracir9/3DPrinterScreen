@@ -95,7 +95,7 @@ template<uint8_t NUM>
 void horizontalBox<NUM>::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) const
 {
     #ifdef DEBUG_MODE
-    Serial.println("horizontal Box render start");
+    printf("horizontal Box render start\n");
     #endif
 
     vector2<int16_t> size;
@@ -154,7 +154,7 @@ void horizontalBox<NUM>::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int1
     }
 
     #ifdef DEBUG_LINES
-        size = getSize(tft);
+        size = verticalBox<NUM>::getSize(tft);
         if (size.x == 0)
         {
             size.x = w;
@@ -173,7 +173,7 @@ void horizontalBox<NUM>::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int1
     #endif
 
     #ifdef DEBUG_MODE
-    Serial.println("vertical Box render end");
+    printf("vertical Box render end\n");
     #endif
 }
 

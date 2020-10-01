@@ -47,7 +47,7 @@ bool lcdUI::setScreen(menu idx)
     if (menuid != idx)
     {
         #ifdef DEBUG_MODE
-        Serial.println("change!");
+        printf("change!\n");
         #endif
 
         delete base;
@@ -61,7 +61,7 @@ bool lcdUI::setScreen(menu idx)
 canvas* lcdUI::updateObjects(menu id)
 {
     #ifdef DEBUG_MODE
-        Serial.println("create new class!");
+        printfln("create new class!");
     #endif
 
     switch (id)

@@ -42,7 +42,7 @@ template<uint8_t NUM>
 verticalBox<NUM>::~verticalBox()
 {
     #ifdef DEBUG_MODE
-    Serial.println("Delete verticalBox");
+    printf("Delete verticalBox\n");
     #endif
 }
 
@@ -125,7 +125,7 @@ template<uint8_t NUM>
 void verticalBox<NUM>::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) const
 {
     #ifdef DEBUG_MODE
-    Serial.println("vertical Box render start");
+    printf("vertical Box render start\n");
     #endif
     vector2<int16_t> size;
     uint16_t resHeight = 0;
@@ -201,7 +201,7 @@ void verticalBox<NUM>::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_
     #endif
 
     #ifdef DEBUG_MODE
-    Serial.println("vertical Box render end");
+    printf("vertical Box render end\n");
     #endif
 }
 

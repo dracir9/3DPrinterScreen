@@ -69,27 +69,27 @@ void widget::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
 canvas::canvas(bool updt)
 {
     #ifdef DEBUG_MODE
-    Serial.println("Created canvas");
+    printf("Created canvas\n");
     #endif
 }
 
 canvas::~canvas()
 {
     #ifdef DEBUG_MODE
-    Serial.println("Delete canvas");
+    printf("Delete canvas\n");
     #endif
 }
 
 void canvas::render(tftLCD *tft)
 {
 #ifdef DEBUG_MODE
-    Serial.println("Canvas render start");
+    printf("Canvas render start\n");
 #endif
 
     if (child) child->render(tft, 0, 0, tft->width(), tft->height());
 
 #ifdef DEBUG_MODE
-    Serial.println("Canvas render end");
+    printf("Canvas render end\n");
 #endif
 }
 

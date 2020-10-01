@@ -7,13 +7,13 @@
 info_W::info_W()
 {
     #ifdef DEBUG_MODE
-        Serial.println("Create info");
+        printf("Create info\n");
     #endif
 
-    if(!list.attachComponent(&txt0)) Serial.println("Fail!");
-    if(!list.attachComponent(&txt1)) Serial.println("Fail!");
-    if(!list.attachComponent(&txt2)) Serial.println("Fail!");
-    if(!list.attachComponent(&txt3)) Serial.println("Fail!");
+    if(!list.attachComponent(&txt0)) printf("Fail!\n");
+    if(!list.attachComponent(&txt1)) printf("Fail!\n");
+    if(!list.attachComponent(&txt2)) printf("Fail!\n");
+    if(!list.attachComponent(&txt3)) printf("Fail!\n");
     attachToRoot(&list);
 }
 

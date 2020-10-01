@@ -256,8 +256,6 @@ void readPrinter()
     }
     if(cnt)
     {
-        Serial.print("->");
-        Serial.print(comand.c_str());
-        Serial.println("<-");
+        printf("->%s<-\n", comand.c_str());
     }
 }

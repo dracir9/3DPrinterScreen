@@ -41,7 +41,7 @@ template<uint8_t COL, uint8_t ROW>
 grid<COL, ROW>::~grid()
 {
     #ifdef DEBUG_MODE
-    Serial.println("Delete verticalBox");
+    printf("Delete verticalBox\n");
     #endif
 }
 

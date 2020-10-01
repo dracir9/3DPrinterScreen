@@ -58,10 +58,9 @@ bool loadFromSdCard(String path) {
     dataType = "text/html";
     dataFile = SD.open(path.c_str());
   }
-  Serial.print("Loading file: ");
-  Serial.println(path);
+  printf("Loading file: %s\n", path.c_str());
   if (!dataFile) {
-    Serial.println("Failed (T_T)");
+    printf("Failed (T_T)\n");
     return false;
   }
 
@@ -70,7 +69,7 @@ bool loadFromSdCard(String path) {
   }
 
   if (server.streamFile(dataFile, dataType) != dataFile.size()) {
-    Serial.println("Sent less data than expected!");
+    printf("Sent less data than expected!\n");
   }
 
   dataFile.close();
@@ -87,23 +86,22 @@ void handleFileUpload() {
       SD.remove((char *)upload.filename.c_str());
     }
     uploadFile = SD.open(upload.filename.c_str(), FILE_WRITE);
-    Serial.print("Upload: START, filename: "); Serial.println(upload.filename);
+    printf("Upload: START, filename: %s\n", upload.filename.c_str());
   } else if (upload.status == UPLOAD_FILE_WRITE) {
     if (uploadFile) {
       uploadFile.write(upload.buf, upload.currentSize);
     }
-    Serial.print("\rUpload: WRITE, Bytes: "); Serial.print(upload.totalSize);
+    printf("\rUpload: WRITE, Bytes: %d\n", upload.totalSize);
   } else if (upload.status == UPLOAD_FILE_END) {
     if (uploadFile) {
       uploadFile.close();
     }
-    Serial.print("\nUpload: END, Size: "); Serial.println(upload.totalSize);
+    printf("\nUpload: END, Size: %d\n", upload.totalSize);
   }
 }
 
 void deleteRecursive(String path) {
-  Serial.print("Deleting directory: ");
-  Serial.println(path);
+  printf("Deleting directory: %s\n", path.c_str());
   File file = SD.open((char *)path.c_str());
   if (!file.isDirectory()) {
     file.close();
@@ -133,7 +131,7 @@ void deleteRecursive(String path) {
 }
 
 void handleDelete() {
-  Serial.println("Start Delete");
+  printf("Start Delete\n");
   if (server.args() == 0) {
     return returnFail("BAD ARGS");
   }
@@ -147,7 +145,7 @@ void handleDelete() {
 }
 
 void handleCreate() {
-  Serial.println("Start create");
+  printf("Start create\n");
   if (server.args() == 0) {
     return returnFail("BAD ARGS");
   }
@@ -170,14 +168,14 @@ void handleCreate() {
 }
 
 void printDirectory() {
-  Serial.print("Printing directory: ");
+  printf("Printing directory: ");
   if (!server.hasArg("dir")) {
     return returnFail("BAD ARGS");
   }
   String path = server.arg("dir");
-  Serial.println(path);
+  printf("%s\n", path.c_str());
   if (path != "/" && !SD.exists((char *)path.c_str())) {
-    Serial.println("BAD PATH");
+    printf("BAD PATH\n");
     return returnFail("BAD PATH");
   }
   File dir = SD.open((char *)path.c_str());
@@ -210,7 +208,7 @@ void printDirectory() {
     output += path.substring(path.lastIndexOf("/")+1);
     output += "\"";
     output += "}";
-    Serial.println(output);
+    printf("%s\n", output.c_str());
     server.sendContent(output);
     entry.close();
   }
@@ -226,12 +224,12 @@ void handleNotFound() {
     }
     else
     {
-      Serial.println("Failed loading file");
+      printf("Failed loading file\n");
     }
   }
   else
   {
-    Serial.print("SDCARD Not Detected\n\n");
+    printf("SDCARD Not Detected\n\n");
   }
   
 
@@ -246,26 +244,24 @@ void handleNotFound() {
     message += " NAME:" + server.argName(i) + "\n VALUE:" + server.arg(i) + "\n";
   }
   server.send(404, "text/plain", message);
-  Serial.print(message);
+  printf("%s", message.c_str());
 }
 
 void setupServer()
 {
     //tft.println("Setting AP (Access Point)...");
-    Serial.println("Setting AP (Access Point)…");
+    printf("Setting AP (Access Point)…\n");
     WiFi.softAP(ssid, password);
 
     //tft.print("AP IP address: ");
-    Serial.print("AP IP address: ");
+    printf("AP IP address: \n");
     //tft.println(WiFi.softAPIP());
-    Serial.println(WiFi.softAPIP());
+    printf("%s\n", WiFi.softAPIP().toString().c_str());
 
     if (MDNS.begin(host)) {
         MDNS.addService("http", "tcp", 80);
-        Serial.println("MDNS responder started");
-        Serial.print("You can now connect to http://");
-        Serial.print(host);
-        Serial.println(".local");
+        printf("MDNS responder started\n");
+        printf("You can now connect to http://%s.local/\n", host);
     }
 
     server.on("/list", HTTP_GET, printDirectory);
@@ -276,29 +272,26 @@ void setupServer()
 
     server.begin();
     //tft.println("HTTP server started");
-    Serial.println("HTTP server started");
+    printf("HTTP server started\n");
 }
 
 bool connectWiFi(const char* ssid_l, const char* pass)
 {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid_l, pass);
-  Serial.print("Connecting to ");
-  Serial.println(ssid_l);
+  printf("Connecting to %s\n", ssid_l);
 
   // Wait for connection
   uint8_t i = 0;
   while (WiFi.status() != WL_CONNECTED && i++ < 40) {//wait 20 seconds
     delay(500);
-    Serial.print(".");
+    printf(".");
   }
-  Serial.println();
-  if (i == 21) {
-    Serial.print("Could not connect to ");
-    Serial.println(ssid_l);
+
+  if (i >= 21) {
+    printf("\nCould not connect to %s\n", ssid_l);
     return false;
   }
-  Serial.print("Connected! IP address: ");
-  Serial.println(-WiFi.localIP());
+  printf("\nConnected! IP address: %s\n", WiFi.localIP().toString().c_str());
   return true;
 }
