@@ -29,7 +29,6 @@ void textBox::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) cons
 #ifdef DEBUG_MODE
     Serial.println("text Box render start");
 #endif
-
     vector2<int16_t> dim = tft->getTextBounds(*text);
     dim.x = max(paddingX, dim.x);
     dim.y = max(paddingY, dim.y);

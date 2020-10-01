@@ -35,6 +35,7 @@ uint16_t brushColor = YELLOW;
 
 lcdUI tft;
 TouchScreen ts = TouchScreen(TOUCH_PIN_XP, TOUCH_PIN_YP, TOUCH_PIN_XM, TOUCH_PIN_YM, 300);
+unsigned long startTime = 0;
 
 //###########################################################
 //  FUNCTIONS
@@ -42,13 +43,7 @@ TouchScreen ts = TouchScreen(TOUCH_PIN_XP, TOUCH_PIN_YP, TOUCH_PIN_XM, TOUCH_PIN
 
 bool touchMapXY(uint16_t &x, uint16_t &y)
 {
-    digitalWrite(TFT_CS, HIGH);
     TSPoint p = ts.getPoint();
-    pinMode(TOUCH_PIN_YP, OUTPUT); //restore shared pins
-    pinMode(TOUCH_PIN_XM, OUTPUT);
-    digitalWrite(TOUCH_PIN_YP, HIGH); //because TFT control pins
-    digitalWrite(TOUCH_PIN_XM, HIGH);
-    digitalWrite(TFT_CS, LOW);
 
     if (p.z > MINPRESSURE && p.z < MAXPRESSURE)
     {
@@ -84,6 +79,8 @@ void setup(void)
     tft.fillCircle(25, 300, 2, YELLOW);
 
     tft.setScreen(tft.info);
+
+    ts.enableRestore();
 
     //setupServer();
 
@@ -144,6 +141,7 @@ void loop(void)
         touchTime = max(end-start, touchTime);
         Serial.println(touchTime);
     }
+
     if (Serial.available())
     {
         readPrinter();
