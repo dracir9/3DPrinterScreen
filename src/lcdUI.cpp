@@ -1,6 +1,11 @@
 
 #include "lcdUI.h"
 
+#ifdef TAG
+#undef TAG
+#endif
+#define TAG "lcdUI"
+
 /*####################################################
     lcdUI class
     Screen and user input managing
@@ -46,9 +51,7 @@ bool lcdUI::setScreen(menu idx)
 {
     if (menuid != idx)
     {
-        #ifdef DEBUG_MODE
-        printf("change!\n");
-        #endif
+        ESP_LOGD(TAG, "change to idx %d!\n", idx);
 
         delete base;
         base = updateObjects(idx);
@@ -60,9 +63,7 @@ bool lcdUI::setScreen(menu idx)
 
 canvas* lcdUI::updateObjects(menu id)
 {
-    #ifdef DEBUG_MODE
-        printfln("create new class!");
-    #endif
+    ESP_LOGV(TAG, "Create new class!\n");
 
     switch (id)
     {

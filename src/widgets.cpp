@@ -1,6 +1,11 @@
 
 #include "widgets.h"
 
+#ifdef TAG
+#undef TAG
+#endif
+#define TAG "widgets"
+
 vector2<int16_t> arrangeSize(vector2<int16_t> size, fillMode arrange)
 {
     size.x = abs(size.x);
@@ -68,29 +73,21 @@ void widget::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
 ********************************************************************************/
 canvas::canvas(bool updt)
 {
-    #ifdef DEBUG_MODE
-    printf("Created canvas\n");
-    #endif
+    ESP_LOGV(TAG, "Created canvas\n");
 }
 
 canvas::~canvas()
 {
-    #ifdef DEBUG_MODE
-    printf("Delete canvas\n");
-    #endif
+    ESP_LOGV(TAG, "Deleted canvas\n");
 }
 
 void canvas::render(tftLCD *tft)
 {
-#ifdef DEBUG_MODE
-    printf("Canvas render start\n");
-#endif
+    ESP_LOGV(TAG, "Canvas render start\n");
 
     if (child) child->render(tft, 0, 0, tft->width(), tft->height());
 
-#ifdef DEBUG_MODE
-    printf("Canvas render end\n");
-#endif
+    ESP_LOGV(TAG, "Canvas render end\n");
 }
 
 void canvas::attachToRoot(widget *chld)

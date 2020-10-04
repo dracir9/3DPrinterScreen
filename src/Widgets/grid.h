@@ -5,6 +5,11 @@
 #include <Arduino.h>
 #include "widgets.h"
 
+#ifdef TAG
+#undef TAG
+#endif
+#define TAG "grid"
+
 template<uint8_t COL, uint8_t ROW>
 class grid : public widget
 {
@@ -40,9 +45,7 @@ grid<COL, ROW>::grid(bool updt = true):
 template<uint8_t COL, uint8_t ROW>
 grid<COL, ROW>::~grid()
 {
-    #ifdef DEBUG_MODE
-    printf("Delete verticalBox\n");
-    #endif
+    ESP_LOGV(TAG, "Delete verticalBox\n");
 }
 
 template<uint8_t COL, uint8_t ROW>

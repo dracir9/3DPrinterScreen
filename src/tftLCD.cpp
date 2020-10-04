@@ -2,6 +2,11 @@
 #include "tftLCD.h"
 #include <pgmspace.h>
 
+#ifdef TAG
+#undef TAG
+#endif
+#define TAG "tftLCD"
+
 inline GFXglyph * pgm_read_glyph_ptr(const GFXfont *gfxFont, uint8_t c)
 {
     #ifdef __AVR__
@@ -586,9 +591,7 @@ vector2<int16_t> tftLCD::getTextBounds(const String &str, int16_t *x, int16_t *y
 
 vector2<int16_t> tftLCD::getTextBounds(const char *str)
 {
-#ifdef DEBUG_MODE
-    printf("getTextBounds start\n");
-#endif
+    ESP_LOGV(TAG, "getTextBounds start\n");
 
     return getTextBounds(String(str));
 }
