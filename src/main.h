@@ -8,6 +8,7 @@
 #include "webInterface.h"
 #include "serial.h"
 #include "lcdUI.h"
+#include "machine.h"
 #include "Ulitity/utility.h"
 
 #endif

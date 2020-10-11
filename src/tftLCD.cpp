@@ -32,55 +32,6 @@ inline uint8_t * pgm_read_bitmap_ptr(const GFXfont *gfxFont)
 }
 
 /*####################################################
-    Vector temp
-####################################################*/
-template <class T>
-bool vector2<T>::operator==(vector2 v1)
-{
-    return ((v1.x == x) && (v1.y == y));
-}
-
-template <class T>
-bool vector2<T>::operator!=(vector2 v1)
-{
-    return ((v1.x != x) || (v1.y != y));
-}
-
-template <class T>
-vector2<T> vector2<T>::operator+(vector2 v1)
-{
-    return vector2(v1.x + x, v1.y + y);
-}
-
-template <class T>
-vector2<T> vector2<T>::operator+=(vector2 v1)
-{
-    x += v1.x;
-    y += v1.y;
-    return vector2(x, y);
-}
-
-template <class T>
-vector2<T> vector2<T>::operator-(vector2 v1)
-{
-    return vector2(v1.x - x, v1.y - y);
-}
-
-template <class T>
-vector2<T> vector2<T>::operator-=(vector2 v1)
-{
-    x -= v1.x;
-    y -= v1.y;
-    return vector2(x, y);
-}
-
-template <class T>
-vector2<T> vector2<T>::operator*(size_t num)
-{
-    return vector2(x * num, y * num);
-}
-
-/*####################################################
     tft Sprite class
 ####################################################*/
 
@@ -142,7 +93,7 @@ void tftSprite::printCenter(const char *str)
     @param    dim   Width and height of the rectangle (2D vector)
 */
 /**************************************************************************/
-void tftLCD::drawCharBg(vector2<int16_t> pos, uint8_t c, uint16_t color, uint16_t bg, uint8_t size, vector2<int16_t> *start, vector2<int16_t> dim)
+void tftLCD::drawCharBg(Vector2<int16_t> pos, uint8_t c, uint16_t color, uint16_t bg, uint8_t size, Vector2<int16_t> *start, Vector2<int16_t> dim)
 {
     int16_t minx = 0, miny = 0, maxx = 5, maxy = 8;
     if(!gfxFont) // 'Classic' built-in font
@@ -314,7 +265,7 @@ void tftLCD::drawCharBg(vector2<int16_t> pos, uint8_t c, uint16_t color, uint16_
     @param    dim   Width and height of the rectangle (2D vector)
 */
 /**************************************************************************/
-size_t tftLCD::writeBg(uint8_t c, vector2<int16_t> *pos, vector2<int16_t> dim)
+size_t tftLCD::writeBg(uint8_t c, Vector2<int16_t> *pos, Vector2<int16_t> dim)
 {
     if(!gfxFont) 
     { // 'Classic' built-in font
@@ -354,7 +305,7 @@ size_t tftLCD::writeBg(uint8_t c, vector2<int16_t> *pos, vector2<int16_t> dim)
                         cursor_y += (int16_t)textsize *
                           (uint8_t)pgm_read_byte(&gfxFont->yAdvance);
                     }
-                    drawCharBg(vector2<int16_t>(cursor_x, cursor_y), c, textcolor, textbgcolor, textsize, pos, dim);
+                    drawCharBg(Vector2<int16_t>(cursor_x, cursor_y), c, textcolor, textbgcolor, textsize, pos, dim);
                 }
                 cursor_x += (uint8_t)pgm_read_byte(&glyph->xAdvance) * (int16_t)textsize;
             }
@@ -372,7 +323,7 @@ size_t tftLCD::writeBg(uint8_t c, vector2<int16_t> *pos, vector2<int16_t> dim)
 /**************************************************************************/
 void tftLCD::printBg(const String &str)
 {
-    printBg(str, vector2<uint8_t>());
+    printBg(str, Vector2<uint8_t>());
 }
 
 /**************************************************************************/
@@ -385,7 +336,7 @@ void tftLCD::printBg(const String &str)
 /**************************************************************************/
 void tftLCD::printBg(const String &str, uint8_t pad)
 {
-    printBg(str, vector2<uint8_t>(pad, pad));
+    printBg(str, Vector2<uint8_t>(pad, pad));
 }
 
 /**************************************************************************/
@@ -396,17 +347,17 @@ void tftLCD::printBg(const String &str, uint8_t pad)
     @param    pad   Border width arround text in X and Y directions (2D vector)
 */
 /**************************************************************************/
-void tftLCD::printBg(const String &str, vector2<uint8_t> pad)
+void tftLCD::printBg(const String &str, Vector2<uint8_t> pad)
 {
     if (str.indexOf('\n') == -1)
     {
         int16_t x = 0, y = 0;
-        vector2<int16_t> size = getTextBounds(str, &x, &y);
-        vector2<int16_t> pos(x + cursor_x - pad.x, y + cursor_y - pad.y);
+        Vector2<int16_t> size = getTextBounds(str, &x, &y);
+        Vector2<int16_t> pos(x + cursor_x - pad.x, y + cursor_y - pad.y);
         size.y += 2*pad.y;
         for (unsigned int i = 0; i < str.length(); i++)
         {
-            writeBg(str[i], &pos, vector2<int16_t>(0, size.y));
+            writeBg(str[i], &pos, Vector2<int16_t>(0, size.y));
         }
         fillRect(pos.x, pos.y, pad.x, size.y, textbgcolor);
     }
@@ -436,15 +387,15 @@ void tftLCD::printBg(const String &str, vector2<uint8_t> pad)
     @param    dim   Width and height of the rectangle (2D vector)
 */
 /**************************************************************************/
-void tftLCD::printBg(const String &str, vector2<int16_t> pos, vector2<uint16_t> dim)
+void tftLCD::printBg(const String &str, Vector2<int16_t> pos, Vector2<uint16_t> dim)
 {
     int16_t x = 0, y = 0;
-    vector2<int16_t> start = pos;
-    vector2<int16_t> end(0, 0);
+    Vector2<int16_t> start = pos;
+    Vector2<int16_t> end(0, 0);
 
     for (unsigned int i = 0; i < str.length(); i++)
     {        
-        vector2<int16_t> size = getTextBounds(String(str[i]), &x, &y);
+        Vector2<int16_t> size = getTextBounds(String(str[i]), &x, &y);
         x += cursor_x;
         y += cursor_y;
         //charBounds(str[i], &x, &y, &minx, &miny, &maxx, &maxy);
@@ -553,12 +504,12 @@ void tftLCD::charBounds(char c, int16_t *x, int16_t *y, int16_t *minx, int16_t *
     @param  str     String to evaluate
 */
 /**************************************************************************/
-vector2<int16_t> tftLCD::getTextBounds(const String &str)
+Vector2<int16_t> tftLCD::getTextBounds(const String &str)
 {
     int b = str.indexOf('\n');
     if (b == -1) // Single line
     {
-        return vector2<int16_t>(textWidth(str), fontHeight());
+        return Vector2<int16_t>(textWidth(str), fontHeight());
     }
     else // Multy-line
     {
@@ -575,21 +526,21 @@ vector2<int16_t> tftLCD::getTextBounds(const String &str)
             h++;                                // number of lines
         }
         h *= fontHeight();                      // Total height
-        return vector2<int16_t>(w,h);
+        return Vector2<int16_t>(w,h);
     }
-    return vector2<int16_t>();
+    return Vector2<int16_t>();
 }
 
-vector2<int16_t> tftLCD::getTextBounds(const String &str, int16_t *x, int16_t *y)
+Vector2<int16_t> tftLCD::getTextBounds(const String &str, int16_t *x, int16_t *y)
 {
     if(str.length() != 0)
     {
         return getTextBounds(str.c_str(), x, y);
     }
-    return vector2<int16_t>();
+    return Vector2<int16_t>();
 }
 
-vector2<int16_t> tftLCD::getTextBounds(const char *str)
+Vector2<int16_t> tftLCD::getTextBounds(const char *str)
 {
     ESP_LOGV(TAG, "getTextBounds start\n");
 
@@ -604,7 +555,7 @@ vector2<int16_t> tftLCD::getTextBounds(const char *str)
     @param  y       Y offset from cursor Y position
 */
 /**************************************************************************/
-vector2<int16_t> tftLCD::getTextBounds(const char *str, int16_t *x, int16_t *y)
+Vector2<int16_t> tftLCD::getTextBounds(const char *str, int16_t *x, int16_t *y)
 {
     if (textfont != 1)
     {
@@ -615,7 +566,7 @@ vector2<int16_t> tftLCD::getTextBounds(const char *str, int16_t *x, int16_t *y)
 
         *x = 0;
         *y = 0;
-        vector2<int16_t> size = vector2<int16_t>();
+        Vector2<int16_t> size = Vector2<int16_t>();
 
         int16_t minx = _width, miny = _height, maxx = -1, maxy = -1;
 
@@ -632,7 +583,7 @@ vector2<int16_t> tftLCD::getTextBounds(const char *str, int16_t *x, int16_t *y)
         }
         return size;
     #else
-        return vector2<int16_t>();
+        return Vector2<int16_t>();
     #endif
 }
 
@@ -648,7 +599,7 @@ void tftLCD::printCenter(const String &str)
     int16_t center;
 
     center = cursor_x; // Save central X position for later
-    vector2<int16_t> size = getTextBounds(str, &x, &y); // Get bounding box
+    Vector2<int16_t> size = getTextBounds(str, &x, &y); // Get bounding box
     int b = str.indexOf('\n');
     if (b == -1) // Single line text
     {

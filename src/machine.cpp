@@ -1,20 +1,20 @@
 
 #include "machine.h"
 
-Machine::Machine(uint8_t toolNumber):
+CNC_machine::CNC_machine(uint8_t toolNumber):
     toolNum(toolNumber)
 {
     posE = (int32_t*)calloc(toolNumber, sizeof(int32_t));
     offsetE = (int32_t*)calloc(toolNumber, sizeof(int32_t));
 }
 
-Machine::~Machine()
+CNC_machine::~CNC_machine()
 {
     if(posE) free(posE);
     if(offsetE) free(offsetE);
 }
 
-bool Machine::move(int32_t x, int32_t y, int32_t z, uint8_t mask)
+bool CNC_machine::move(int32_t x, int32_t y, int32_t z, uint8_t mask)
 {
     if(absCoords)
     {
@@ -31,7 +31,7 @@ bool Machine::move(int32_t x, int32_t y, int32_t z, uint8_t mask)
     
     return true;
 }
-bool Machine::extrude(uint8_t tool, int32_t ammount)
+bool CNC_machine::extrude(uint8_t tool, int32_t ammount)
 {
     if(tool >= toolNum) return false;
     if(absCoordsE)
@@ -45,12 +45,12 @@ bool Machine::extrude(uint8_t tool, int32_t ammount)
     return true;
 }
 
-void Machine::setRelativeCoords(bool isRelative)
+void CNC_machine::setRelativeCoords(bool isRelative)
 {
     absCoords = !isRelative;
 }
 
-void Machine::setRelativeExtrusion(bool isRelative)
+void CNC_machine::setRelativeExtrusion(bool isRelative)
 {
     absCoordsE = !isRelative;
 }

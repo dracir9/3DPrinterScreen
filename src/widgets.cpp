@@ -6,7 +6,7 @@
 #endif
 #define TAG "widgets"
 
-vector2<int16_t> arrangeSize(vector2<int16_t> size, fillMode arrange)
+Vector2<int16_t> arrangeSize(Vector2<int16_t> size, fillMode arrange)
 {
     size.x = abs(size.x);
     size.y = abs(size.y);

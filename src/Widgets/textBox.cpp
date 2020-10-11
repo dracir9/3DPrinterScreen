@@ -9,14 +9,14 @@
 /********************************************************************************
     Text Box 
 ********************************************************************************/
-vector2<int16_t> textBox::getSize(tftLCD *tft) const
+Vector2<int16_t> textBox::getSize(tftLCD *tft) const
 {
     ESP_LOGV(TAG, "text Box getSize start\n");
 
     tft->setTextSize(size);
     if (font) tft->setFreeFont(font);
     else tft->setTextFont(GLCD);
-    vector2<int16_t> size = tft->getTextBounds(*text);
+    Vector2<int16_t> size = tft->getTextBounds(*text);
     size.x = max(paddingX, size.x);
     size.y = max(paddingY, size.y);
     return arrangeSize(size, arrange);
@@ -28,7 +28,7 @@ void textBox::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) cons
 {
     ESP_LOGV(TAG, "text Box render start\n");
 
-    vector2<int16_t> dim = tft->getTextBounds(*text);
+    Vector2<int16_t> dim = tft->getTextBounds(*text);
     dim.x = max(paddingX, dim.x);
     dim.y = max(paddingY, dim.y);
     tft->img.setColorDepth(1);
@@ -47,7 +47,7 @@ void textBox::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) cons
     tft->img.deleteSprite();
 
 #ifdef DEBUG_LINES
-    vector2<int16_t> size = tft->getTextBounds(*text);
+    Vector2<int16_t> size = tft->getTextBounds(*text);
     tft->drawRect(x, y, w, h, TFT_RED);
     tft->drawRect(x+(w-size.x)/2, y+(h-size.y)/2, size.x, size.y, TFT_BLUE);
 #endif

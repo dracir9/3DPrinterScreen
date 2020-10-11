@@ -20,7 +20,7 @@ enum fillMode : int8_t
     BotRight
 };
 
-vector2<int16_t> arrangeSize(vector2<int16_t> size, fillMode arrange);
+Vector2<int16_t> arrangeSize(Vector2<int16_t> size, fillMode arrange);
 
 /**************************************************************************
     Base class for UI ogjects
@@ -36,7 +36,7 @@ public:
     update(updt)
     {}
     virtual ~widget() = default;
-    virtual vector2<int16_t> getSize(tftLCD *tft) const = 0;
+    virtual Vector2<int16_t> getSize(tftLCD *tft) const = 0;
     void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h);
     virtual void draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) const = 0;
 };

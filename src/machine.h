@@ -5,12 +5,12 @@
 #include <Arduino.h>
 #include "Vector.h"
 
-class Machine
+class CNC_machine
 {
 public:
 
-    Machine(uint8_t toolNumber);
-    ~Machine();
+    CNC_machine(uint8_t toolNumber);
+    ~CNC_machine();
     bool move(int32_t x, int32_t y, int32_t z, uint8_t mask);
     bool extrude(uint8_t tool, int32_t ammount);
     void setRelativeCoords(bool isRelative);
