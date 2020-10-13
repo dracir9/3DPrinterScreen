@@ -6,12 +6,12 @@
 #include "Widgets/horizontalBox.h"
 #include "Widgets/textBox.h"
 
-class info_W final: public canvas
+class Info_W final: public Screen
 {
 public:
-    info_W();
+    Info_W();
 
-    void update();
+    void update(uint32_t deltaTime);
 
 private:
     String label0 = "Segom";

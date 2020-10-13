@@ -9,7 +9,7 @@
 /*####################################################
     Info widget
 ####################################################*/
-info_W::info_W()
+Info_W::Info_W()
 {
     ESP_LOGV(TAG, "Create info\n");
 
@@ -20,7 +20,7 @@ info_W::info_W()
     attachToRoot(&list);
 }
 
-void info_W::update()
+void Info_W::update(uint32_t deltaTime)
 {
     label1 = String("Hola\noo\ng\nl\n") + String(millis());
     label2 = String(millis());

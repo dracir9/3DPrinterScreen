@@ -4,12 +4,12 @@
 
 #include "widgets.h"
 
-class black_W final: public canvas
+class Black_W final: public Screen
 {
 public:
-    black_W(tftLCD* tft);
+    Black_W(tftLCD* tft);
 
-    void update();
+    void update(uint32_t deltaTime);
 
 private:
 };

@@ -44,18 +44,18 @@ public:
 /**************************************************************************
     Base frame of the UI
 **************************************************************************/
-class canvas
+class Screen
 {
 protected:
-    widget *child = NULL;
+    widget *child = nullptr;
 
 public:
-    canvas(bool updt=true);
-    virtual ~canvas();
+    Screen(bool updt=true);
+    virtual ~Screen();
 
-    void render(tftLCD *tft);
+    virtual void render(tftLCD *tft);
     void attachToRoot(widget *chld);
-    virtual void update() = 0;
+    virtual void update(uint32_t deltaTime) = 0;
 };
 
 #endif

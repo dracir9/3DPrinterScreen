@@ -4,12 +4,12 @@
 /*####################################################
     Black screen widget
 ####################################################*/
-black_W::black_W(tftLCD* tft)
+Black_W::Black_W(tftLCD* tft)
 {
     tft->fillScreen(TFT_BLACK);
 }
 
-void black_W::update()
+void Black_W::update(uint32_t deltaTime)
 {
 
 }

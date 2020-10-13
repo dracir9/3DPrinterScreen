@@ -69,28 +69,28 @@ void widget::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
 }
 
 /********************************************************************************
-    Canvas 
+    Screen 
 ********************************************************************************/
-canvas::canvas(bool updt)
+Screen::Screen(bool updt)
 {
-    ESP_LOGV(TAG, "Created canvas\n");
+    ESP_LOGV(TAG, "Created Screen\n");
 }
 
-canvas::~canvas()
+Screen::~Screen()
 {
-    ESP_LOGV(TAG, "Deleted canvas\n");
+    ESP_LOGV(TAG, "Deleted Screen\n");
 }
 
-void canvas::render(tftLCD *tft)
+void Screen::render(tftLCD *tft)
 {
-    ESP_LOGV(TAG, "Canvas render start\n");
+    ESP_LOGV(TAG, "Screen render start\n");
 
     if (child) child->render(tft, 0, 0, tft->width(), tft->height());
 
-    ESP_LOGV(TAG, "Canvas render end\n");
+    ESP_LOGV(TAG, "Screen render end\n");
 }
 
-void canvas::attachToRoot(widget *chld)
+void Screen::attachToRoot(widget *chld)
 {
     child=chld;
 }
