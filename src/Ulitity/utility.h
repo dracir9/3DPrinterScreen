@@ -5,10 +5,29 @@
 #include <Arduino.h>
 
 #if CORE_DEBUG_LEVEL >= ARDUHAL_LOG_LEVEL_DEBUG
-    static int64_t startTime;
+    class Utils
+    {
+    public:
+        //******************************************************************
+        // tic()
+        //******************************************************************
+        // Set time mark
+        //------------------------------------------------------------------
+        static void tic();
+        
+        //******************************************************************
+        // tic()
+        //******************************************************************
+        // Return and print time elapsed since last tic() call in microsenconds
+        //------------------------------------------------------------------
+        static const int64_t toc();
 
-    #define TIC  startTime = esp_timer_get_time();
-    #define TOC printf("Elapsed time: %lu", (unsigned long)(esp_timer_get_time()-startTime));
+    private:
+        static int64_t startTime;
+    };
+
+    #define TIC Utils::tic();
+    #define TOC Utils:toc();
 #else
     #define TIC
     #define TOC
