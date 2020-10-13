@@ -43,6 +43,13 @@ bool lcdUI::updateDisplay(uint8_t fps)
         nextRender += 1000000LL/fps;
         return true;
     }
+
+    if (esp_timer_get_time() > nextCheck)
+    {
+        initSD();
+        nextCheck += 5000000LL;
+        return true;
+    }
     return false;
 }
 
@@ -67,7 +74,7 @@ Screen* lcdUI::updateObjects(menu id)
     switch (id)
     {
         case menu::black:
-            return new Black_W(&tft);
+            return new Black_W(this);
             break;
         case menu::info:
             return new Info_W();
@@ -75,19 +82,39 @@ Screen* lcdUI::updateObjects(menu id)
         case menu::main:
             break;
         case menu::FileBrowser:
-            return new FileBrowser_Scr(&tft);
+            return new FileBrowser_Scr(this);
             break;
         case menu::settings:
             break;
         case menu::control:
             break;
+        case menu::GcodePreview:
+            return new GcodePreview_Scr(this);
+            break;
+        default:
+            return nullptr;
     }
-    return NULL;
+    return nullptr;
 }
 
 uint32_t lcdUI::getUpdateTime() const
 {
     return updateTime;
+}
+
+bool lcdUI::initSD()
+{
+    if (!hasSD && SD.begin())
+    {
+        ESP_LOGD(TAG, "SD Card initialized.");
+        hasSD = true;
+    }
+    return hasSD;
+}
+
+bool lcdUI::checkSD() const
+{
+    return hasSD;
 }
 
 /**************************************************************************/

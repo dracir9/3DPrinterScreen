@@ -2,12 +2,14 @@
 #ifndef BLACK_W_H
 #define BLACK_W_H
 
-#include "widgets.h"
+#include "lcdUI.h"
+
+class lcdUI;
 
 class Black_W final: public Screen
 {
 public:
-    Black_W(tftLCD* tft);
+    Black_W(lcdUI* UI);
 
     void update(uint32_t deltaTime);
 

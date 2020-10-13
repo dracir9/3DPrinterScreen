@@ -4,10 +4,12 @@
 
 #include <Arduino.h>
 #include "tftLCD.h"
+#include "SD.h"
 #include "widgets.h"
 #include "Menu/info_w.h"
 #include "Menu/black_w.h"
 #include "Menu/fileBrowser_Scr.h"
+#include "Menu/gcodePreview_Scr.h"
 
 class lcdUI
 {
@@ -22,25 +24,31 @@ public:
         main,
         settings,
         FileBrowser,
-        control
+        control,
+        GcodePreview
     };
-
-    friend void setup();
-    friend void loop();
 
     // Functions
     bool updateDisplay(uint8_t fps);
     bool setScreen(menu idx);
     uint32_t getUpdateTime() const;
+    bool initSD();
+    bool checkSD() const;
     
-private:
     tftLCD tft;
+
+    File selectedFile;
+
+private:
     Screen* base = nullptr;
 
     menu menuid = menu::black;
     int64_t nextRender = 0;
     int64_t lastRender = 0;
+    int64_t nextCheck = 0;
     unsigned long updateTime = 0;
+
+    bool hasSD = false;
 
     Screen* updateObjects(menu id);
 };

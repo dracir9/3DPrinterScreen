@@ -4,7 +4,6 @@
 
 #include <Arduino.h>
 #include <TouchScreen.h>
-#include "widgets.h"
 #include "webInterface.h"
 #include "serial.h"
 #include "lcdUI.h"

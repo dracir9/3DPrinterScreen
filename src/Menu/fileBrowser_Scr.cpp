@@ -1,9 +1,10 @@
 
 #include "fileBrowser_Scr.h"
 
-FileBrowser_Scr::FileBrowser_Scr(tftLCD* tft)
+FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI)
 {
-    tft->fillScreen(TFT_BLACK);
+    UI->tft.fillScreen(TFT_BLACK);
+    _UI = UI;
 /*     tft->drawRect(0, 0, 480, 70, TFT_RED);
     tft->setCursor(240, 35);
     tft->setTextFont(2);
@@ -16,22 +17,24 @@ FileBrowser_Scr::FileBrowser_Scr(tftLCD* tft)
 
 void FileBrowser_Scr::update(uint32_t deltaTime)
 {
-    pos += vel * ((float)deltaTime/1000000.0f);
-    if((pos.x > 474.0f && vel.x > 0) || (pos.x < 5.0f && vel.x < 0))
+    if (_UI->checkSD() && SD.exists("/test.gcode"))
     {
-        vel.x = -vel.x;
+        _UI->selectedFile = SD.open("/test.gcode");
+        _UI->setScreen(_UI->GcodePreview);
     }
-
-    if((pos.y > 314.0f && vel.y > 0) || (pos.y < 5.0f && vel.y < 0))
-    {
-        vel.y = -vel.y;
-    }
-
-    reColor++;
 }
 
 void FileBrowser_Scr::render(tftLCD *tft)
 {
-    tft->fillRect(pos.x-8, pos.y-8, 16, 16, TFT_BLACK);
-    tft->fillCircle(pos.x, pos.y, 5, reColor);
+    tft->setCursor(240, 160);
+    tft->setTextSize(2);
+    if (_UI->checkSD())
+    {
+        tft->print("SD connected!  ");
+        if (!SD.exists("/test.gcode")) tft->print("\ntest.gcode not found :(");
+    }
+    else
+    {
+        tft->print("SD not found :(");
+    }
 }

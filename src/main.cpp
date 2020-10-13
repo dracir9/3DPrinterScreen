@@ -44,7 +44,6 @@ TouchScreen ts = TouchScreen(TOUCH_PIN_XP, TOUCH_PIN_YP, TOUCH_PIN_XM, TOUCH_PIN
 //###########################################################
 //  FUNCTIONS
 //###########################################################
-
 bool touchMapXY(uint16_t &x, uint16_t &y)
 {
     TSPoint p = ts.getPoint();
@@ -84,12 +83,6 @@ void setup(void)
 
     //setupServer();
 
-    /*  if (SD.begin())
-    {
-        tft.println("SD Card initialized.");
-        printfln("SD Card initialized.");
-        hasSD = true;
-    }*/
     ESP_LOGD(TAG, "Free end setup: %d\n", ESP.getFreeHeap());
 }
 
