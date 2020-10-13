@@ -7,8 +7,9 @@
 #include "widgets.h"
 #include "Menu/info_w.h"
 #include "Menu/black_w.h"
+#include "Menu/fileBrowser_Scr.h"
 
-class lcdUI : public tftLCD
+class lcdUI
 {
 public:
     lcdUI();
@@ -20,9 +21,12 @@ public:
         info,
         main,
         settings,
-        SDmenu,
+        FileBrowser,
         control
     };
+
+    friend void setup();
+    friend void loop();
 
     // Functions
     bool updateDisplay(uint8_t fps);
@@ -30,16 +34,15 @@ public:
     uint32_t getUpdateTime() const;
     
 private:
-    canvas* base = NULL;
+    tftLCD tft;
+    Screen* base = nullptr;
 
-    uint8_t state = 255;
     menu menuid = menu::black;
-    bool rendered = false;
+    int64_t nextRender = 0;
+    int64_t lastRender = 0;
     unsigned long updateTime = 0;
 
-    canvas* updateObjects(menu id);
-    /* void drawInfo(bool init);
-    void drawBlack(bool init); */
+    Screen* updateObjects(menu id);
 };
 
 #endif

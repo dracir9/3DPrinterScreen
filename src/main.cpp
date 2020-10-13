@@ -10,6 +10,11 @@
 
 #include "main.h"
 
+#ifdef TAG
+#undef TAG
+#endif
+#define TAG "main"
+
 //############################################################
 //  CONFIGURATION
 //############################################################
@@ -33,7 +38,7 @@ uint16_t brushColor = YELLOW;
 //  GLOBAL VARIALBES
 //###########################################################
 
-lcdUI tft;
+lcdUI UI;
 TouchScreen ts = TouchScreen(TOUCH_PIN_XP, TOUCH_PIN_YP, TOUCH_PIN_XM, TOUCH_PIN_YM, 300);
 
 //###########################################################
@@ -58,22 +63,22 @@ void setup(void)
     Serial.begin(115200);
     printf("Free Heap at start: %d of %d\n", ESP.getFreeHeap(), ESP.getHeapSize());
 
-    tft.begin();
-    tft.setRotation(1);
-    tft.fillScreen(BLACK);
-    tft.print("(0,0)");
-    tft.setCursor(400, 0);
-    tft.print("(400,0)");
-    tft.setCursor(400, 280);
-    tft.print("(400,280)");
-    tft.setCursor(0, 280);
-    tft.print("(0,280)");
-    tft.fillCircle(25, 25, 2, GREEN);
-    tft.fillCircle(400, 25, 2, BLUE);
-    tft.fillCircle(400, 300, 2, RED);
-    tft.fillCircle(25, 300, 2, YELLOW);
+    UI.tft.begin();
+    UI.tft.setRotation(1);
+    UI.tft.fillScreen(BLACK);
+    UI.tft.print("(0,0)");
+    UI.tft.setCursor(400, 0);
+    UI.tft.print("(400,0)");
+    UI.tft.setCursor(400, 280);
+    UI.tft.print("(400,280)");
+    UI.tft.setCursor(0, 280);
+    UI.tft.print("(0,280)");
+    UI.tft.fillCircle(25, 25, 2, GREEN);
+    UI.tft.fillCircle(400, 25, 2, BLUE);
+    UI.tft.fillCircle(400, 300, 2, RED);
+    UI.tft.fillCircle(25, 300, 2, YELLOW);
 
-    tft.setScreen(tft.info);
+    UI.setScreen(UI.FileBrowser);
 
     ts.enableRestore();
 
@@ -85,12 +90,10 @@ void setup(void)
         printfln("SD Card initialized.");
         hasSD = true;
     }*/
-    String eltext = "holakase";
-    printf("Free end setup: %d\n", ESP.getFreeHeap());
+    ESP_LOGD(TAG, "Free end setup: %d\n", ESP.getFreeHeap());
 }
 
 bool flag = true;
-bool render = true;
 unsigned long cnt = 0;
 unsigned long touchTime = 0;
 
@@ -98,12 +101,11 @@ void loop(void)
 {
     if (flag && millis() % 5000 < 100)
     {
-        printf("Free Heap: %d of %d\n", ESP.getFreeHeap(), ESP.getHeapSize());
+        ESP_LOGD(TAG ,"Free Heap: %d of %d\n", ESP.getFreeHeap(), ESP.getHeapSize());
 
-        if (!tft.setScreen(tft.info))
-            tft.setScreen(tft.black);
-        printf("FPS: %lu\n", cnt/5);
-        printf("Frame update time: %d us\n", tft.getUpdateTime());
+        //if (!UI.setScreen(UI.info))
+        //    UI.setScreen(UI.FileBrowser);
+        ESP_LOGD(TAG, "FPS: %lu\nFrame update time: %d µs\n", cnt/5, UI.getUpdateTime());
         cnt = 0;
         flag = false;
     }
@@ -112,8 +114,6 @@ void loop(void)
         flag = true;
     }
 
-    server.handleClient();
-
     // display touched point with colored dot
     uint16_t pixel_x, pixel_y;
     unsigned long start = micros();
@@ -121,7 +121,7 @@ void loop(void)
     unsigned long end = micros();
     if (valid)
     {
-        tft.fillCircle(pixel_x, pixel_y, 2, brushColor);
+        UI.tft.fillCircle(pixel_x, pixel_y, 2, brushColor);
         //printf("X: %d, Y: %d\n", pixel_x, pixel_y);
         touchTime = max(end-start, touchTime);
         printf("%lu\n", touchTime);
@@ -133,5 +133,5 @@ void loop(void)
     }
 
     // Keep this at the end of the loop
-    if (tft.updateDisplay(60)) cnt++;
+    if (UI.updateDisplay(60)) cnt++;
 }

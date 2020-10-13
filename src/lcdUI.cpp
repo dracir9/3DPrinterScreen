@@ -29,20 +29,19 @@ lcdUI::~lcdUI()
 /**************************************************************************/
 bool lcdUI::updateDisplay(uint8_t fps)
 {
-    if (!rendered && millis() % (1000/fps) == 0)
+    if (esp_timer_get_time() > nextRender)
     {
+        uint32_t deltaTime = esp_timer_get_time() - lastRender;
+        lastRender = esp_timer_get_time();
         updateTime = micros();
-        if(!base) return false;
-        base->update();     // Update logic
-        base->render(this); // Render frame
 
-        rendered = true;
+        if(!base) return false;
+        base->update(deltaTime);     // Update logic
+        base->render(&tft); // Render frame
+        
         updateTime = micros()-updateTime;
+        nextRender += 1000000LL/fps;
         return true;
-    }
-    else if(rendered && millis() % (1000/fps) != 0)
-    {
-        rendered = false;
     }
     return false;
 }
@@ -56,26 +55,27 @@ bool lcdUI::setScreen(menu idx)
         delete base;
         base = updateObjects(idx);
         menuid = idx;
-        return true;
+        if(base) return true;
     }
     return false;
 }
 
-canvas* lcdUI::updateObjects(menu id)
+Screen* lcdUI::updateObjects(menu id)
 {
     ESP_LOGV(TAG, "Create new class!\n");
 
     switch (id)
     {
         case menu::black:
-            return new black_W(this);
+            return new Black_W(&tft);
             break;
         case menu::info:
-            return new info_W();
+            return new Info_W();
             break;
         case menu::main:
             break;
-        case menu::SDmenu:
+        case menu::FileBrowser:
+            return new FileBrowser_Scr(&tft);
             break;
         case menu::settings:
             break;
@@ -92,8 +92,8 @@ uint32_t lcdUI::getUpdateTime() const
 
 /**************************************************************************/
 /*!
-    @brief  Draw the info screen
-    @param  Should initialize the screen?
+//    @brief  Draw the info screen
+//    @param  Should initialize the screen?
 */
 /**************************************************************************/
 /* void lcdUI::drawInfo(bool init)
