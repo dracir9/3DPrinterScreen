@@ -1,6 +1,18 @@
 
 #include "parser.h"
 
+//**********************************************************************
+// Must be declared for allocation and to satisfy the linker           *
+char *GcodeParser::command_ptr,  //                                    *
+     *GcodeParser::string_arg,   //                                    *
+     *GcodeParser::value_ptr;    //                                    *
+char GcodeParser::command_letter;//                                    *
+int GcodeParser::codenum;        //                                    *
+uint32_t GcodeParser::codebits;  // found bits                         *
+uint8_t GcodeParser::param[26];  // parameter offsets from command_ptr *
+//                                                                     *
+//**********************************************************************
+
 // Create a global instance of the GCode parser singleton
 GcodeParser parser;
 

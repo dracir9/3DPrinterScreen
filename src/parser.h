@@ -25,7 +25,7 @@ public:
     static char *command_ptr,               // The command, so it can be echoed
             *string_arg,                // string of command line
             command_letter;             // G, M, or T
-    static int codenum;
+    static int codenum;                 // Command number
 
     static void reset();
 
@@ -131,5 +131,7 @@ public:
     // Bool is true with no value or non-zero
     static inline bool value_bool() { return !has_value() || !!value_byte(); }
 };
+
+extern GcodeParser parser;
 
 #endif
