@@ -94,11 +94,11 @@ void loop(void)
 {
     if (flag && millis() % 5000 < 100)
     {
-        ESP_LOGD(TAG ,"Free Heap: %d of %d\n", ESP.getFreeHeap(), ESP.getHeapSize());
+        ESP_LOGD(TAG ,"Free Heap: %d of %d", ESP.getFreeHeap(), ESP.getHeapSize());
 
         //if (!UI.setScreen(UI.info))
         //    UI.setScreen(UI.FileBrowser);
-        ESP_LOGD(TAG, "FPS: %lu\nFrame update time: %d µs\n", cnt/5, UI.getUpdateTime());
+        ESP_LOGD(TAG, "FPS: %lu\nFrame update time: %d µs", cnt/5, UI.getUpdateTime());
         cnt = 0;
         flag = false;
     }

@@ -5,14 +5,14 @@ FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI)
 {
     UI->tft.fillScreen(TFT_BLACK);
     _UI = UI;
-/*     tft->drawRect(0, 0, 480, 70, TFT_RED);
-    tft->setCursor(240, 35);
-    tft->setTextFont(2);
-    tft->setTextSize(2);
-    tft->setTextDatum(CC_DATUM);
-    tft->print("Test text");
-    tft->drawRect(0, 70, 250, 250, TFT_GREEN);
-    tft->drawRect(250, 70, 230, 70, TFT_BLUE); */
+    _UI->tft.drawRect(0, 0, 480, 70, TFT_RED);
+    _UI->tft.setCursor(240, 35);
+    _UI->tft.setTextFont(2);
+    _UI->tft.setTextSize(2);
+    _UI->tft.setTextDatum(CC_DATUM);
+    _UI->tft.print("Test text");
+    _UI->tft.drawRect(0, 70, 250, 250, TFT_GREEN);
+    _UI->tft.drawRect(250, 70, 230, 70, TFT_BLUE);
 }
 
 void FileBrowser_Scr::update(uint32_t deltaTime)
