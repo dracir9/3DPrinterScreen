@@ -15,6 +15,8 @@ public:
 
     void render(tftLCD *tft);
 
+    void printDirectory(File dir, int numTabs);
+
 private:
     lcdUI* _UI;
 };
