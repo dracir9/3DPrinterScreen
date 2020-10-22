@@ -27,7 +27,7 @@
     };
 
     #define TIC Utils::tic();
-    #define TOC Utils:toc();
+    #define TOC Utils::toc();
 #else
     #define TIC
     #define TOC
