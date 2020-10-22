@@ -37,7 +37,7 @@ public:
     
     tftLCD tft;
 
-    File selectedFile;
+    char selectedFile[96];
 
 private:
     Screen* base = nullptr;

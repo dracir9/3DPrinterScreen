@@ -22,7 +22,7 @@ void FileBrowser_Scr::update(uint32_t deltaTime)
         printDirectory(SD.open("/"), 0);
         if (SD.exists("/test.gcode"))
         {
-            _UI->selectedFile = SD.open("/test.gcode");
+            strcpy(_UI->selectedFile, "/sd/test.gcode");
             _UI->setScreen(_UI->GcodePreview);
         }
     }

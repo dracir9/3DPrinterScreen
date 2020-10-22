@@ -5,7 +5,8 @@
 #include "lcdUI.h"
 #include "parser.h"
 
-#define MAX_LINE_LEN 256
+#define MAX_LINE_LEN 96
+#define BUFFER_LEN 2048
 
 class lcdUI;
 
@@ -21,16 +22,33 @@ public:
 private:
     bool readLine();
     bool processComand();
+    void renderGCode(tftLCD *tft);
 
-    File GcodeFile;
-    char GcodeLine[MAX_LINE_LEN];
+    // SD file variables
+    FILE* GcodeFile;
+    char* RBuffer;
+    char* GcodeLine;
+    uint16_t bufPos = 0;
+    uint16_t readLen = 0;
 
     bool readDone = false;
+
+    // Machine state
+    bool absPos = true;
+    bool absEPos = true;
+    Vector3<int32_t> currentPos;
+    Vector3<int32_t> nextPos;
+    Vector3<int32_t> offset;
+    float currentE;
+    float nextE;
+    float offsetE;
 
     Vector2<float> pos;
     Vector2<float> vel = Vector2<float>(100,100);
 
     uint16_t reColor = 0;
+
+    lcdUI *_UI;
 };
 
 #endif
