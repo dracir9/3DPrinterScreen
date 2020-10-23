@@ -239,6 +239,8 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
     TOC
     // Close file
     fclose(GcodeFile);
+    free(RBuffer);
+    free(GcodeLine);
 
     readDone = true;
 }
