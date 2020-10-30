@@ -6,10 +6,53 @@
 #endif
 #define TAG "lcdUI"
 
-/*####################################################
-    lcdUI class
-    Screen and user input managing
-####################################################*/
+void render_Task(void* arg)
+{
+    ESP_LOGD(TAG, "Starting render task");
+    fflush(stdout);
+    lcdUI* UI = (lcdUI*)arg;
+    TickType_t xLastWakeTime;
+    const TickType_t xFrequency = UI? UI->fps : 5;
+
+    while ( UI )
+    {
+        UI->updateDisplay();
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+    }
+    vTaskDelete(NULL);
+}
+
+void touch_Task(void* arg)
+{
+    ESP_LOGD(TAG, "Starting touch task");
+    fflush(stdout);
+    lcdUI* UI = (lcdUI*)arg;
+    TickType_t xLastWakeTime;
+    const TickType_t xFrequency = pdMS_TO_TICKS(10000);
+    while ( UI )
+    {
+        ESP_LOGD(TAG, "Min stack render: %d", uxTaskGetStackHighWaterMark(UI->renderTask));
+        ESP_LOGD(TAG, "Min stack touch: %d", uxTaskGetStackHighWaterMark(NULL));
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+    }
+    vTaskDelete(NULL);
+}
+
+bool lcdUI::begin(uint8_t upsD, uint8_t rpsT)
+{
+    if (booted) return false;
+    tft.begin();
+    tft.setRotation(1);
+
+    xTaskCreateStatic(render_Task, "Render task", 4096, this, 3, &renderTask);
+    delay(100); // Allow some time for the task to start
+    xTaskCreate(touch_Task, "touch task", 4096, this, 2, &touchTask);
+    delay(100);
+
+    booted = true;
+    return true;
+}
+
 lcdUI::lcdUI()
 {
     menuid = menu::info;
@@ -21,36 +64,29 @@ lcdUI::~lcdUI()
     delete base;
 }
 
-/**************************************************************************/
-/*
-    @brief  Update the LCD display with new information
-    @param  ID of the screen to be displayed/updated
-*/
-/**************************************************************************/
-bool lcdUI::updateDisplay(uint8_t fps)
+/***************************************************************************
+ * @brief      Update and render the LCD display
+ * @param      fps Maximum frames per second
+ * @return     True if successfully updated
+ **************************************************************************/
+bool lcdUI::updateDisplay()
 {
-    if (esp_timer_get_time() > nextRender)
-    {
-        uint32_t deltaTime = esp_timer_get_time() - lastRender;
-        lastRender = esp_timer_get_time();
-        updateTime = micros();
+    uint32_t deltaTime = esp_timer_get_time() - lastRender;
+    lastRender = esp_timer_get_time();
+    updateTime = micros();
 
-        if(!base) return false;
-        base->update(deltaTime);     // Update logic
-        base->render(&tft); // Render frame
-        
-        updateTime = micros()-updateTime;
-        nextRender += 1000000LL/fps;
-        return true;
-    }
+    if(!base) return false;
+    base->update(deltaTime);    // Update logic
+    base->render(&tft);         // Render frame
+    
+    updateTime = micros()-updateTime;
 
     if (esp_timer_get_time() > nextCheck)
     {
         initSD();
         nextCheck += 5000000LL;
-        return true;
     }
-    return false;
+    return true;
 }
 
 bool lcdUI::setScreen(menu idx)
@@ -118,7 +154,7 @@ bool lcdUI::checkSD() const
 }
 
 /**************************************************************************/
-/*!
+/************************************************************************
 //    @brief  Draw the info screen
 //    @param  Should initialize the screen?
 */
