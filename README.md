@@ -1,5 +1,5 @@
-# Print Screen
-Print Screen is a 3d printer controller project based arround ESP32. The purpose of this project is to add wireless connectivity to the printer and simplify its operation through LCD and touchscreen interfaces.
+# 3D Printer Screen
+3D Printer Screen is a 3d printer controller project based arround ESP32. The purpose of this project is to add wireless connectivity to the printer and simplify its operation through LCD and touchscreen interfaces.
 
 **_Early development_**
 
