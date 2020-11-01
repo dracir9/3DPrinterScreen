@@ -44,7 +44,7 @@ public:
     bool begin(uint8_t upsD = 60, uint8_t rpsT= 10);
     bool updateDisplay();
     bool processTouch();
-    bool setScreen(menu idx);
+    void setScreen(menu idx);
     uint32_t getUpdateTime() const;
     bool initSD();
     bool checkSD() const;
@@ -69,12 +69,13 @@ private:
     xTaskHandle touchTask;
     SemaphoreHandle_t SPIMutex;
 
-    menu menuid = menu::black;
+    menu menuID = menu::black;
+    menu newMenuID;
     int64_t lastRender = 0;
     int64_t nextCheck = 0;
     unsigned long updateTime = 0;
 
-    Screen* updateObjects(menu id);
+    bool updateObjects();
 };
 
 #endif

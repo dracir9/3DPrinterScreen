@@ -16,6 +16,7 @@ void renderUITask(void* arg)
 
     while ( UI )
     {
+        xLastWakeTime = xTaskGetTickCount();
         UI->updateDisplay();
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
@@ -27,15 +28,14 @@ void handleTouchTask(void* arg)
     ESP_LOGD(TAG, "Starting touch task");
     fflush(stdout);
     lcdUI* UI = (lcdUI*)arg;
-    TickType_t xLastWakeTime;
-    const TickType_t xFrequency = pdMS_TO_TICKS(50);
+
     while ( UI )
     {
         //ESP_LOGD(TAG, "Min stack render: %d", uxTaskGetStackHighWaterMark(UI->renderTask));
         //ESP_LOGD(TAG, "Min stack touch: %d", uxTaskGetStackHighWaterMark(NULL));
         
         UI->processTouch();
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
     vTaskDelete(NULL);
 }
@@ -75,7 +75,7 @@ bool lcdUI::begin(uint8_t upsD, uint8_t rpsT)
 
 lcdUI::lcdUI()
 {
-    menuid = menu::info;
+    menuID = menu::info;
     setScreen(menu::black);
 }
 
@@ -95,7 +95,9 @@ bool lcdUI::updateDisplay()
 {
     uint32_t deltaTime = esp_timer_get_time() - lastRender;
     lastRender = esp_timer_get_time();
-    updateTime = micros();
+    uint32_t start = micros();
+
+    if (!updateObjects()) return false; // Update to the latest screen
 
     if(!base) return false;
     base->update(deltaTime);    // Update logic
@@ -104,7 +106,7 @@ bool lcdUI::updateDisplay()
     base->render(&tft);         // Render frame
     xSemaphoreGive(SPIMutex);
     
-    updateTime = micros()-updateTime;
+    updateTime = micros()-start;
 
     if (esp_timer_get_time() > nextCheck)
     {
@@ -137,48 +139,48 @@ bool lcdUI::processTouch()
     return true;
 }
 
-bool lcdUI::setScreen(menu idx)
+void lcdUI::setScreen(menu idx)
 {
-    if (menuid != idx)
-    {
-        ESP_LOGD(TAG, "change to idx %d!\n", idx);
-
-        delete base;
-        base = updateObjects(idx);
-        menuid = idx;
-        if(base) return true;
-    }
-    return false;
+    newMenuID = idx;
 }
 
-Screen* lcdUI::updateObjects(menu id)
+bool lcdUI::updateObjects()
 {
-    ESP_LOGV(TAG, "Create new class!\n");
+    if (menuID == newMenuID) return true;
+    ESP_LOGD(TAG, "change to idx %d!\n", newMenuID);
 
-    switch (id)
+    delete base;
+
+    switch (newMenuID)
     {
         case menu::black:
-            return new Black_W(this);
+            base = new Black_W(this);
             break;
         case menu::info:
-            return new Info_W();
+            base = new Info_W();
             break;
         case menu::main:
             break;
         case menu::FileBrowser:
-            return new FileBrowser_Scr(this);
+            base = new FileBrowser_Scr(this);
             break;
         case menu::settings:
             break;
         case menu::control:
             break;
         case menu::GcodePreview:
-            return new GcodePreview_Scr(this);
+            base = new GcodePreview_Scr(this);
             break;
         default:
-            return nullptr;
+            base = nullptr;
     }
-    return nullptr;
+
+    if(base)
+    {
+        menuID = newMenuID;
+        return true;
+    }
+    return false;
 }
 
 uint32_t lcdUI::getUpdateTime() const
