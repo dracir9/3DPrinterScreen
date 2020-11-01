@@ -11,7 +11,7 @@ class Info_W final: public Screen
 public:
     Info_W();
 
-    void update(uint32_t deltaTime);
+    void update(uint32_t deltaTime) override;
 
 private:
     String label0 = "Segom";

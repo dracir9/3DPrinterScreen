@@ -3,7 +3,6 @@
 #define MAIN_H
 
 #include <Arduino.h>
-#include <TouchScreen.h>
 #include "webInterface.h"
 #include "serial.h"
 #include "lcdUI.h"

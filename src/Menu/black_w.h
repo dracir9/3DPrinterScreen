@@ -11,7 +11,7 @@ class Black_W final: public Screen
 public:
     Black_W(lcdUI* UI);
 
-    void update(uint32_t deltaTime);
+    void update(uint32_t deltaTime) override;
 
 private:
 };

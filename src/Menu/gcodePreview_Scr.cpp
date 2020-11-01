@@ -53,44 +53,6 @@ bool GcodePreview_Scr::readLine()
 
     ESP_LOGE("GcodePreview_Scr", "Very long line in file \"%s\". ABORT!", _UI->selectedFile);
     return false;
-    
-/*    uint16_t len;
-    int c;
-
-    do {
-        commentMode = false;
-        len = 0;
-        
-        // Get one line
-        while(len < MAX_LINE_LEN - 1)
-        {
-            c = GcodeFile.read();
-            //fgets(GcodeLine, MAX_LINE_LEN, GcodeFile);
-            filePos++;
-            if(c <= 0 || c  == '\r' || c == '\n') {
-                break;
-            }
-            else if(c == ';'){  // If there is a comment just end the string
-                commentMode = true;
-            }
-
-            if (!commentMode) GcodeLine[len++] = (char) c;
-        }
-
-        if (len >= MAX_LINE_LEN - 1) // 
-        {
-            ESP_LOGE("GcodePreview_Scr", "Very long line in file \"%s\". ABORT!", GcodeFile.name());
-            return false;
-        }
-        if (c < 0 && filePos < fileSize)
-        {
-            ESP_LOGE("GcodePreview_Scr", "Error reading file \"%s\"", GcodeFile.name());
-            return false;
-        }
-    } while(!len && filePos < fileSize);
-
-    GcodeLine[len] = '\0'; // End line
-    return true; */
 }
 
 bool GcodePreview_Scr::processComand()

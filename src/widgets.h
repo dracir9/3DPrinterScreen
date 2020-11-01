@@ -50,12 +50,21 @@ protected:
     widget *child = nullptr;
 
 public:
-    Screen(bool updt=true);
+    enum touchEvent : uint8_t
+    {
+        press=0,
+        relase,
+        hold
+    };
+    
+    Screen();
     virtual ~Screen();
 
     virtual void render(tftLCD *tft);
     void attachToRoot(widget *chld);
     virtual void update(uint32_t deltaTime) = 0;
+
+    virtual void handleTouch(touchEvent event, Vector2<int16_t> pos);
 };
 
 #endif

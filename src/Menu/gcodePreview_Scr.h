@@ -15,9 +15,9 @@ class GcodePreview_Scr final : public Screen
 public:
     GcodePreview_Scr(lcdUI* UI);
 
-    void update(uint32_t deltaTime);
+    void update(uint32_t deltaTime) override;
 
-    void render(tftLCD *tft);
+    void render(tftLCD *tft) override;
 
 private:
     bool readLine();

@@ -71,7 +71,7 @@ void widget::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
 /********************************************************************************
     Screen 
 ********************************************************************************/
-Screen::Screen(bool updt)
+Screen::Screen()
 {
     ESP_LOGV(TAG, "Created Screen\n");
 }
@@ -93,4 +93,9 @@ void Screen::render(tftLCD *tft)
 void Screen::attachToRoot(widget *chld)
 {
     child=chld;
+}
+
+void Screen::handleTouch(touchEvent event, Vector2<int16_t> pos)
+{
+    return;
 }

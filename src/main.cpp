@@ -47,7 +47,11 @@ void setup(void)
     Serial.begin(115200);
     printf("Free Heap at start: %d of %d\n", ESP.getFreeHeap(), ESP.getHeapSize());
 
-    UI.begin();
+    if (!UI.begin())
+    {
+        ESP_LOGE(TAG, "Failed to initialize UI. Rebooting NOW!");
+        esp_restart();
+    }
 
     UI.setScreen(UI.FileBrowser);
 

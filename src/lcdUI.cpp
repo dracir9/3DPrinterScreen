@@ -6,13 +6,13 @@
 #endif
 #define TAG "lcdUI"
 
-void render_Task(void* arg)
+void renderUITask(void* arg)
 {
     ESP_LOGD(TAG, "Starting render task");
     fflush(stdout);
     lcdUI* UI = (lcdUI*)arg;
     TickType_t xLastWakeTime;
-    const TickType_t xFrequency = UI? UI->fps : 5;
+    const TickType_t xFrequency = configTICK_RATE_HZ/(UI? UI->fps : 5);
 
     while ( UI )
     {
@@ -22,17 +22,19 @@ void render_Task(void* arg)
     vTaskDelete(NULL);
 }
 
-void touch_Task(void* arg)
+void handleTouchTask(void* arg)
 {
     ESP_LOGD(TAG, "Starting touch task");
     fflush(stdout);
     lcdUI* UI = (lcdUI*)arg;
     TickType_t xLastWakeTime;
-    const TickType_t xFrequency = pdMS_TO_TICKS(10000);
+    const TickType_t xFrequency = pdMS_TO_TICKS(50);
     while ( UI )
     {
-        ESP_LOGD(TAG, "Min stack render: %d", uxTaskGetStackHighWaterMark(UI->renderTask));
-        ESP_LOGD(TAG, "Min stack touch: %d", uxTaskGetStackHighWaterMark(NULL));
+        //ESP_LOGD(TAG, "Min stack render: %d", uxTaskGetStackHighWaterMark(UI->renderTask));
+        //ESP_LOGD(TAG, "Min stack touch: %d", uxTaskGetStackHighWaterMark(NULL));
+        
+        UI->processTouch();
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
     vTaskDelete(NULL);
@@ -44,9 +46,27 @@ bool lcdUI::begin(uint8_t upsD, uint8_t rpsT)
     tft.begin();
     tft.setRotation(1);
 
-    xTaskCreateStatic(render_Task, "Render task", 4096, this, 3, &renderTask);
+    ts.enableRestore();
+
+    SPIMutex = xSemaphoreCreateMutex();
+    if (SPIMutex == NULL)
+    {
+        ESP_LOGE(TAG, "Failed to create SPI Mutex");
+        return false;
+    }
+    xTaskCreate(renderUITask, "Render task", 4096, this, 3, &renderTask);
+    if (renderTask == NULL)
+    {
+        ESP_LOGE(TAG, "Failed to create render task");
+        return false;
+    }
     delay(100); // Allow some time for the task to start
-    xTaskCreate(touch_Task, "touch task", 4096, this, 2, &touchTask);
+    xTaskCreate(handleTouchTask, "touch task", 4096, this, 2, &touchTask);
+    if (touchTask == NULL)
+    {
+        ESP_LOGE(TAG, "Failed to create touch task");
+        return false;
+    }
     delay(100);
 
     booted = true;
@@ -61,6 +81,8 @@ lcdUI::lcdUI()
 
 lcdUI::~lcdUI()
 {
+    vTaskDelete(renderTask);
+    vTaskDelete(touchTask);
     delete base;
 }
 
@@ -77,7 +99,10 @@ bool lcdUI::updateDisplay()
 
     if(!base) return false;
     base->update(deltaTime);    // Update logic
+
+    xSemaphoreTake(SPIMutex, portMAX_DELAY);
     base->render(&tft);         // Render frame
+    xSemaphoreGive(SPIMutex);
     
     updateTime = micros()-updateTime;
 
@@ -86,6 +111,29 @@ bool lcdUI::updateDisplay()
         initSD();
         nextCheck += 5000000LL;
     }
+    return true;
+}
+
+bool lcdUI::processTouch()
+{
+    xSemaphoreTake(SPIMutex, portMAX_DELAY);
+    TSPoint p = ts.getPoint(tft.height(), tft.width());
+    xSemaphoreGive(SPIMutex);
+
+    bool pressed = false;
+    Screen::touchEvent event;
+    if (p.z > MIN_PRESSURE && p.z < MAX_PRESSURE)
+    {
+        pressed = true;
+    }
+    
+    if (!prevPressed && pressed) event = Screen::touchEvent::press;
+    else if (prevPressed && pressed) event = Screen::touchEvent::hold;
+    else if (prevPressed && !pressed) event = Screen::touchEvent::relase;
+    else return true;
+
+    if (!base) return false;
+    base->handleTouch(event, Vector2<int16_t>(p.y, tft.height()-p.x));
     return true;
 }
 

@@ -43,13 +43,14 @@ public:
  */
     bool begin(uint8_t upsD = 60, uint8_t rpsT= 10);
     bool updateDisplay();
+    bool processTouch();
     bool setScreen(menu idx);
     uint32_t getUpdateTime() const;
     bool initSD();
     bool checkSD() const;
 
-    friend void render_Task(void* arg);
-    friend void touch_Task(void* arg);
+    friend void renderUITask(void* arg);
+    friend void handleTouchTask(void* arg);
     
     tftLCD tft;
 
@@ -60,17 +61,18 @@ private:
     TouchScreen ts = TouchScreen(TOUCH_PIN_XP, TOUCH_PIN_YP, TOUCH_PIN_XM, TOUCH_PIN_YM, 300);
 
     bool booted = false;
+    bool hasSD = false;
+    bool prevPressed;
+
     uint8_t fps = 60;
     xTaskHandle renderTask;
     xTaskHandle touchTask;
+    SemaphoreHandle_t SPIMutex;
 
     menu menuid = menu::black;
-    int64_t nextRender = 0;
     int64_t lastRender = 0;
     int64_t nextCheck = 0;
     unsigned long updateTime = 0;
-
-    bool hasSD = false;
 
     Screen* updateObjects(menu id);
 };

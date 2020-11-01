@@ -41,6 +41,24 @@ void FileBrowser_Scr::render(tftLCD *tft)
     {
         tft->print("SD not found :(");
     }
+
+    if (draw)
+    {
+        tft->fillCircle(cursor.x, cursor.y, 2, TFT_YELLOW);
+    }
+}
+
+void FileBrowser_Scr::handleTouch(touchEvent event, Vector2<int16_t> pos)
+{
+    if (event == press || event == hold)
+    {
+        draw = true;
+        cursor = pos;
+    }
+    else
+    {
+        draw = false;
+    }
 }
 
 void FileBrowser_Scr::printDirectory(File dir, int numTabs)
