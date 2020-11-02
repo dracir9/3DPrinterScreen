@@ -8,8 +8,6 @@
 #define MAX_LINE_LEN 96
 #define BUFFER_LEN 2048
 
-class lcdUI;
-
 class GcodePreview_Scr final : public Screen
 {
 public:
@@ -47,8 +45,6 @@ private:
     Vector2<float> vel = Vector2<float>(100,100);
 
     uint16_t reColor = 0;
-
-    lcdUI *_UI;
 };
 
 #endif

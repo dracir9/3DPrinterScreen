@@ -4,8 +4,6 @@
 
 #include "lcdUI.h"
 
-class lcdUI;
-
 class Black_W final: public Screen
 {
 public:

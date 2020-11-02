@@ -7,6 +7,8 @@
 #include "Configuration.h"
 #include "tftLCD.h"
 
+class lcdUI;
+
 enum fillMode : int8_t
 {
     TopLeft,
@@ -48,6 +50,7 @@ class Screen
 {
 protected:
     widget *child = nullptr;
+    lcdUI *_UI;
 
 public:
     enum touchEvent : uint8_t

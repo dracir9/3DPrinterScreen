@@ -102,6 +102,8 @@ bool lcdUI::updateDisplay()
     if(!base) return false;
     base->update(deltaTime);    // Update logic
 
+    vTaskDelay(2); // Allow some time for other tasks
+
     xSemaphoreTake(SPIMutex, portMAX_DELAY);
     base->render(&tft);         // Render frame
     xSemaphoreGive(SPIMutex);
@@ -151,6 +153,7 @@ bool lcdUI::updateObjects()
 
     delete base;
 
+    xSemaphoreTake(SPIMutex, portMAX_DELAY);
     switch (newMenuID)
     {
         case menu::black:
@@ -174,6 +177,7 @@ bool lcdUI::updateObjects()
         default:
             base = nullptr;
     }
+    xSemaphoreGive(SPIMutex);
 
     if(base)
     {
