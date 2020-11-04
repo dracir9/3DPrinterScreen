@@ -51,6 +51,7 @@ public:
 
     friend void renderUITask(void* arg);
     friend void handleTouchTask(void* arg);
+    friend void loop();
     
     tftLCD tft;
 

@@ -31,9 +31,6 @@ void handleTouchTask(void* arg)
 
     while ( UI )
     {
-        //ESP_LOGD(TAG, "Min stack render: %d", uxTaskGetStackHighWaterMark(UI->renderTask));
-        //ESP_LOGD(TAG, "Min stack touch: %d", uxTaskGetStackHighWaterMark(NULL));
-        
         UI->processTouch();
         vTaskDelay(pdMS_TO_TICKS(50));
     }
@@ -134,7 +131,9 @@ bool lcdUI::processTouch()
     if (!prevPressed && pressed) event = Screen::touchEvent::press;
     else if (prevPressed && pressed) event = Screen::touchEvent::hold;
     else if (prevPressed && !pressed) event = Screen::touchEvent::relase;
-    else return true;
+    else return true;   // Idle touch. "prevPressed" and "pressed" are already equal, is safe to return
+
+    prevPressed = pressed;
 
     if (!base) return false;
     base->handleTouch(event, Vector2<int16_t>(p.y, tft.height()-p.x));
@@ -194,7 +193,7 @@ uint32_t lcdUI::getUpdateTime() const
 
 bool lcdUI::initSD()
 {
-    if (!hasSD && SD.begin())
+    if (!hasSD && SD.begin(5, SPI, 40000000U, "/sdcard"))
     {
         ESP_LOGD(TAG, "SD Card initialized.");
         hasSD = true;
