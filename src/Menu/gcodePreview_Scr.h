@@ -5,9 +5,6 @@
 #include "lcdUI.h"
 #include "parser.h"
 
-#define MAX_LINE_LEN 96
-#define BUFFER_LEN 2048
-
 class GcodePreview_Scr final : public Screen
 {
 public:
@@ -24,6 +21,8 @@ private:
 
     // SD file variables
     FILE* GcodeFile;
+    const uint32_t maxLineLen = 96;
+    const uint32_t bufferLen = 2048;
     char* RBuffer;
     char* GcodeLine;
     uint16_t bufPos = 0;

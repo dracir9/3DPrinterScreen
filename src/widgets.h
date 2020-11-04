@@ -65,9 +65,9 @@ public:
 
     virtual void render(tftLCD *tft);
     void attachToRoot(widget *chld);
-    virtual void update(uint32_t deltaTime) = 0;
+    virtual void update(const uint32_t deltaTime) = 0;
 
-    virtual void handleTouch(touchEvent event, Vector2<int16_t> pos);
+    virtual void handleTouch(const touchEvent event, const Vector2<int16_t> pos);
 };
 
 #endif

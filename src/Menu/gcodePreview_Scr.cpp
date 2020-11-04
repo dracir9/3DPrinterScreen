@@ -14,11 +14,11 @@ GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI)
 bool GcodePreview_Scr::readLine()
 {
     bool commentMode = false;
-    for (int16_t i = 0; i < MAX_LINE_LEN; i++)
+    for (int16_t i = 0; i < maxLineLen; i++)
     {
         if (bufPos >= readLen)
         {
-            readLen = fread(RBuffer, 1, BUFFER_LEN, GcodeFile);
+            readLen = fread(RBuffer, 1, bufferLen, GcodeFile);
             if (readLen <= 0)
             {
                 return false;
@@ -151,7 +151,7 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
     int line = 0;
 
     // Setup memory buffers
-    RBuffer = (char*)malloc(BUFFER_LEN);
+    RBuffer = (char*)malloc(bufferLen);
     if (RBuffer == NULL)
     {
         ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for Read Buffer");
@@ -159,7 +159,7 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
         return;
     }
 
-    GcodeLine = (char*)malloc(MAX_LINE_LEN);
+    GcodeLine = (char*)malloc(maxLineLen);
     if (GcodeLine == NULL)
     {
         ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for line Buffer");
