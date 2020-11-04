@@ -6,36 +6,69 @@ FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI)
     UI->tft.fillScreen(TFT_BLACK);
     _UI = UI;
     _UI->tft.drawRect(0, 0, 480, 70, TFT_RED);
-    _UI->tft.setCursor(240, 35);
-    _UI->tft.setTextFont(2);
-    _UI->tft.setTextSize(2);
+    
     _UI->tft.setTextDatum(CC_DATUM);
-    _UI->tft.print("Test text");
-    _UI->tft.drawRect(0, 70, 250, 250, TFT_GREEN);
-    _UI->tft.drawRect(250, 70, 230, 70, TFT_BLUE);
+    _UI->tft.setTextFont(4);
+    _UI->tft.drawString("Test text", 240, 35);
+    _UI->tft.setTextFont(2);
 }
 
-void FileBrowser_Scr::update(uint32_t deltaTime)
+void FileBrowser_Scr::update(const uint32_t deltaTime)
 {
     if (_UI->checkSD())
     {
-        printDirectory(SD.open("/"), 0);
-        if (SD.exists("/test.gcode"))
+        if (!init)
         {
-            strcpy(_UI->selectedFile, "/sd/test.gcode");
-            _UI->setScreen(_UI->GcodePreview);
+            printDirectory(SD.open("/"), 0);
+
+            printf("SPIFFS:\n");
+            printDirectory(SPIFFS.open("/"), 0);
+            /* if (SD.exists("/test.gcode"))
+            {
+                strcpy(_UI->selectedFile, "/sd/test.gcode");
+                _UI->setScreen(_UI->GcodePreview);
+            } */
+            init = true;
         }
+
+        loadPage();
     }
 }
 
 void FileBrowser_Scr::render(tftLCD *tft)
 {
-    tft->setCursor(240, 160);
-    tft->setTextSize(2);
+    tft->setCursor(300, 43);
+    tft->setTextFont(2);
     if (_UI->checkSD())
     {
-        tft->print("SD connected!  ");
-        if (!SD.exists("/test.gcode")) tft->print("\ntest.gcode not found :(");
+        tft->println("SD connected!");
+        tft->setTextDatum(CL_DATUM);
+
+        uint8_t k = 0;
+        for (uint8_t i = 0; i < 4; i++)
+        {
+            for (uint8_t j = 0; j < 2; j++)
+            {
+                if (strlen(dirList[k]) == 0)
+                {
+                    tft->fillRect(240*j, 120 + 50*i, 240, 50, TFT_BLACK);
+                    k++;
+                    continue;
+                }
+
+                tft->drawRect(240*j, 120 + 50*i, 240, 50, TFT_OLIVE);
+                tft->drawString(dirList[k], 10 + 240*j, 145 + 50*i);
+                if ((isDir & 1<<k) > 0)
+                {
+                    
+                }
+                else
+                {
+                    tft->drawBmpSPIFFS("/spiffs/file_25.bmp", 210 + 240*j, 135 + 50*i);
+                }
+                k++;
+            }
+        }
     }
     else
     {
@@ -48,10 +81,11 @@ void FileBrowser_Scr::render(tftLCD *tft)
     }
 }
 
-void FileBrowser_Scr::handleTouch(touchEvent event, Vector2<int16_t> pos)
+void FileBrowser_Scr::handleTouch(const touchEvent event, const Vector2<int16_t> pos)
 {
     if (event == press || event == hold)
     {
+        filePage = (filePage + 1) % numFilePages;
         draw = true;
         cursor = pos;
     }
@@ -94,4 +128,67 @@ void FileBrowser_Scr::printDirectory(File dir, int numTabs)
         }
         entry.close();
     }
+}
+
+void FileBrowser_Scr::loadPage()
+{
+    if (pageLoaded == filePage) return;
+    struct dirent *entry;
+    DIR * dir = opendir(path);
+    if (!dir)
+    {
+        ESP_LOGE("fileBrowser", "Error opening folder %s", path);
+        return;
+    }
+
+    if (numFilePages == 0) // First directory read
+    {
+        uint16_t hidden = 0;
+        while ((entry = readdir(dir)) && numFilePages <= 255)
+        {
+            if (isHidden(entry->d_name))
+            {
+                hidden++;
+                continue;
+            }
+            numFilePages++;      // Count number of files
+
+            if (numFilePages % 8 == 0) hiddenFiles[numFilePages / 8] = hidden;
+        }
+        numFilePages /= 8;                                  // Translate to screen pages
+        numFilePages++;
+        ESP_LOGD("fileBrowser", "File Pages: %d", numFilePages);
+        rewinddir(dir);
+    }
+
+    seekdir(dir, filePage*8 + hiddenFiles[filePage]);
+    uint8_t i = 0;
+    while (i < 8)
+    {
+        entry = readdir(dir);
+        if (!entry) break;                                  // No more files
+
+        if (isHidden(entry->d_name)) continue;
+        
+        strncpy(dirList[i], entry->d_name, maxFilenameLen-1); // Save file name and cut to size
+        dirList[i][maxFilenameLen-1] = '\0';
+        
+        if (entry->d_type == DT_DIR) isDir |= 1<<i;
+        i++;
+    }
+    for ( ; i < 8; i++)
+    {
+        dirList[i][0] = '\0';
+    }
+    pageLoaded = filePage;
+}
+
+bool FileBrowser_Scr::isHidden(const char *name)
+{
+    //const char *lookupTable[1] = {"System Volume Information"};
+    if (strncmp(name, "System Volume Information", 256) == 0) return true;
+
+    // May add extra system files here
+
+    return false;
 }
