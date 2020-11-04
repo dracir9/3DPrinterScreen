@@ -36,6 +36,8 @@ public:
     void printCenter(const String &str);
     void printCenter(const char *str);
 
+    void drawBmpSPIFFS(const char *filename, int16_t x, int16_t y);
+
     tftSprite img = tftSprite(this);
 };
 

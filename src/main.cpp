@@ -47,6 +47,12 @@ void setup(void)
     Serial.begin(115200);
     printf("Free Heap at start: %d of %d\n", ESP.getFreeHeap(), ESP.getHeapSize());
 
+    if (!SPIFFS.begin(true))
+    {
+        ESP_LOGE(TAG, "Failed to initialize SPIFFS. Rebooting NOW!");
+        esp_restart();
+    }
+
     if (!UI.begin())
     {
         ESP_LOGE(TAG, "Failed to initialize UI. Rebooting NOW!");
@@ -65,6 +71,8 @@ void loop(void)
     {
         ESP_LOGD(TAG ,"Free Heap: %d of %d", ESP.getFreeHeap(), ESP.getHeapSize());
         ESP_LOGD(TAG, "Frame update time: %d µs", UI.getUpdateTime());
+        ESP_LOGD(TAG, "Min stack render: %d", uxTaskGetStackHighWaterMark(UI.renderTask));
+        ESP_LOGD(TAG, "Min stack touch: %d", uxTaskGetStackHighWaterMark(UI.touchTask));
 
         flag = false;
     }

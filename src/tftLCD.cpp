@@ -629,3 +629,73 @@ void tftLCD::printCenter(const char *str)
 {
     printCenter(String(str));
 }
+
+// These read 16- and 32-bit types from the SD card file.
+// BMP data is stored little-endian, Arduino is little-endian too.
+// May need to reverse subscript order if porting elsewhere.
+
+uint16_t SPIFFS_read16(FILE *f) {
+    uint16_t result;
+    ((uint8_t *)&result)[0] = fgetc(f); // LSB
+    ((uint8_t *)&result)[1] = fgetc(f); // MSB
+    return result;
+}
+
+uint32_t SPIFFS_read32(FILE *f) {
+    uint32_t result;
+    ((uint8_t *)&result)[0] = fgetc(f); // LSB
+    ((uint8_t *)&result)[1] = fgetc(f);
+    ((uint8_t *)&result)[2] = fgetc(f);
+    ((uint8_t *)&result)[3] = fgetc(f); // MSB
+    return result;
+}
+
+void tftLCD::drawBmpSPIFFS(const char *filename, int16_t x, int16_t y)
+{
+    if ((x >= width()) || (y >= height())) return;
+
+    // Open requested file on SPIFFS
+    FILE *bmpFS = fopen(filename, "r");
+
+    if (!bmpFS)
+    {
+        Serial.print("File not found");
+        return;
+    }
+
+    uint32_t seekOffset;
+    uint16_t w, h, row;
+
+    if (SPIFFS_read16(bmpFS) == 0x4D42)
+    {
+        SPIFFS_read32(bmpFS);
+        SPIFFS_read32(bmpFS);
+        seekOffset = SPIFFS_read32(bmpFS);
+        SPIFFS_read32(bmpFS);
+        w = SPIFFS_read32(bmpFS);
+        h = SPIFFS_read32(bmpFS);
+
+        if (SPIFFS_read16(bmpFS) == 1 && SPIFFS_read16(bmpFS) == 16 && SPIFFS_read32(bmpFS) == 3)
+        {
+            y += h - 1;
+
+            bool oldSwapBytes = getSwapBytes();
+            setSwapBytes(true);
+            fseek(bmpFS, seekOffset, SEEK_SET);
+            uint8_t lineBuffer[w * 2 + ((w & 1) << 1)];
+
+            for (row = 0; row < h; row++)
+            {
+                fread(lineBuffer, 1, sizeof(lineBuffer), bmpFS);
+
+                // Push the pixel row to screen, pushImage will crop the line if needed
+                // y is decremented as the BMP image is drawn bottom up
+                pushImage(x, y--, w, 1, (uint16_t*)lineBuffer);
+            }
+            setSwapBytes(oldSwapBytes);
+        }
+        else
+            Serial.println("BMP format not recognized.");
+    }
+    fclose(bmpFS);
+}
