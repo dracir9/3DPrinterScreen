@@ -126,17 +126,27 @@ bool lcdUI::processTouch()
     if (p.z > MIN_PRESSURE && p.z < MAX_PRESSURE)
     {
         pressed = true;
+        Tpos.x = p.y;
+        Tpos.y = tft.height() - p.x;
     }
+
+    printf("p: %d\n", p.z);
     
-    if (!prevPressed && pressed) event = Screen::touchEvent::press;
-    else if (prevPressed && pressed) event = Screen::touchEvent::hold;
-    else if (prevPressed && !pressed) event = Screen::touchEvent::relase;
+    if (!prevPressed && pressed) event = Screen::press;
+    else if (prevPressed && pressed) event = Screen::hold;
+    else if (prevPressed && !pressed) event = Screen::relase;
     else return true;   // Idle touch. "prevPressed" and "pressed" are already equal, is safe to return
 
     prevPressed = pressed;
 
+    #ifdef DEBUG_TOUCH
+    if (event == Screen::press) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_YELLOW);
+    else if (event == Screen::hold) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_MAGENTA);
+    else if (event == Screen::relase) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_CYAN);
+    #endif
+
     if (!base) return false;
-    base->handleTouch(event, Vector2<int16_t>(p.y, tft.height()-p.x));
+    base->handleTouch(event, Tpos);
     return true;
 }
 

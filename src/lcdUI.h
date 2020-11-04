@@ -65,7 +65,7 @@ private:
     bool hasSD = false;
     bool prevPressed;
 
-    uint8_t fps = 60;
+    uint8_t fps = 30;
     xTaskHandle renderTask;
     xTaskHandle touchTask;
     SemaphoreHandle_t SPIMutex;
@@ -75,6 +75,7 @@ private:
     int64_t lastRender = 0;
     int64_t nextCheck = 0;
     unsigned long updateTime = 0;
+    Vector2<int16_t> Tpos;
 
     bool updateObjects();
 };
