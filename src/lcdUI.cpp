@@ -129,8 +129,6 @@ bool lcdUI::processTouch()
         Tpos.x = p.y;
         Tpos.y = tft.height() - p.x;
     }
-
-    printf("p: %d\n", p.z);
     
     if (!prevPressed && pressed) event = Screen::press;
     else if (prevPressed && pressed) event = Screen::hold;

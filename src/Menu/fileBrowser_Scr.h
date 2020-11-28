@@ -17,13 +17,18 @@ public:
     void handleTouch(const Screen::touchEvent event, const Vector2<int16_t> pos) override;
 
 private:
-    void printDirectory(File dir, int numTabs);
+    void printDirectory(File dir, const int numTabs);
     void loadPage();
     void renderPage(tftLCD *tft);
+    bool isPageLoaded();
+    bool isPageRendered();
+    void setPageLoaded();
+    void setPageRendered();
+    void updatePath(const char* newPath, const bool relativePath);
     bool isHidden(const char * name);
 
     const static uint32_t maxFilenameLen = 26;
-    char path[96] = "/sdcard/";
+    char path[256] = "/sdcard";
     char dirList[8][maxFilenameLen];
     uint8_t isDir = 0;
     uint8_t numFilePages = 0;
