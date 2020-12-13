@@ -30,6 +30,7 @@ private:
     const static uint32_t maxFilenameLen = 26;
     char path[256] = "/sdcard";
     char dirList[8][maxFilenameLen];
+    uint8_t fileDepth = 0;
     uint8_t isDir = 0;
     uint8_t numFilePages = 0;
     uint8_t filePage = 0;

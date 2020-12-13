@@ -112,12 +112,35 @@ void FileBrowser_Scr::handleTouch(const touchEvent event, const Vector2<int16_t>
         if (pos.y >= 70 && pos.y < 120)
         {
             if (pos.x < 50) updatePath("/sdcard", false);       // Return Home
-            else if (pos.x < 120) updatePath("/..3", true);
-            else if (pos.x < 190) updatePath("/..2", true);
-            else if (pos.x < 260) updatePath("/..1", true);
-            else if (pos.x < 330) filePage = 0;
-            else if (pos.x < 380 && filePage > 0) filePage--;
-            else if (pos.x > 430 && filePage < numFilePages-1) filePage++;
+            for (uint8_t i = 0, k = fileDepth > 4? 4 : fileDepth; i < fileDepth && i < 4; i++, k--)
+            {
+                if (pos.x >= 50 + 70*i && pos.x < 120 + 70*i)
+                {
+                    switch (k)
+                    {
+                    case 1:
+                        filePage = 0;
+                        break;
+
+                    case 2:
+                        updatePath("/..1", true);
+                        break;
+
+                    case 3:
+                        updatePath("/..2", true);
+                        break;
+
+                    case 4:
+                        updatePath("/..3", true);
+                        break;
+                    
+                    default:
+                        break;
+                    }
+                }
+            }
+            if (pos.x >= 330 && pos.x < 380 && filePage > 0) filePage--;
+            else if (pos.x >= 430 && filePage < numFilePages-1) filePage++;
         }
         else if (pos.y >= 120)
         {
@@ -164,29 +187,87 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
 {
     if (isPageRendered()) return;
 
+    tft->setCursor(350, 35);
+    tft->print(fileDepth);
+
     // Draw controls
+    // Page +
     tft->fillRect(330, 70, 50, 50, pageLoaded == 0 ? TFT_BLACK : TFT_CYAN);
+
+    // Page -
     tft->fillRect(430, 70, 50, 50, pageLoaded == numFilePages-1 ? TFT_BLACK : TFT_CYAN);
+
+    // SD Home
     tft->drawRect(0, 70, 50, 50, TFT_ORANGE);
-    tft->drawRect(50, 70, 70, 50, TFT_ORANGE);
-    tft->setViewport(50, 70, 70, 50);
-    tft->setCursor(5,0);
-    tft->print("abcdefghijklmnop");
-    tft->resetViewport();
-    tft->drawRect(120, 70, 70, 50, TFT_ORANGE);
-    tft->drawRect(190, 70, 70, 50, TFT_ORANGE);
-    tft->drawRect(260, 70, 70, 50, TFT_ORANGE);
+
+    // Folder path
+    for (uint8_t i = 0; i < 4; i++)
+    {
+        if (i < fileDepth)
+        {
+            tft->drawRect(50 + 70*i, 70, 70, 50, TFT_ORANGE);
+            tft->fillRect(51 + 70*i, 71, 68, 48, TFT_BLACK);
+        }
+        else
+        {
+            tft->fillRect(50 + 70*i, 70, 70, 50, TFT_BLACK);
+        }
+    }
 
     tft->setTextDatum(CC_DATUM);
+    
+    char tmp[17];
+    uint8_t k;
+    uint8_t idx = strlen(path)-1;
+    tft->setTextFont(2);
+    tft->setTextPadding(68);
+    
+    for (uint8_t i = fileDepth > 4? 4 : fileDepth; i > 0; i--)
+    {
+        uint8_t cnt = 0, len = 0;
+        for (uint8_t j = idx; j > 0; j--)
+        {
+            if (path[idx--] == '/') break;
+            len++;
+        }
+
+        char *p = (char*)calloc(len+1, sizeof(char));
+        strncpy(p, &path[idx+2], len);
+        p[len] = '\0';
+
+        uint8_t lines = tft->textWidth(p)/68;
+        
+        for (k = 0; k < 4; k++)
+        {
+            uint8_t charN = 15;
+            strncpy(tmp, &p[cnt], 16);
+            tmp[16] = '\0';
+            
+            while (tft->textWidth(tmp) > 68)
+            {
+                tmp[charN--] = '\0';
+            }
+            
+            char *p = strchr(tmp, '/');
+            if (p) *p = '\0';
+
+            printf("%s<>%s\n", tmp, path);
+            tft->drawString(tmp, 15 + 70*i, 95 - 8*lines + 16*k);
+
+            cnt += charN + 1;
+            if (cnt > len) break; // All characters read
+        }
+        free(p);
+    }
+    
     tft->setTextPadding(48);
     tft->drawString("SD", 25, 95);
-    char tmp[15];
-    sprintf(tmp, "%d/%d", filePage+1, numFilePages);
+    sprintf(tmp, "%d/%d", pageLoaded+1, numFilePages);
     tft->drawString(tmp, 405, 95);
 
     // Draw file table
     tft->setTextDatum(CL_DATUM);
-    uint8_t k = 0;
+    k = 0;
     for (uint8_t i = 0; i < 2; i++)
     {
         for (uint8_t j = 0; j < 4; j++)
@@ -243,10 +324,17 @@ void FileBrowser_Scr::loadPage()
         numFilePages++;
         ESP_LOGD("fileBrowser", "File Pages: %d", numFilePages);
 
+        fileDepth = 0;
+        for (char *p = strrchr(path, '/'); p > path; p--)
+        {
+            if (*p == '/') fileDepth++;
+        }
+
         rewinddir(dir);
         filePage = 0;
     }
 
+    isDir = 0;
     seekdir(dir, filePage*8 + hiddenFiles[filePage]);
     uint8_t i = 0;
     while (i < 8)
