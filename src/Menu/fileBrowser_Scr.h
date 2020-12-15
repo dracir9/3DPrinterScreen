@@ -21,9 +21,7 @@ private:
     void loadPage();
     void renderPage(tftLCD *tft);
     bool isPageLoaded();
-    bool isPageRendered();
     void setPageLoaded();
-    void setPageRendered();
     void updatePath(const char* newPath, const bool relativePath);
     bool isHidden(const char * name);
 
@@ -35,7 +33,7 @@ private:
     uint8_t numFilePages = 0;
     uint8_t filePage = 0;
     uint8_t pageLoaded = 1;
-    uint8_t pageRendered = 1;
+    bool pageRendered = false;
     uint8_t hiddenFiles[32] = {0};
 
     bool init = false;

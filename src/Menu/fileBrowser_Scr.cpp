@@ -9,7 +9,7 @@ FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI)
     
     _UI->tft.setTextDatum(CC_DATUM);
     _UI->tft.setTextFont(4);
-    _UI->tft.drawString("Test text", 240, 35);
+    _UI->tft.drawString("SD card", 240, 35);
     _UI->tft.setTextFont(2);
 }
 
@@ -53,19 +53,10 @@ bool FileBrowser_Scr::isPageLoaded()
     return pageLoaded == filePage;
 }
 
-bool FileBrowser_Scr::isPageRendered()
-{
-    return pageRendered == pageLoaded;
-}
-
 void FileBrowser_Scr::setPageLoaded()
 {
     pageLoaded = filePage;
-}
-
-void FileBrowser_Scr::setPageRendered()
-{
-    pageRendered = pageLoaded;
+    pageRendered = false;
 }
 
 void FileBrowser_Scr::updatePath(const char* newPath, const bool relativePath)
@@ -102,7 +93,7 @@ void FileBrowser_Scr::updatePath(const char* newPath, const bool relativePath)
     ESP_LOGD("fileBrowser", "New path: %s", path);
     numFilePages = 0;       // Mark as new folder for reading
     filePage++;             // Trigger page load
-    pageRendered++;         // Trigger page render
+    pageRendered = false;         // Trigger page render
 }
 
 void FileBrowser_Scr::handleTouch(const touchEvent event, const Vector2<int16_t> pos)
@@ -185,20 +176,30 @@ void FileBrowser_Scr::printDirectory(File dir, int numTabs)
 
 void FileBrowser_Scr::renderPage(tftLCD *tft)
 {
-    if (isPageRendered()) return;
-
-    tft->setCursor(350, 35);
-    tft->print(fileDepth);
+    if (pageRendered) return;
 
     // Draw controls
     // Page +
-    tft->fillRect(330, 70, 50, 50, pageLoaded == 0 ? TFT_BLACK : TFT_CYAN);
+    if (pageLoaded == 0)
+        tft->fillRect(330, 70, 50, 50, TFT_BLACK);
+    else
+    {
+        tft->drawBmpSPIFFS("/spiffs/arrowL_32.bmp", 335, 82);
+        tft->drawRect(330, 70, 42, 50, TFT_CYAN);
+    }
 
     // Page -
-    tft->fillRect(430, 70, 50, 50, pageLoaded == numFilePages-1 ? TFT_BLACK : TFT_CYAN);
+    if (pageLoaded == numFilePages-1)
+        tft->fillRect(430, 70, 50, 50, TFT_BLACK);
+    else
+    {
+        tft->drawBmpSPIFFS("/spiffs/arrowR_32.bmp", 443, 82);
+        tft->drawRect(438, 70, 42, 50, TFT_CYAN);
+    }
 
     // SD Home
     tft->drawRect(0, 70, 50, 50, TFT_ORANGE);
+    tft->drawBmpSPIFFS("/spiffs/home_24.bmp", 13, 83);
 
     // Folder path
     for (uint8_t i = 0; i < 4; i++)
@@ -213,14 +214,14 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
             tft->fillRect(50 + 70*i, 70, 70, 50, TFT_BLACK);
         }
     }
-
-    tft->setTextDatum(CC_DATUM);
     
+    // Folder path names
     char tmp[17];
     uint8_t k;
     uint8_t idx = strlen(path)-1;
     tft->setTextFont(2);
     tft->setTextPadding(68);
+    tft->setTextDatum(CC_DATUM);
     
     for (uint8_t i = fileDepth > 4? 4 : fileDepth; i > 0; i--)
     {
@@ -251,7 +252,6 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
             char *p = strchr(tmp, '/');
             if (p) *p = '\0';
 
-            printf("%s<>%s\n", tmp, path);
             tft->drawString(tmp, 15 + 70*i, 95 - 8*lines + 16*k);
 
             cnt += charN + 1;
@@ -261,9 +261,9 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
     }
     
     tft->setTextPadding(48);
-    tft->drawString("SD", 25, 95);
-    sprintf(tmp, "%d/%d", pageLoaded+1, numFilePages);
-    tft->drawString(tmp, 405, 95);
+    tft->drawString("Page", 405, 87);
+    sprintf(tmp, "%d of %d", pageLoaded+1, numFilePages);
+    tft->drawString(tmp, 405, 103);
 
     // Draw file table
     tft->setTextDatum(CL_DATUM);
@@ -292,7 +292,7 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
             k++;
         }
     }
-    setPageRendered();
+    pageRendered = true;
 }
 
 void FileBrowser_Scr::loadPage()
