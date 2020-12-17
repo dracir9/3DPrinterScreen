@@ -55,7 +55,7 @@ public:
     
     tftLCD tft;
 
-    char selectedFile[96];
+    std::string selectedFile;
 
 private:
     Screen* base = nullptr;

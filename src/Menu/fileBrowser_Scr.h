@@ -22,12 +22,14 @@ private:
     void renderPage(tftLCD *tft);
     bool isPageLoaded();
     void setPageLoaded();
-    void updatePath(const char* newPath, const bool relativePath);
+    void updatePath(const std::string &newPath, const bool relativePath);
     bool isHidden(const char * name);
+    bool isGcode(const std::string &file);
+    void sendFile(const std::string &file);
 
-    const static uint32_t maxFilenameLen = 26;
-    char path[256] = "/sdcard";
-    char dirList[8][maxFilenameLen];
+    std::string path = "/sdcard";
+    std::string dirList[8];
+    //char dirList[8][maxFilenameLen];
     uint8_t fileDepth = 0;
     uint8_t isDir = 0;
     uint8_t numFilePages = 0;
