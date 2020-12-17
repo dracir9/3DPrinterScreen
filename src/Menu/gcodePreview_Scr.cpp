@@ -25,7 +25,7 @@ bool GcodePreview_Scr::readLine()
             }
             else if (ferror(GcodeFile))
             {
-                ESP_LOGE("GcodePreview_Scr", "Error reading file \"%s\"", _UI->selectedFile);              
+                ESP_LOGE("GcodePreview_Scr", "Error reading file \"%s\"", _UI->selectedFile.c_str());              
             }
             bufPos = 0;
         }
@@ -51,7 +51,7 @@ bool GcodePreview_Scr::readLine()
         bufPos++;
     }
 
-    ESP_LOGE("GcodePreview_Scr", "Very long line in file \"%s\". ABORT!", _UI->selectedFile);
+    ESP_LOGE("GcodePreview_Scr", "Very long line in file \"%s\". ABORT!", _UI->selectedFile.c_str());
     return false;
 }
 
@@ -168,10 +168,10 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
     }
 
     // Open G-Code
-    GcodeFile = fopen(_UI->selectedFile, "r");
+    GcodeFile = fopen(_UI->selectedFile.c_str(), "r");
     if (GcodeFile == NULL)
     {
-        ESP_LOGE("GcodePreview_Scr", "Failed to open file \"%s\"", _UI->selectedFile);
+        ESP_LOGE("GcodePreview_Scr", "Failed to open file \"%s\"", _UI->selectedFile.c_str());
         readDone = true;
         return;
     }

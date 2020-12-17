@@ -59,38 +59,38 @@ void FileBrowser_Scr::setPageLoaded()
     pageRendered = false;
 }
 
-void FileBrowser_Scr::updatePath(const char* newPath, const bool relativePath)
+void FileBrowser_Scr::updatePath(const std::string &newPath, const bool relativePath)
 {
     if (relativePath)
     {
-        char* dot = strstr(newPath, "/..");
-        if (dot == NULL)
+        size_t dot = newPath.find("/..");
+        if (dot == -1)
         {
-            strcat(path, "/");
-            strcat(path, newPath);
-        } else
+            path += "/" + std::string(newPath);
+        } 
+        else
         {
             dot += 3;
-            char* slash = strrchr(path, '/');
-            if (slash == NULL || (*dot < '0' && *dot > '9'))
+            size_t slash = path.rfind('/');
+            if (slash == -1 || (newPath[dot] < '0' && newPath[dot] > '9'))
             {
                 ESP_LOGE("fileBrowser", "Invalid path!");
                 return;
             }
 
-            for (uint8_t i = 0; i < (*dot-'0'); i++)
+            for (uint8_t i = 0; i < (newPath[dot]-'0'); i++)
             {
-                if (strcmp(path, "/sdcard") == 0) break;
-                slash = strrchr(path, '/');
-                if (slash == NULL) return;
-                *slash = '\0';
+                if (path.compare("/sdcard") == 0) break;
+                path.erase(slash);
+                slash = path.rfind('/');
+                if (slash == -1) return;
             }
         }
     } else
     {
-        strcpy(path, newPath);
+        path = newPath;
     }
-    ESP_LOGD("fileBrowser", "New path: %s", path);
+    ESP_LOGD("fileBrowser", "New path: %s", path.c_str());
     numFilePages = 0;       // Mark as new folder for reading
     filePage++;             // Trigger page load
     pageRendered = false;         // Trigger page render
@@ -139,6 +139,8 @@ void FileBrowser_Scr::handleTouch(const touchEvent event, const Vector2<int16_t>
             if (pos.x >= 240) idx += 4;
             ESP_LOGD("Touch", "IDX: %d", idx);
             if ((isDir & (1 << idx)) > 0) updatePath(dirList[idx], true);
+            else if (isGcode(dirList[idx]))
+                sendFile(dirList[idx]);
         }
     }
 }
@@ -218,12 +220,12 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
     // Folder path names
     char tmp[17];
     uint8_t k;
-    uint8_t idx = strlen(path)-1;
+    uint8_t idx = path.length()-1;
     tft->setTextFont(2);
     tft->setTextPadding(68);
     tft->setTextDatum(CC_DATUM);
     
-    for (uint8_t i = fileDepth > 4? 4 : fileDepth; i > 0; i--)
+    for (uint8_t i = fileDepth > 4? 4 : fileDepth; i > 0; i--) // For each of the last 3 folders
     {
         uint8_t cnt = 0, len = 0;
         for (uint8_t j = idx; j > 0; j--)
@@ -232,16 +234,14 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
             len++;
         }
 
-        char *p = (char*)calloc(len+1, sizeof(char));
-        strncpy(p, &path[idx+2], len);
-        p[len] = '\0';
+        std::string folderName = path.substr(idx+2, len);
 
-        uint8_t lines = tft->textWidth(p)/68;
+        uint8_t lines = tft->textWidth(folderName.c_str())/68;
         
         for (k = 0; k < 4; k++)
         {
             uint8_t charN = 15;
-            strncpy(tmp, &p[cnt], 16);
+            strncpy(tmp, &folderName[cnt], 16);
             tmp[16] = '\0';
             
             while (tft->textWidth(tmp) > 68)
@@ -257,7 +257,6 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
             cnt += charN + 1;
             if (cnt > len) break; // All characters read
         }
-        free(p);
     }
     
     tft->setTextPadding(48);
@@ -272,7 +271,7 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
     {
         for (uint8_t j = 0; j < 4; j++)
         {
-            if (strlen(dirList[k]) == 0)
+            if (dirList[k].length() == 0)
             {
                 tft->fillRect(240*i, 120 + 50*j, 240, 50, TFT_BLACK);   // Clear unused slots
                 k++;
@@ -280,15 +279,15 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
             }
             tft->drawRect(240*i, 120 + 50*j, 240, 50, TFT_OLIVE);       // Draw grid
             tft->setTextPadding(202);                                   // Set pading to clear old text
-            tft->drawString(dirList[k], 10 + 240*i, 145 + 50*j);        // Write file name
+     
+            tft->drawString(String(dirList[k].substr(0, 25).c_str()), 10 + 240*i, 145 + 50*j);          // Write file name
+
             if ((isDir & 1<<k) > 0)
-            {
                 tft->drawBmpSPIFFS("/spiffs/folder_24.bmp", 212 + 240*i, 133 + 50*j);   // Draw folder icon
-            }
-            else
-            {
+            else if (isGcode(dirList[k]))
                 tft->drawBmpSPIFFS("/spiffs/file_24.bmp", 212 + 240*i, 133 + 50*j);     // Draw file icon
-            }
+            else
+                tft->fillRect(212 + 240*i, 133 + 50*j, 24, 24, TFT_RED);
             k++;
         }
     }
@@ -299,7 +298,7 @@ void FileBrowser_Scr::loadPage()
 {
     if (isPageLoaded()) return;
     struct dirent *entry;
-    DIR * dir = opendir(path);
+    DIR * dir = opendir(path.c_str());
     if (!dir)
     {
         ESP_LOGE("fileBrowser", "Error opening folder %s", path);
@@ -325,9 +324,9 @@ void FileBrowser_Scr::loadPage()
         ESP_LOGD("fileBrowser", "File Pages: %d", numFilePages);
 
         fileDepth = 0;
-        for (char *p = strrchr(path, '/'); p > path; p--)
+        for (uint8_t i = 1; i < path.length(); i++)
         {
-            if (*p == '/') fileDepth++;
+            if (path[i] == '/') fileDepth++;
         }
 
         rewinddir(dir);
@@ -344,8 +343,7 @@ void FileBrowser_Scr::loadPage()
 
         if (isHidden(entry->d_name)) continue;
         
-        strncpy(dirList[i], entry->d_name, maxFilenameLen-1); // Save file name and cut to size
-        dirList[i][maxFilenameLen-1] = '\0';
+        dirList[i] = entry->d_name;                         // Save file name
         
         if (entry->d_type == DT_DIR) isDir |= 1<<i;
         i++;
@@ -355,7 +353,7 @@ void FileBrowser_Scr::loadPage()
 
     for ( ; i < 8; i++)
     {
-        dirList[i][0] = '\0';
+        dirList[i].clear();
     }
     setPageLoaded();
 }
@@ -368,4 +366,22 @@ bool FileBrowser_Scr::isHidden(const char *name)
     // May add extra system files here
 
     return false;
+}
+
+bool FileBrowser_Scr::isGcode(const std::string &file)
+{
+    size_t dot = file.rfind('.');
+    if (dot != -1)
+    {
+        dot++;
+        if (file.compare(dot, 5, "g") == 0 || file.compare(dot, 5, "gco") == 0 || file.compare(dot, 5, "gcode") == 0)
+            return true;
+    }
+    return false;
+}
+
+void FileBrowser_Scr::sendFile(const std::string &file)
+{
+    _UI->selectedFile = path + "/" + file;
+    _UI->setScreen(lcdUI::GcodePreview);
 }
