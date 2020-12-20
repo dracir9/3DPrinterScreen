@@ -69,10 +69,14 @@ void loop(void)
 {
     if (flag && millis() % 5000 < 100)
     {
-        ESP_LOGD(TAG ,"Free Heap: %d of %d", ESP.getFreeHeap(), ESP.getHeapSize());
-        ESP_LOGD(TAG, "Frame update time: %d µs", UI.getUpdateTime());
-        ESP_LOGD(TAG, "Min stack render: %d", uxTaskGetStackHighWaterMark(UI.renderTask));
-        ESP_LOGD(TAG, "Min stack touch: %d", uxTaskGetStackHighWaterMark(UI.touchTask));
+        if (ESP.getFreeHeap() < 51200)
+            ESP_LOGD(TAG ,"Free Heap: %d of %d", ESP.getFreeHeap(), ESP.getHeapSize());
+        if (UI.getUpdateTime() > 16666)
+            ESP_LOGD(TAG, "Frame update time: %d µs", UI.getUpdateTime());
+        if (uxTaskGetStackHighWaterMark(UI.renderTask) < 512)
+            ESP_LOGD(TAG, "Min stack render: %d", uxTaskGetStackHighWaterMark(UI.renderTask));
+        if (uxTaskGetStackHighWaterMark(UI.touchTask) < 512)
+            ESP_LOGD(TAG, "Min stack touch: %d", uxTaskGetStackHighWaterMark(UI.touchTask));
 
         flag = false;
     }

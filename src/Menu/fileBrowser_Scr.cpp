@@ -17,19 +17,14 @@ void FileBrowser_Scr::update(const uint32_t deltaTime)
 {
     if (_UI->checkSD())
     {
-        if (!init)
+        /* if (!init)
         {
             printDirectory(SD.open("/"), 0);
-
             printf("SPIFFS:\n");
             printDirectory(SPIFFS.open("/"), 0);
-            /* if (SD.exists("/test.gcode"))
-            {
-                strcpy(_UI->selectedFile, "/sd/test.gcode");
-                _UI->setScreen(_UI->GcodePreview);
-            } */
+
             init = true;
-        }
+        } */
 
         loadPage();
     }
