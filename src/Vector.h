@@ -32,7 +32,8 @@ public:
         return *this;
     }
 
-    Vector3<T> &operator += (const Vector3<T> &v)
+    template<class U>
+    Vector3<T> &operator += (const Vector3<U> &v)
     {
         x += v.x;
         y += v.y;
@@ -40,7 +41,8 @@ public:
         return *this;
     }
 
-    Vector3<T> &operator -= (const Vector3<T> &v)
+    template<class U>
+    Vector3<T> &operator -= (const Vector3<U> &v)
     {
         x -= v.x;
         y -= v.y;
@@ -48,7 +50,8 @@ public:
         return *this;
     }
 
-    Vector3<T> &operator *= (T scalar)
+    template<class U>
+    Vector3<T> &operator *= (U scalar)
     {
         x *= scalar;
         y *= scalar;
@@ -56,7 +59,8 @@ public:
         return *this;
     }
 
-    Vector3<T> &operator /= (T scalar)
+    template<class U>
+    Vector3<T> &operator /= (U scalar)
     {
         assert(scalar != 0);
         scalar = 1.0f / scalar;
@@ -156,28 +160,32 @@ public:
         return *this;
     };
 
-    Vector2<T> &operator+=(const Vector2<T> &v)
+    template<class U>
+    Vector2<T> &operator+=(const Vector2<U> &v)
     {
         x += v.x;
         y += v.y;
         return *this;
     };
 
-    Vector2<T> &operator -= (const Vector2<T> &v)
+    template<class U>
+    Vector2<T> &operator -= (const Vector2<U> &v)
     {
         x -= v.x;
         y -= v.y;
         return *this;
     }
 
-    Vector2<T> &operator *= (T scalar)
+    template<class U>  
+    Vector2<T> &operator *= (U scalar)
     {
         x *= scalar;
         y *= scalar;
         return *this;
     }
 
-    Vector2<T> &operator /= (T scalar)
+    template<class U>
+    Vector2<T> &operator /= (U scalar)
     {
         assert(scalar != 0);
         scalar = 1.0f / scalar;
@@ -255,46 +263,46 @@ inline bool operator==(const Vector3<T> &v, const Vector3<T> &u)
             v.z == u.z);
 }
 
-template <class T>
-inline Vector3<T> operator+(const Vector3<T> &v, const Vector3<T> &u)
+template <class T, class U>
+inline Vector3<T> operator+(const Vector3<T> &v, const Vector3<U> &u)
 {
     return Vector3<T>(v.x+u.x, v.y+u.y, v.z+u.z);
 }
 
-template <class T>
-inline Vector3<T> operator-(const Vector3<T> &v,const Vector3<T> &u)
+template <class T, class U>
+inline Vector3<T> operator-(const Vector3<T> &v,const Vector3<U> &u)
 {
     return Vector3<T>(v.x-u.x, v.y-u.y, v.z-u.z);
 }
 
-template <class T>
-inline Vector3<T> operator*(const Vector3<T> &v, T scalar)
+template <class T, class U>
+inline Vector3<T> operator*(const Vector3<T> &v, U scalar)
 {
     return Vector3<T>(v.x*scalar, v.y*scalar, v.z*scalar);
 }
 
-template <class T>
-inline Vector3<T> operator*(T scalar, const Vector3<T> &v)
+template <class T, class U>
+inline Vector3<T> operator*(U scalar, const Vector3<T> &v)
 {
     return Vector3<T>(v.x*scalar, v.y*scalar, v.z*scalar);
 }
 
-template <class T>
-inline float operator*(const Vector3<T> &v, const Vector3<T> &u)
+template <class T, class U>
+inline float operator*(const Vector3<T> &v, const Vector3<U> &u)
 {
     return v.x*u.x + v.y*u.y + v.z*u.z;
 }
 
-template <class T>
-inline Vector3<T> operator/(const Vector3<T> &v, T scalar)
+template <class T, class U>
+inline Vector3<T> operator/(const Vector3<T> &v, U scalar)
 {
     assert(scalar != 0);
     scalar = 1.0f / scalar;
     return Vector3<T>(v.x*scalar, v.y*scalar, v.z*scalar);
 }
 
-template <class T>
-inline Vector3<T> CrossProduct(const Vector3<T> &v, const Vector3<T> &u)
+template <class T, class U>
+inline Vector3<T> CrossProduct(const Vector3<T> &v, const Vector3<U> &u)
 {
     return Vector3<T>(v.y*u.z - v.z*u.y,
                   v.z*u.x - v.x*u.z,
@@ -304,7 +312,7 @@ inline Vector3<T> CrossProduct(const Vector3<T> &v, const Vector3<T> &u)
 template <class T>
 inline Vector3<T> Lerp(const Vector3<T> &v, const Vector3<T> &u, float t)
 {
-    return Vector3<T>(v.x + (u.x - v.x) * t,
+    return Vector3<float>(v.x + (u.x - v.x) * t,
                    v.y + (u.y - v.y) * t,
                    v.z + (u.z - v.z) * t);
 }
@@ -358,46 +366,46 @@ inline bool operator==(const Vector2<T> &v, const Vector2<T> &u)
             v.y == u.y);
 }
 
-template <class T>
-inline Vector2<T> operator+(const Vector2<T> &v, const Vector2<T> &u)
+template <class T, class U>
+inline Vector2<T> operator+(const Vector2<T> &v, const Vector2<U> &u)
 {
     return Vector2<T>(v.x+u.x, v.y+u.y);
 }
 
-template <class T>
-inline Vector2<T> operator-(const Vector2<T> &v,const Vector2<T> &u)
+template <class T, class U>
+inline Vector2<T> operator-(const Vector2<T> &v,const Vector2<U> &u)
 {
     return Vector2<T>(v.x-u.x, v.y-u.y);
 }
 
-template <class T>
-inline Vector2<T> operator*(const Vector2<T> &v, T scalar)
+template <class T, class U>
+inline Vector2<T> operator*(const Vector2<T> &v, U scalar)
 {
     return Vector2<T>(v.x*scalar, v.y*scalar);
 }
 
-template <class T>
-inline Vector2<T> operator*(T scalar, const Vector2<T> &v)
+template <class T, class U>
+inline Vector2<T> operator*(U scalar, const Vector2<T> &v)
 {
     return Vector2<T>(v.x*scalar, v.y*scalar);
 }
 
-template <class T>
-inline float operator*(const Vector2<T> &v, const Vector2<T> &u)
+template <class T, class U>
+inline float operator*(const Vector2<T> &v, const Vector2<U> &u)
 {
     return v.x*u.x + v.y*u.y + v.z*u.z;
 }
 
-template <class T>
-inline Vector2<T> operator/(const Vector2<T> &v, T scalar)
+template <class T, class U>
+inline Vector2<T> operator/(const Vector2<T> &v, U scalar)
 {
     assert(scalar != 0);
     scalar = 1.0f / scalar;
     return Vector2<T>(v.x*scalar, v.y*scalar);
 }
 
-template <class T>
-inline Vector2<T> CrossProduct(const Vector2<T> &v, const Vector2<T> &u)
+template <class T, class U>
+inline Vector2<T> CrossProduct(const Vector2<T> &v, const Vector2<U> &u)
 {
     return Vector2<T>(v.y*u.z - v.z*u.y,
                       v.z*u.x - v.x*u.z);
@@ -406,7 +414,7 @@ inline Vector2<T> CrossProduct(const Vector2<T> &v, const Vector2<T> &u)
 template <class T>
 inline Vector2<T> Lerp(const Vector2<T> &v, const Vector2<T> &u, float t)
 {
-    return Vector2<T>(v.x + (u.x - v.x) * t,
+    return Vector2<float>(v.x + (u.x - v.x) * t,
                    v.y + (u.y - v.y) * t);
 }
 
