@@ -1,24 +1,24 @@
 
 #include "gcodePreview_Scr.h"
 
-#define SCALE 5
-#define MOVEX 400
-#define MOVEY 400
-
 GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI)
 {
     _UI = UI;
-    UI->tft.fillScreen(TFT_BLACK);
+    _UI->tft.fillScreen(TFT_BLACK);
+    _UI->tft.drawRect(0, 0, 320, 320, TFT_GREEN);
+    _UI->tft.drawRect(32, 32, 256, 256, TFT_OLIVE);
 }
 
 bool GcodePreview_Scr::readLine()
 {
     bool commentMode = false;
+    *commentLine = '\0';
+    uint8_t j = 0;
     for (int16_t i = 0; i < maxLineLen; i++)
     {
-        if (bufPos >= readLen)
+        if (bufPos >= readLen) // Reached end of read buffer
         {
-            readLen = fread(RBuffer, 1, bufferLen, GcodeFile);
+            readLen = fread(readBuffer, 1, bufferLen, GcodeFile);
             if (readLen <= 0)
             {
                 return false;
@@ -29,9 +29,9 @@ bool GcodePreview_Scr::readLine()
             }
             bufPos = 0;
         }
-        if (RBuffer[bufPos] <= 0 || RBuffer[bufPos] == '\n' || RBuffer[bufPos] <= '\r')
+        if (readBuffer[bufPos] <= 0 || readBuffer[bufPos] == '\n' || readBuffer[bufPos] <= '\r') // End of line encountered
         {
-            GcodeLine[i] = '\0';
+            gCodeLine[i] = '\0';
             if (i == 0) // If empty line keep reading
             {
                 i = -1;
@@ -40,13 +40,16 @@ bool GcodePreview_Scr::readLine()
             }
             return true;
         }
-        else if (RBuffer[bufPos] == ';')
+        else if (readBuffer[bufPos] == ';')
         {
             commentMode = true;
-            GcodeLine[i] = '\0';
+            gCodeLine[i] = '\0';
         }
 
-        if (!commentMode) GcodeLine[i] = RBuffer[bufPos];
+        if (commentMode)
+            commentLine[j++] = readBuffer[bufPos];
+        else
+            gCodeLine[i] = readBuffer[bufPos]; // Fill line buffer
 
         bufPos++;
     }
@@ -57,8 +60,12 @@ bool GcodePreview_Scr::readLine()
 
 bool GcodePreview_Scr::processComand()
 {
+
+    // Parse comments for usefull information
+    parseComment(commentLine);
+
     // Should be safe to parse
-    parser.parse(GcodeLine);
+    parser.parse(gCodeLine);
 
     switch (parser.command_letter)
     {
@@ -67,30 +74,30 @@ bool GcodePreview_Scr::processComand()
         {
         case 0: case 1:
             if (parser.seen('X')){
-                if(absPos) nextPos.x = offset.x + parser.value_float()*SCALE;
-                else nextPos.x = currentPos.x + parser.value_float()*SCALE;
+                if(absPos) nextPos.x = offset.x + parser.value_float()*1000;
+                else nextPos.x = currentPos.x + parser.value_float()*1000;
                 //printf("Found X-> %f\n", parser.value_float());
             }
             if (parser.seen('Y')){
-                if(absPos) nextPos.y = offset.y + parser.value_float()*SCALE;
-                else nextPos.y = currentPos.y + parser.value_float()*SCALE;
+                if(absPos) nextPos.y = offset.y + parser.value_float()*1000;
+                else nextPos.y = currentPos.y + parser.value_float()*1000;
                 //printf("Found Y-> %f\n", parser.value_float());
             }
             if (parser.seen('Z')){
-                if(absPos) nextPos.z = offset.z + parser.value_float()*SCALE;
-                else nextPos.z = currentPos.z + parser.value_float()*SCALE;
+                if(absPos) nextPos.z = offset.z + parser.value_float()*1000;
+                else nextPos.z = currentPos.z + parser.value_float()*1000;
                 //printf("Found Z-> %f\n", parser.value_float());
             }
             if (parser.seen('E')){
-                if(absEPos) nextE = offsetE + parser.value_float()*SCALE;
-                else nextE = currentE + parser.value_float()*SCALE;
+                if(absEPos) nextE = offsetE + parser.value_float();
+                else nextE = currentE + parser.value_float();
                 //printf("Found E-> %f\n", parser.value_float());
             }
             break;
 
         case 28:
             nextPos = Vector3<int32_t>();
-            nextE = 0;
+            nextE = 0.0f;
             break;
 
         case 90:
@@ -105,16 +112,16 @@ bool GcodePreview_Scr::processComand()
 
         case 92:
             if (parser.seen('X')){
-                offset.x = currentPos.x;
+                offset.x = currentPos.x - parser.value_float()*1000;
             }
             if (parser.seen('Y')){
-                offset.y = currentPos.y;
+                offset.y = currentPos.y - parser.value_float()*1000;
             }
             if (parser.seen('Z')){
-                offset.z = currentPos.z;
+                offset.z = currentPos.z - parser.value_float()*1000;
             }
             if (parser.seen('E')){
-                offsetE = currentE;
+                offsetE = currentE - parser.value_float();
             }
             break;
         
@@ -148,21 +155,28 @@ bool GcodePreview_Scr::processComand()
 void GcodePreview_Scr::renderGCode(tftLCD *tft)
 {
     if (readDone) return;
-    int line = 0;
 
     // Setup memory buffers
-    RBuffer = (char*)malloc(bufferLen);
-    if (RBuffer == NULL)
+    readBuffer = (char*)malloc(bufferLen);
+    if (readBuffer == NULL)
     {
-        ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for Read Buffer");
+        ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for read buffer");
         readDone = true;
         return;
     }
 
-    GcodeLine = (char*)malloc(maxLineLen);
-    if (GcodeLine == NULL)
+    gCodeLine = (char*)malloc(maxLineLen);
+    if (gCodeLine == NULL)
     {
-        ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for line Buffer");
+        ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for line buffer");
+        readDone = true;
+        return;
+    }
+
+    commentLine = (char*)malloc(maxLineLen);
+    if (gCodeLine == NULL)
+    {
+        ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for comment buffer");
         readDone = true;
         return;
     }
@@ -186,28 +200,60 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
 
         if (nextE > currentE)
         {
-            tft->drawLine(currentPos.x-MOVEX, currentPos.y-MOVEY, nextPos.x-MOVEX, nextPos.y-MOVEY, TFT_RED);
+            float scale = 256.0f / max(maxPos.x-minPos.x, maxPos.y-minPos.y);
+            Vector3<int32_t> startVec = (currentPos - minPos)*scale;
+            Vector3<int32_t> endVec = (nextPos - minPos)*scale;
+            
+            tft->drawLine(32 + startVec.x, 32 + startVec.y, 32 + endVec.x, 32 + endVec.y, TFT_RED);
             //printf("Line from (%d, %d) to (%d, %d)\n", currentPos.x, currentPos.y, nextPos.x, nextPos.y);
         }
 
         currentPos = nextPos;
         currentE = nextE;
         reColor += 10;
-
-        //printf("Line: %d >>%s<<\n", line, GcodeLine);
-        line++;
     }
 
     TOC
     // Close file
     fclose(GcodeFile);
-    free(RBuffer);
-    free(GcodeLine);
+    free(readBuffer);
+    free(gCodeLine);
+    free(commentLine);
 
     readDone = true;
 }
 
-void GcodePreview_Scr::update(uint32_t deltaTime)
+void GcodePreview_Scr::parseComment(const char* line)
+{
+    char *p;
+    p = strstr(line, "MINX:");
+    if (p)
+    {
+        minPos.x = strtof(&p[5], nullptr)*1000;
+    }
+    else if ((p = strstr(line, "MAXX:")))
+    {
+        maxPos.x = strtof(&p[5], nullptr)*1000;
+    }
+    else if ((p = strstr(line, "MINY:")))
+    {
+        minPos.y = strtof(&p[5], nullptr)*1000;
+    }
+    else if ((p = strstr(line, "MAXY:")))
+    {
+        maxPos.y = strtof(&p[5], nullptr)*1000;
+    }
+    else if ((p = strstr(line, "MINZ:")))
+    {
+        minPos.z = strtof(&p[5], nullptr)*1000;
+    }
+    else if ((p = strstr(line, "MAXZ:")))
+    {
+        maxPos.z = strtof(&p[5], nullptr)*1000;
+    }
+}
+
+void GcodePreview_Scr::update(const uint32_t deltaTime)
 {
     pos += vel * ((float)deltaTime/1000000.0f);
     if((pos.x > 474.0f && vel.x > 0) || (pos.x < 5.0f && vel.x < 0))
