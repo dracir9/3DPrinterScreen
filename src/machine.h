@@ -19,10 +19,10 @@ public:
 private:
     const uint8_t toolNum;
 
-    Vector3<int32_t> pos;
+    Vec3 pos;
     int32_t* posE;
 
-    Vector3<int32_t> offset;
+    Vec3 offset;
     int32_t* offsetE;
 
     bool absCoords;

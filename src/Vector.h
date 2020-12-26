@@ -2,8 +2,6 @@
 #ifndef __VECTOR_H__
 #define __VECTOR_H__
 
-#include <assert.h>
-
 //**********************************************************************
 //* 3 dimensional vector (X,Y,Z)
 //**********************************************************************
@@ -414,7 +412,7 @@ inline Vector2<T> CrossProduct(const Vector2<T> &v, const Vector2<U> &u)
 template <class T>
 inline Vector2<T> Lerp(const Vector2<T> &v, const Vector2<T> &u, float t)
 {
-    return Vector2<float>(v.x + (u.x - v.x) * t,
+    return Vec2f(v.x + (u.x - v.x) * t,
                    v.y + (u.y - v.y) * t);
 }
 
@@ -453,5 +451,12 @@ inline float DistanceBetweenSquared (const Vector2<T> &v, const Vector2<T> &u)
     Vector2<T> distance = v - u;
     return distance.LengthSquared();
 }
+
+typedef Vector3<int32_t> Vec3;
+typedef Vector3<float> Vec3f;
+
+typedef Vector2<int32_t> Vec2;
+typedef Vector2<int16_t> Vec2h;
+typedef Vector2<float> Vec2f;
 
 #endif

@@ -24,7 +24,7 @@ public:
     verticalBox(bool updt = true);
     ~verticalBox();
 
-    virtual Vector2<int16_t> getSize(tftLCD *tft) const;
+    virtual Vec2h getSize(tftLCD *tft) const;
     virtual void draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) const;
     bool attachComponent(widget *chld);
 };
@@ -50,14 +50,14 @@ verticalBox<NUM>::~verticalBox()
 }
 
 template<uint8_t NUM>
-Vector2<int16_t> verticalBox<NUM>::getSize(tftLCD *tft) const
+Vec2h verticalBox<NUM>::getSize(tftLCD *tft) const
 {
-    Vector2<int16_t> size0;
+    Vec2h size0;
     bool fillX = false, fillY = false;
     for (uint8_t i = 0; i < NUM; i++)
     {
         if(!child[i]) continue;
-        Vector2<int16_t> size1 = child[i]->getSize(tft);
+        Vec2h size1 = child[i]->getSize(tft);
         if (size1.x == 0)
         {
             size0.x = 0;
@@ -129,7 +129,7 @@ void verticalBox<NUM>::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_
 {
     ESP_LOGV(TAG, "verticalBox render start\n");
 
-    Vector2<int16_t> size;
+    Vec2h size;
     uint16_t resHeight = 0;
     uint8_t fillNum = 0;
     for (uint8_t i = 0; i < NUM; i++)

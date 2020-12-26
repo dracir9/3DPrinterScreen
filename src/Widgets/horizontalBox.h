@@ -20,7 +20,7 @@ class horizontalBox : public verticalBox<NUM>
 public:
     horizontalBox(bool updt = true);
 
-    Vector2<int16_t> getSize(tftLCD *tft);
+    Vec2h getSize(tftLCD *tft);
     void draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) const;
 };
 
@@ -36,14 +36,14 @@ horizontalBox<NUM>::horizontalBox(bool updt):
 }
 
 template<uint8_t NUM>
-Vector2<int16_t> horizontalBox<NUM>::getSize(tftLCD *tft)
+Vec2h horizontalBox<NUM>::getSize(tftLCD *tft)
 {
-    Vector2<int16_t> size0;
+    Vec2h size0;
     bool fillX = false, fillY = false;
     for (uint8_t i = 0; i < NUM; i++)
     {
         if(!verticalBox<NUM>::child[i]) continue;
-        Vector2<int16_t> size1 = verticalBox<NUM>::child[i]->getSize(tft);
+        Vec2h size1 = verticalBox<NUM>::child[i]->getSize(tft);
         if (size1.y == 0) // Calculate Y
         {
             size0.y = 0;
@@ -101,7 +101,7 @@ void horizontalBox<NUM>::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int1
 {
     ESP_LOGV(TAG, "horizontal Box render start\n");
 
-    Vector2<int16_t> size;
+    Vec2h size;
     uint16_t resWidth = 0;
     uint8_t fillNum = 0;
     for (uint8_t i = 0; i < NUM; i++)

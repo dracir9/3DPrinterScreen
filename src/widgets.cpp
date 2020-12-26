@@ -6,7 +6,7 @@
 #endif
 #define TAG "widgets"
 
-Vector2<int16_t> arrangeSize(Vector2<int16_t> size, fillMode arrange)
+Vec2h arrangeSize(Vec2h size, fillMode arrange)
 {
     size.x = abs(size.x);
     size.y = abs(size.y);
@@ -95,7 +95,7 @@ void Screen::attachToRoot(widget *chld)
     child=chld;
 }
 
-void Screen::handleTouch(touchEvent event, Vector2<int16_t> pos)
+void Screen::handleTouch(touchEvent event, Vec2h pos)
 {
     return;
 }

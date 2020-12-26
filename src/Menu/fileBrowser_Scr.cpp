@@ -90,7 +90,7 @@ void FileBrowser_Scr::updatePath(const std::string &newPath, const bool relative
     filePage++;             // Trigger page load
 }
 
-void FileBrowser_Scr::handleTouch(const touchEvent event, const Vector2<int16_t> pos)
+void FileBrowser_Scr::handleTouch(const touchEvent event, const Vec2h pos)
 {
     if (event == press)
     {

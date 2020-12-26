@@ -75,7 +75,7 @@ private:
     int64_t lastRender = 0;
     int64_t nextCheck = 0;
     unsigned long updateTime = 0;
-    Vector2<int16_t> Tpos;
+    Vec2h Tpos;
 
     bool updateObjects();
 };
