@@ -61,7 +61,7 @@ void setup(void)
 
     UI.setScreen(UI.FileBrowser);
 
-    ESP_LOGD(TAG, "Free end setup: %d\n", ESP.getFreeHeap());
+    ESP_LOGD(TAG, "Free end setup: %d", ESP.getFreeHeap());
 }
 
 bool flag = true;
@@ -71,7 +71,7 @@ void loop(void)
     {
         if (ESP.getFreeHeap() < 51200)
             ESP_LOGD(TAG ,"Free Heap: %d of %d", ESP.getFreeHeap(), ESP.getHeapSize());
-        if (UI.getUpdateTime() > 16666)
+        //if (UI.getUpdateTime() > 16666)
             ESP_LOGD(TAG, "Frame update time: %d µs", UI.getUpdateTime());
         if (uxTaskGetStackHighWaterMark(UI.renderTask) < 512)
             ESP_LOGD(TAG, "Min stack render: %d", uxTaskGetStackHighWaterMark(UI.renderTask));

@@ -88,7 +88,6 @@ void FileBrowser_Scr::updatePath(const std::string &newPath, const bool relative
     ESP_LOGD("fileBrowser", "New path: %s", path.c_str());
     numFilePages = 0;       // Mark as new folder for reading
     filePage++;             // Trigger page load
-    pageRendered = false;         // Trigger page render
 }
 
 void FileBrowser_Scr::handleTouch(const touchEvent event, const Vector2<int16_t> pos)
@@ -303,7 +302,7 @@ void FileBrowser_Scr::loadPage()
     if (numFilePages == 0) // First directory read
     {
         uint16_t hidden = 0;
-        while ((entry = readdir(dir)) && numFilePages <= 255)
+        while ((entry = readdir(dir)) && numFilePages < 255)
         {
             if (isHidden(entry->d_name))
             {

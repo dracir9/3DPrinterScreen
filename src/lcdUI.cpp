@@ -37,9 +37,12 @@ void handleTouchTask(void* arg)
     vTaskDelete(NULL);
 }
 
-bool lcdUI::begin(uint8_t upsD, uint8_t rpsT)
+bool lcdUI::begin(uint8_t upsD)
 {
     if (booted) return false;
+
+    fps = upsD;
+
     tft.begin();
     tft.setRotation(1);
 
@@ -85,18 +88,15 @@ lcdUI::~lcdUI()
 
 /***************************************************************************
  * @brief      Update and render the LCD display
- * @param      fps Maximum frames per second
  * @return     True if successfully updated
  **************************************************************************/
 bool lcdUI::updateDisplay()
 {
     uint32_t deltaTime = esp_timer_get_time() - lastRender;
     lastRender = esp_timer_get_time();
-    uint32_t start = micros();
 
     if (!updateObjects()) return false; // Update to the latest screen
 
-    if(!base) return false;
     base->update(deltaTime);    // Update logic
 
     vTaskDelay(2); // Allow some time for other tasks
@@ -105,7 +105,7 @@ bool lcdUI::updateDisplay()
     base->render(&tft);         // Render frame
     xSemaphoreGive(SPIMutex);
     
-    updateTime = micros()-start;
+    updateTime = esp_timer_get_time()-lastRender;
 
     if (esp_timer_get_time() > nextCheck)
     {

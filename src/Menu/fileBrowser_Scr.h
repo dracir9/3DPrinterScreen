@@ -29,7 +29,6 @@ private:
 
     std::string path = "/sdcard";
     std::string dirList[8];
-    //char dirList[8][maxFilenameLen];
     uint8_t fileDepth = 0;
     uint8_t isDir = 0;
     uint8_t numFilePages = 0;
@@ -37,8 +36,6 @@ private:
     uint8_t pageLoaded = 1;
     bool pageRendered = false;
     uint8_t hiddenFiles[32] = {0};
-
-    bool init = false;
 };
 
 #endif

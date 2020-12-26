@@ -41,7 +41,7 @@ public:
  * @param       upsT Maximum touch reads per second
  * @return      True if successfully initiated
  */
-    bool begin(uint8_t upsD = 60, uint8_t rpsT= 10);
+    bool begin(uint8_t upsD = 30);
     bool updateDisplay();
     bool processTouch();
     void setScreen(menu idx);
