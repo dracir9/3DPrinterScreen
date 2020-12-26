@@ -156,7 +156,7 @@ void lcdUI::setScreen(menu idx)
 bool lcdUI::updateObjects()
 {
     if (menuID == newMenuID) return true;
-    ESP_LOGD(TAG, "change to idx %d!\n", newMenuID);
+    ESP_LOGD(TAG, "Change screen to ID: %d\n", newMenuID);
 
     delete base;
 

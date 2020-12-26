@@ -31,7 +31,8 @@ bool GcodePreview_Scr::readLine()
         }
         if (readBuffer[bufPos] <= 0 || readBuffer[bufPos] == '\n' || readBuffer[bufPos] <= '\r') // End of line encountered
         {
-            gCodeLine[i] = '\0';
+            gCodeLine[i] = '\0';    // Ensure null-terminated string
+            commentLine[j] = '\0';
             if (i == 0) // If empty line keep reading
             {
                 i = -1;
@@ -58,14 +59,18 @@ bool GcodePreview_Scr::readLine()
     return false;
 }
 
-bool GcodePreview_Scr::processComand()
+bool GcodePreview_Scr::processLine()
 {
 
     // Parse comments for usefull information
-    parseComment(commentLine);
+    if (strlen(commentLine) > 1);
+        parseComment(commentLine);
 
     // Should be safe to parse
-    parser.parse(gCodeLine);
+    if (strlen(gCodeLine) > 1)
+        parser.parse(gCodeLine);
+    else
+        return false;
 
     switch (parser.command_letter)
     {
@@ -96,7 +101,7 @@ bool GcodePreview_Scr::processComand()
             break;
 
         case 28:
-            nextPos = Vector3<int32_t>();
+            nextPos = Vec3();
             nextE = 0.0f;
             break;
 
@@ -196,15 +201,27 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
     {
         if (!readLine()) break;
 
-        processComand();
-
-        if (nextE > currentE)
+        if (processLine() && printStarted && nextE > currentE)
         {
-            float scale = 256.0f / max(maxPos.x-minPos.x, maxPos.y-minPos.y);
-            Vector3<int32_t> startVec = (currentPos - minPos)*scale;
-            Vector3<int32_t> endVec = (nextPos - minPos)*scale;
+            /* float scale = 256.0f / max(maxPos.x-minPos.x, maxPos.y-minPos.y);
+            Vec3 startVec = (currentPos - minPos)*scale;
+            Vec3 endVec = (nextPos - minPos)*scale; */
+
+            // Transform points to camera coordinates
+            Vec3 p1(currentPos.x - camPos.x, camPos.z - currentPos.z, currentPos.y - camPos.y);
+            Vec3 p2(nextPos.x - camPos.x, camPos.z - nextPos.z, nextPos.y - camPos.y);
+
+            if (p1.z <= 0)
+                ESP_LOGE("GcodePreview_Scr", "p1.Z(%d) <= 0!", p1.z);
+
+            if (p1.z <= 0)
+                ESP_LOGE("GcodePreview_Scr", "p2.Z(%d) <= 0!", p2.z);
+
+            // Apply perspective transformation
+            Vec2h d1(p1.x*90 / p1.z, p1.y*90 / p1.z);
+            Vec2h d2(p2.x*90 / p2.z, p2.y*90 / p2.z);
             
-            tft->drawLine(32 + startVec.x, 32 + startVec.y, 32 + endVec.x, 32 + endVec.y, TFT_RED);
+            tft->drawLine(160 + d1.x, 160 + d1.y, 160 + d2.x, 160 + d2.y, TFT_RED);
             //printf("Line from (%d, %d) to (%d, %d)\n", currentPos.x, currentPos.y, nextPos.x, nextPos.y);
         }
 
@@ -226,8 +243,7 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
 void GcodePreview_Scr::parseComment(const char* line)
 {
     char *p;
-    p = strstr(line, "MINX:");
-    if (p)
+    if ((p = strstr(line, "MINX:")))
     {
         minPos.x = strtof(&p[5], nullptr)*1000;
     }
@@ -251,6 +267,23 @@ void GcodePreview_Scr::parseComment(const char* line)
     {
         maxPos.z = strtof(&p[5], nullptr)*1000;
     }
+    else if ((p = strstr(line, "Generated")))
+    {
+        int32_t x = (maxPos.x + minPos.x) / 2;
+        int32_t z = (maxPos.z + minPos.z) / 2;
+        int32_t y1 = (160 * minPos.y - (maxPos.x - minPos.x)*90/2) / 160;
+        int32_t y2 = (160 * minPos.y - (maxPos.z - minPos.z)*90/2) / 160;
+        camPos = Vec3(x, min(y1, y2), z);
+        ESP_LOGD("GcodePreview_Scr", "camPos(%d, %d, %d)", camPos.x, camPos.y, camPos.z);
+    }
+    else if ((p = strstr(line, "LAYER:0")))
+    {
+        printStarted = true;
+    }
+    else
+    {
+        ESP_LOGV("GcodePreview_Scr", "Unseen comment: %s\n", line);
+    }
 }
 
 void GcodePreview_Scr::update(const uint32_t deltaTime)
@@ -272,6 +305,37 @@ void GcodePreview_Scr::update(const uint32_t deltaTime)
 void GcodePreview_Scr::render(tftLCD *tft)
 {
     renderGCode(tft);
+    //raster(tft);
     //tft->fillRect(pos.x-8, pos.y-8, 16, 16, TFT_BLACK);
     //tft->fillCircle(pos.x, pos.y, 5, reColor);
+}
+
+void GcodePreview_Scr::raster(tftLCD *tft)
+{
+    //tft->fillRect(0, 0, 320, 320, TFT_BLACK);
+
+    camPos = Vec3(0, -86, 100);
+    int32_t cube[8][3] = {{-50,-50, 50},{-50,-50,150},{-50,50,50},{50,-50,50},{50,50,50},{-50,50,150},{50,-50,150},{50,50,150}};
+    int32_t line[12][2] = {{0,1},{0,2},{0,3},{1,5},{1,6},{2,4},{2,5},{3,4},{3,6},{4,7},{5,7},{6,7}};
+
+    int32_t px1;
+    int32_t py1;
+    int32_t px2;
+    int32_t py2;
+
+    for (uint8_t i = 0; i < 12; i++)
+    {
+        // Transform points to camera coordinates
+        Vec3 p1(cube[line[i][0]][0] - camPos.x, camPos.z - cube[line[i][0]][2], cube[line[i][0]][1] - camPos.y);
+        Vec3 p2(cube[line[i][1]][0] - camPos.x, camPos.z - cube[line[i][1]][2], cube[line[i][1]][1] - camPos.y);
+
+        // Apply perspective transformation
+        px1 = p1.x*90 / p1.z;
+        py1 = p1.y*90 / p1.z;
+        px2 = p2.x*90 / p2.z;
+        py2 = p2.y*90 / p2.z;
+
+        tft->drawLine(160+px1, 160+py1, 160+px2, 160+py2, TFT_CYAN);
+        //printf("%d:From (%d, %d) to (%d, %d)\n", i, px1, py1, px2, py2);
+    }
 }

@@ -16,9 +16,10 @@ public:
 
 private:
     bool readLine();
-    bool processComand();
+    bool processLine();
     void renderGCode(tftLCD *tft);
     void parseComment(const char* line);
+    void raster(tftLCD *tft);
 
     // SD file variables
     FILE* GcodeFile;
@@ -32,20 +33,23 @@ private:
 
     bool readDone = false;
 
-    // Machine state
+    // Machine state (in mm)
+    bool printStarted = false;
     bool absPos = true;
     bool absEPos = true;
-    Vector3<int32_t> currentPos;
-    Vector3<int32_t> nextPos;
-    Vector3<int32_t> offset;
-    Vector3<int32_t> minPos;
-    Vector3<int32_t> maxPos;
+    Vec3 currentPos;
+    Vec3 nextPos;
+    Vec3 offset;
+    Vec3 minPos;
+    Vec3 maxPos;
     float currentE;
     float nextE;
     float offsetE;
 
-    Vector2<float> pos;
-    Vector2<float> vel = Vector2<float>(100,100);
+    Vec3 camPos;
+
+    Vec2f pos;
+    Vec2f vel = Vec2f(100,100);
 
     uint16_t reColor = 0;
 };
