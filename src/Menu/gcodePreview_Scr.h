@@ -23,8 +23,8 @@ private:
 
     // SD file variables
     FILE* GcodeFile;
-    const uint32_t maxLineLen = 96;
-    const uint32_t bufferLen = 2048;
+    static constexpr uint32_t maxLineLen = 96;
+    static constexpr uint32_t bufferLen = 2048;
     char* readBuffer;
     char* gCodeLine;
     char* commentLine;
@@ -33,7 +33,7 @@ private:
 
     bool readDone = false;
 
-    // Machine state (in mm)
+    // Machine state (in um)
     bool printStarted = false;
     bool absPos = true;
     bool absEPos = true;
@@ -46,7 +46,10 @@ private:
     float nextE;
     float offsetE;
 
+    // Camera settings
+    int32_t near = 200;
     Vec3 camPos;
+    Vec3f light = Vec3f(1.0f, 0.0f, 0.0f);
 
     Vec2f pos;
     Vec2f vel = Vec2f(100,100);

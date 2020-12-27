@@ -161,6 +161,12 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
 {
     if (readDone) return;
 
+    for (uint8_t i = 0; i < 32; i++)
+    {
+        tft->fillRect(320, i*10, 160, 10, i << 11);
+        tft->drawLine(470, i*10, 480, i*10, TFT_CYAN);
+    }
+
     // Setup memory buffers
     readBuffer = (char*)malloc(bufferLen);
     if (readBuffer == NULL)
@@ -186,6 +192,14 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
         return;
     }
 
+    uint16_t* Zbuffer = (uint16_t*) calloc(256*256, sizeof(uint16_t));
+    if (Zbuffer == NULL)
+    {
+        ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for Z buffer");
+        readDone = true;
+        return;
+    }
+
     // Open G-Code
     GcodeFile = fopen(_UI->selectedFile.c_str(), "r");
     if (GcodeFile == NULL)
@@ -201,33 +215,39 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
     {
         if (!readLine()) break;
 
-        if (processLine() && printStarted && nextE > currentE)
+        if (processLine() && printStarted && nextE > currentE && !(currentPos == nextPos))
         {
-            /* float scale = 256.0f / max(maxPos.x-minPos.x, maxPos.y-minPos.y);
-            Vec3 startVec = (currentPos - minPos)*scale;
-            Vec3 endVec = (nextPos - minPos)*scale; */
-
             // Transform points to camera coordinates
             Vec3 p1(currentPos.x - camPos.x, camPos.z - currentPos.z, currentPos.y - camPos.y);
             Vec3 p2(nextPos.x - camPos.x, camPos.z - nextPos.z, nextPos.y - camPos.y);
 
-            if (p1.z <= 0)
-                ESP_LOGE("GcodePreview_Scr", "p1.Z(%d) <= 0!", p1.z);
+            if(p1.z > 0 && p2.z > 0)
+            {
+                // Apply perspective transformation
+                Vec3 d1(p1.x*near / p1.z, p1.y*near / p1.z, p1.z);
+                Vec3 d2(p2.x*near / p2.z, p2.y*near / p2.z, p2.z);
 
-            if (p1.z <= 0)
-                ESP_LOGE("GcodePreview_Scr", "p2.Z(%d) <= 0!", p2.z);
+                //if (!(d1 == d2))
+                {
+                    Vec3f dir = p2-p1;
+                    dir.Normalize();
+                    uint32_t color = 23 * abs(dir*light) + 8;
+                    
+                    tft->drawLine(160 + d1.x, 160 + d1.y, 160 + d2.x, 160 + d2.y, color << 11);
+                }
+            }
+            else
+            {
+                if (p1.z <= 0)
+                    ESP_LOGE("GcodePreview_Scr", "p1.Z(%d) <= 0!", p1.z);
 
-            // Apply perspective transformation
-            Vec2h d1(p1.x*90 / p1.z, p1.y*90 / p1.z);
-            Vec2h d2(p2.x*90 / p2.z, p2.y*90 / p2.z);
-            
-            tft->drawLine(160 + d1.x, 160 + d1.y, 160 + d2.x, 160 + d2.y, TFT_RED);
-            //printf("Line from (%d, %d) to (%d, %d)\n", currentPos.x, currentPos.y, nextPos.x, nextPos.y);
+                if (p2.z <= 0)
+                    ESP_LOGE("GcodePreview_Scr", "p2.Z(%d) <= 0!", p2.z);
+            }
         }
 
         currentPos = nextPos;
         currentE = nextE;
-        reColor += 10;
     }
 
     TOC
@@ -271,8 +291,8 @@ void GcodePreview_Scr::parseComment(const char* line)
     {
         int32_t x = (maxPos.x + minPos.x) / 2;
         int32_t z = (maxPos.z + minPos.z) / 2;
-        int32_t y1 = (160 * minPos.y - (maxPos.x - minPos.x)*90/2) / 160;
-        int32_t y2 = (160 * minPos.y - (maxPos.z - minPos.z)*90/2) / 160;
+        int32_t y1 = (160 * minPos.y - (maxPos.x - minPos.x)*near/2) / 160;
+        int32_t y2 = (160 * minPos.y - (maxPos.z - minPos.z)*near/2) / 160;
         camPos = Vec3(x, min(y1, y2), z);
         ESP_LOGD("GcodePreview_Scr", "camPos(%d, %d, %d)", camPos.x, camPos.y, camPos.z);
     }
@@ -330,10 +350,10 @@ void GcodePreview_Scr::raster(tftLCD *tft)
         Vec3 p2(cube[line[i][1]][0] - camPos.x, camPos.z - cube[line[i][1]][2], cube[line[i][1]][1] - camPos.y);
 
         // Apply perspective transformation
-        px1 = p1.x*90 / p1.z;
-        py1 = p1.y*90 / p1.z;
-        px2 = p2.x*90 / p2.z;
-        py2 = p2.y*90 / p2.z;
+        px1 = p1.x*near / p1.z;
+        py1 = p1.y*near / p1.z;
+        px2 = p2.x*near / p2.z;
+        py2 = p2.y*near / p2.z;
 
         tft->drawLine(160+px1, 160+py1, 160+px2, 160+py2, TFT_CYAN);
         //printf("%d:From (%d, %d) to (%d, %d)\n", i, px1, py1, px2, py2);
