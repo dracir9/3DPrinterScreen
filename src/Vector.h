@@ -16,13 +16,16 @@ public:
     //------------------------------------------------------------------
     Vector3() : x(0), y(0), z(0) {}
     Vector3(T x, T y, T z) : x(x), y(y), z(z) {}
-    Vector3(const Vector3<T> &v) : x(v.x), y(v.y), z(v.z) {}
+
+    template <class U>
+    Vector3(const Vector3<U> &v) : x(v.x), y(v.y), z(v.z) {}
     //******************************************************************
 
     //******************************************************************
     //* Operators
     //******************************************************************
-    Vector3<T> &operator = (const Vector3<T> &v)
+    template <class U>
+    Vector3<T> &operator = (const Vector3<U> &v)
     {
         x = v.x;
         y = v.y;
@@ -30,7 +33,7 @@ public:
         return *this;
     }
 
-    template<class U>
+    template <class U>
     Vector3<T> &operator += (const Vector3<U> &v)
     {
         x += v.x;
@@ -39,7 +42,7 @@ public:
         return *this;
     }
 
-    template<class U>
+    template <class U>
     Vector3<T> &operator -= (const Vector3<U> &v)
     {
         x -= v.x;
@@ -48,7 +51,7 @@ public:
         return *this;
     }
 
-    template<class U>
+    template <class U>
     Vector3<T> &operator *= (U scalar)
     {
         x *= scalar;
@@ -57,7 +60,7 @@ public:
         return *this;
     }
 
-    template<class U>
+    template <class U>
     Vector3<T> &operator /= (U scalar)
     {
         assert(scalar != 0);
@@ -85,7 +88,125 @@ public:
         } else if (i == 2) {
             return z;
         } else {
-            assert("[] Access error!");
+            ESP_LOGE("Vector", "[] Access error! Attempted to read index %d", i);
+        }
+    }
+    //******************************************************************
+
+    //******************************************************************
+    //* Methods
+    //******************************************************************
+    bool IsZero ()
+    {
+        return !(x || y || z);
+    }
+
+    float LengthSquared ()
+    {
+        return x*x + y*y + z*z;
+    }
+
+    float Length ()
+    {
+        return sqrtf(LengthSquared());
+    }
+
+    bool IsNormalized ()
+    {
+        return Length() == 1.0f;
+    }
+    //******************************************************************
+
+    T x;
+    T y;
+    T z;
+};
+
+//**********************************************************************
+//* 3 dimensional vector (X,Y,Z) float specialization
+//**********************************************************************
+template <>
+class Vector3<float>
+{
+public:
+    //******************************************************************
+    //* Constructors
+    //******************************************************************
+    Vector3() : x(0), y(0), z(0) {}
+    Vector3(float x, float y, float z) : x(x), y(y), z(z) {}
+
+    template <class U>
+    Vector3(const Vector3<U> &v) : x(v.x), y(v.y), z(v.z) {}
+    //******************************************************************
+
+    //******************************************************************
+    //* Operators
+    //******************************************************************
+    template <class U>
+    Vector3<float> &operator = (const Vector3<U> &v)
+    {
+        x = v.x;
+        y = v.y;
+        z = v.z;
+        return *this;
+    }
+
+    template <class U>
+    Vector3<float> &operator += (const Vector3<U> &v)
+    {
+        x += v.x;
+        y += v.y;
+        z += v.z;
+        return *this;
+    }
+
+    template <class U>
+    Vector3<float> &operator -= (const Vector3<U> &v)
+    {
+        x -= v.x;
+        y -= v.y;
+        z -= v.z;
+        return *this;
+    }
+
+    template <class U>
+    Vector3<float> &operator *= (U scalar)
+    {
+        x *= scalar;
+        y *= scalar;
+        z *= scalar;
+        return *this;
+    }
+
+    template <class U>
+    Vector3<float> &operator /= (U scalar)
+    {
+        assert(scalar != 0);
+        scalar = 1.0f / scalar;
+        x *= scalar;
+        y *= scalar;
+        z *= scalar;
+        return *this;
+    }
+
+    Vector3<float> &operator - ()
+    {
+        x = -x;
+        y = -y;
+        z = -z;
+        return *this;
+    }
+
+    float &operator [] (int i)
+    {
+        if (i == 0) {
+            return x;
+        } else if (i == 1) {
+            return y;
+        } else if (i == 2) {
+            return z;
+        } else {
+            ESP_LOGE("Vector", "[] Access error! Attempted to read index %d", i);
         }
     }
     //******************************************************************
@@ -118,17 +239,17 @@ public:
         x *= magnitude;
         y *= magnitude;
         z *= magnitude;
-    
     }
+
     bool IsNormalized ()
     {
         return Length() == 1.0f;
     }
     //******************************************************************
 
-    T x;
-    T y;
-    T z;
+    float x;
+    float y;
+    float z;
 };
 
 //**********************************************************************
@@ -141,24 +262,25 @@ public:
     //******************************************************************
     //* Constructors
     //******************************************************************
-    // Default sets all components to zero.
-    //------------------------------------------------------------------
     Vector2() : x(0), y(0) {}
     Vector2(T x, T y) : x(x), y(y) {}
-    Vector2(const Vector2<T> &v) : x(v.x), y(v.y) {}
+
+    template <class U>
+    Vector2(const Vector2<U> &v) : x(v.x), y(v.y) {}
     //******************************************************************
 
     //******************************************************************
     //* Operators
     //******************************************************************
-    Vector2<T> &operator = (const Vector2<T> &v)
+    template <class U>
+    Vector2<T> &operator = (const Vector2<U> &v)
     {
         x = v.x;
         y = v.y;
         return *this;
     };
 
-    template<class U>
+    template <class U>
     Vector2<T> &operator+=(const Vector2<U> &v)
     {
         x += v.x;
@@ -166,7 +288,7 @@ public:
         return *this;
     };
 
-    template<class U>
+    template <class U>
     Vector2<T> &operator -= (const Vector2<U> &v)
     {
         x -= v.x;
@@ -174,7 +296,7 @@ public:
         return *this;
     }
 
-    template<class U>  
+    template <class U>  
     Vector2<T> &operator *= (U scalar)
     {
         x *= scalar;
@@ -182,7 +304,7 @@ public:
         return *this;
     }
 
-    template<class U>
+    template <class U>
     Vector2<T> &operator /= (U scalar)
     {
         assert(scalar != 0);
@@ -229,6 +351,115 @@ public:
         return sqrtf(LengthSquared());
     }
 
+    bool IsNormalized ()
+    {
+        return Length() == 1.0f;
+    }
+    //******************************************************************
+
+    T x;
+    T y;
+};
+
+//**********************************************************************
+//* 2 dimensional vector (X,Y) float specialization
+//**********************************************************************
+template <>
+class Vector2 <float>
+{
+public:
+    //******************************************************************
+    //* Constructors
+    //******************************************************************
+    Vector2() : x(0), y(0) {}
+    Vector2(float x, float y) : x(x), y(y) {}
+
+    template <class U>
+    Vector2(const Vector2<U> &v) : x(v.x), y(v.y) {}
+    //******************************************************************
+
+    //******************************************************************
+    //* Operators
+    //******************************************************************
+    template <class U>
+    Vector2<float> &operator = (const Vector2<U> &v)
+    {
+        x = v.x;
+        y = v.y;
+        return *this;
+    };
+
+    template <class U>
+    Vector2<float> &operator+=(const Vector2<U> &v)
+    {
+        x += v.x;
+        y += v.y;
+        return *this;
+    };
+
+    template <class U>
+    Vector2<float> &operator -= (const Vector2<U> &v)
+    {
+        x -= v.x;
+        y -= v.y;
+        return *this;
+    }
+
+    template <class U>  
+    Vector2<float> &operator *= (U scalar)
+    {
+        x *= scalar;
+        y *= scalar;
+        return *this;
+    }
+
+    template <class U>
+    Vector2<float> &operator /= (U scalar)
+    {
+        assert(scalar != 0);
+        scalar = 1.0f / scalar;
+        x *= scalar;
+        y *= scalar;
+        return *this;
+    }
+
+    Vector2<float> &operator - ()
+    {
+        x = -x;
+        y = -y;
+        return *this;
+    }
+
+    float &operator [] (int i)
+    {
+        if (i == 0) {
+            return x;
+        } else if (i == 1) {
+            return y;
+        } else {
+            assert("[] Access error!");
+        }
+    }
+    //******************************************************************
+
+    //******************************************************************
+    //* Methods
+    //******************************************************************
+    bool IsZero ()
+    {
+        return !(x || y);
+    }
+
+    float LengthSquared ()
+    {
+        return x*x + y*y;
+    }
+
+    float Length ()
+    {
+        return sqrtf(LengthSquared());
+    }
+
     void Normalize ()
     {
         float magnitude = Length();
@@ -238,16 +469,16 @@ public:
 
         x *= magnitude;
         y *= magnitude;
-    
     }
+
     bool IsNormalized ()
     {
         return Length() == 1.0f;
     }
     //******************************************************************
 
-    T x;
-    T y;
+    float x;
+    float y;
 };
 
 //**********************************************************************
@@ -356,7 +587,6 @@ inline float DistanceBetweenSquared (const Vector3<T> &v, const Vector3<T> &u)
 //**********************************************************************
 //* Vector2
 //**********************************************************************
-
 template <class T>
 inline bool operator==(const Vector2<T> &v, const Vector2<T> &u)
 {
