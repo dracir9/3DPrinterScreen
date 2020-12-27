@@ -1,17 +1,12 @@
 
 #include "textBox.h"
 
-#ifdef TAG
-#undef TAG
-#endif
-#define TAG "textBox"
-
 /********************************************************************************
     Text Box 
 ********************************************************************************/
 Vec2h textBox::getSize(tftLCD *tft) const
 {
-    ESP_LOGV(TAG, "text Box getSize start\n");
+    ESP_LOGV(__FILE__, "text Box getSize start\n");
 
     tft->setTextSize(size);
     if (font) tft->setFreeFont(font);
@@ -21,12 +16,12 @@ Vec2h textBox::getSize(tftLCD *tft) const
     size.y = max(paddingY, size.y);
     return arrangeSize(size, arrange);
  
-    ESP_LOGV(TAG, "textBox getSize end\n");
+    ESP_LOGV(__FILE__, "textBox getSize end\n");
 }
 
 void textBox::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) const
 {
-    ESP_LOGV(TAG, "text Box render start\n");
+    ESP_LOGV(__FILE__, "text Box render start\n");
 
     Vec2h dim = tft->getTextBounds(*text);
     dim.x = max(paddingX, dim.x);
@@ -52,5 +47,5 @@ void textBox::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) cons
     tft->drawRect(x+(w-size.x)/2, y+(h-size.y)/2, size.x, size.y, TFT_BLUE);
 #endif
 
-    ESP_LOGV(TAG, "textBox render end\n");
+    ESP_LOGV(__FILE__, "textBox render end\n");
 }

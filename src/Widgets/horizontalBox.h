@@ -5,11 +5,6 @@
 #include <Arduino.h>
 #include "Widgets/verticalBox.h"
 
-#ifdef TAG
-#undef TAG
-#endif
-#define TAG "horizontalBox"
-
 /**************************************************************************
     Arrange widgets horizontally
 **************************************************************************/
@@ -99,7 +94,7 @@ Vec2h horizontalBox<NUM>::getSize(tftLCD *tft)
 template<uint8_t NUM>
 void horizontalBox<NUM>::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) const
 {
-    ESP_LOGV(TAG, "horizontal Box render start\n");
+    ESP_LOGV(__FILE__, "horizontal Box render start\n");
 
     Vec2h size;
     uint16_t resWidth = 0;
@@ -175,6 +170,6 @@ void horizontalBox<NUM>::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int1
         tft->drawRect(x, y, tft->width(), abs(size.y), TFT_GREEN);
     #endif
 
-    ESP_LOGV(TAG, "vertical Box render end\n");
+    ESP_LOGV(__FILE__, "vertical Box render end\n");
 }
 #endif

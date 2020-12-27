@@ -5,11 +5,6 @@
 #include <Arduino.h>
 #include "widgets.h"
 
-#ifdef TAG
-#undef TAG
-#endif
-#define TAG "verticalBox"
-
 /**************************************************************************
     Arrange widgets vertically
 **************************************************************************/
@@ -46,7 +41,7 @@ verticalBox<NUM>::verticalBox(bool updt):
 template<uint8_t NUM>
 verticalBox<NUM>::~verticalBox()
 {
-    ESP_LOGV(TAG, "Delete verticalBox\n");
+    ESP_LOGV(__FILE__, "Delete verticalBox\n");
 }
 
 template<uint8_t NUM>
@@ -127,7 +122,7 @@ bool verticalBox<NUM>::attachComponent(widget *chld)
 template<uint8_t NUM>
 void verticalBox<NUM>::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) const
 {
-    ESP_LOGV(TAG, "verticalBox render start\n");
+    ESP_LOGV(__FILE__, "verticalBox render start\n");
 
     Vec2h size;
     uint16_t resHeight = 0;
@@ -202,7 +197,7 @@ void verticalBox<NUM>::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_
         tft->drawRect(x, y, abs(size.x), abs(size.y), TFT_GREEN);
     #endif
 
-    ESP_LOGV(TAG, "verticalBox render end\n");
+    ESP_LOGV(__FILE__, "verticalBox render end\n");
 }
 
 #endif

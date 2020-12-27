@@ -1,17 +1,13 @@
 
 #include "info_w.h"
 
-#ifdef TAG
-#undef TAG
-#endif
-#define TAG "info_w"
 
 /*####################################################
     Info widget
 ####################################################*/
 Info_W::Info_W()
 {
-    ESP_LOGV(TAG, "Create info\n");
+    ESP_LOGV(__FILE__, "Create info\n");
 
     if(!list.attachComponent(&txt0)) printf("Fail!\n");
     if(!list.attachComponent(&txt1)) printf("Fail!\n");
