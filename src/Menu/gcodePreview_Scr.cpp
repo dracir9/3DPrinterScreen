@@ -192,7 +192,7 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
         return;
     }
 
-    uint16_t* Zbuffer = (uint16_t*) calloc(256*256, sizeof(uint16_t));
+    uint16_t* Zbuffer = (uint16_t*) calloc(320*160, sizeof(uint16_t));
     if (Zbuffer == NULL)
     {
         ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for Z buffer");
@@ -208,7 +208,8 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
         readDone = true;
         return;
     }
-
+    
+    eTime = esp_timer_get_time();
     TIC
     // Start reading
     while (!feof(GcodeFile))
@@ -227,14 +228,11 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
                 Vec3 d1(p1.x*near / p1.z, p1.y*near / p1.z, p1.z);
                 Vec3 d2(p2.x*near / p2.z, p2.y*near / p2.z, p2.z);
 
-                //if (!(d1 == d2))
-                {
-                    Vec3f dir = p2-p1;
-                    dir.Normalize();
-                    uint32_t color = 23 * abs(dir*light) + 8;
-                    
-                    tft->drawLine(160 + d1.x, 160 + d1.y, 160 + d2.x, 160 + d2.y, color << 11);
-                }
+                Vec3f dir = p2-p1;
+                dir.Normalize();
+                uint32_t color = 23 * abs(dir*light) + 8;
+                
+                tft->drawLine(160 + d1.x, 160 + d1.y, 160 + d2.x, 160 + d2.y, color << 11);
             }
             else
             {
@@ -248,14 +246,20 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
 
         currentPos = nextPos;
         currentE = nextE;
+        if (esp_timer_get_time() - eTime > 1000000)
+        {
+            vTaskDelay(2);
+            eTime = esp_timer_get_time();
+        }
     }
-
     TOC
+
     // Close file
     fclose(GcodeFile);
     free(readBuffer);
     free(gCodeLine);
     free(commentLine);
+    free(Zbuffer);
 
     readDone = true;
 }
@@ -308,18 +312,7 @@ void GcodePreview_Scr::parseComment(const char* line)
 
 void GcodePreview_Scr::update(const uint32_t deltaTime)
 {
-    pos += vel * ((float)deltaTime/1000000.0f);
-    if((pos.x > 474.0f && vel.x > 0) || (pos.x < 5.0f && vel.x < 0))
-    {
-        vel.x = -vel.x;
-    }
-
-    if((pos.y > 314.0f && vel.y > 0) || (pos.y < 5.0f && vel.y < 0))
-    {
-        vel.y = -vel.y;
-    }
-
-    reColor++;
+    
 }
 
 void GcodePreview_Scr::render(tftLCD *tft)

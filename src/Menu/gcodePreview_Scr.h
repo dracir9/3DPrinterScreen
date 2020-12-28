@@ -32,6 +32,7 @@ private:
     uint16_t readLen = 0;
 
     bool readDone = false;
+    int64_t eTime = 0;
 
     // Machine state (in um)
     bool printStarted = false;
@@ -50,11 +51,6 @@ private:
     int32_t near = 200;
     Vec3 camPos;
     Vec3f light = Vec3f(1.0f, 0.0f, 0.0f);
-
-    Vec2f pos;
-    Vec2f vel = Vec2f(100,100);
-
-    uint16_t reColor = 0;
 };
 
 #endif
