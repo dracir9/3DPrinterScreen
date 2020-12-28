@@ -25,6 +25,7 @@
 //###########################################################
 
 lcdUI UI;
+int32_t prevHeap;
 
 //###########################################################
 //  FUNCTIONS
@@ -48,7 +49,8 @@ void setup(void)
 
     UI.setScreen(UI.FileBrowser);
 
-    ESP_LOGD(__FILE__, "Free end setup: %d", ESP.getFreeHeap());
+    prevHeap = ESP.getFreeHeap();
+    ESP_LOGD(__FILE__, "Free end setup: %d", prevHeap);
 }
 
 bool flag = true;
@@ -56,9 +58,12 @@ void loop(void)
 {
     if (flag && millis() % 5000 < 100)
     {
-        if (ESP.getFreeHeap() < 51200)
-            ESP_LOGD(__FILE__ ,"Free Heap: %d of %d", ESP.getFreeHeap(), ESP.getHeapSize());
-        //if (UI.getUpdateTime() > 16666)
+        if (abs(prevHeap - (int32_t)ESP.getFreeHeap()) > 100)
+        {
+            prevHeap = ESP.getFreeHeap();
+            ESP_LOGD(__FILE__ ,"Free Heap: %d of %d", prevHeap, ESP.getHeapSize());
+        }
+        if (UI.getUpdateTime() > 2004)
             ESP_LOGD(__FILE__, "Frame update time: %d µs", UI.getUpdateTime());
         if (uxTaskGetStackHighWaterMark(UI.renderTask) < 512)
             ESP_LOGD(__FILE__, "Min stack render: %d", uxTaskGetStackHighWaterMark(UI.renderTask));
@@ -71,4 +76,5 @@ void loop(void)
     {
         flag = true;
     }
+    vTaskDelay(100);
 }
