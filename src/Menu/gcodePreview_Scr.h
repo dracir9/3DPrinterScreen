@@ -14,6 +14,8 @@ public:
 
     void render(tftLCD *tft) override;
 
+    void handleTouch(const Screen::touchEvent event, const Vec2h pos) override;
+
 private:
     bool readLine();
     bool processLine();
@@ -35,7 +37,7 @@ private:
     int64_t eTime = 0;
 
     // Machine state (in um)
-    bool printStarted = false;
+    bool draw = false;
     bool absPos = true;
     bool absEPos = true;
     Vec3 currentPos;

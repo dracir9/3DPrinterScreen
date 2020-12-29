@@ -7,6 +7,11 @@ GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI)
     _UI->tft.fillScreen(TFT_BLACK);
     _UI->tft.drawRect(0, 0, 320, 320, TFT_GREEN);
     _UI->tft.drawRect(32, 32, 256, 256, TFT_OLIVE);
+    _UI->tft.drawRect(320, 270, 160, 50, TFT_ORANGE);
+    _UI->tft.setTextFont(2);
+    _UI->tft.setTextDatum(CC_DATUM);
+    _UI->tft.setTextPadding(0);
+    _UI->tft.drawString("Return", 400, 295);
 }
 
 bool GcodePreview_Scr::readLine()
@@ -161,12 +166,6 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
 {
     if (readDone) return;
 
-    for (uint8_t i = 0; i < 32; i++)
-    {
-        tft->fillRect(320, i*10, 160, 10, i << 11);
-        tft->drawLine(470, i*10, 480, i*10, TFT_CYAN);
-    }
-
     // Setup memory buffers
     readBuffer = (char*)malloc(bufferLen);
     if (readBuffer == NULL)
@@ -209,14 +208,15 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
         return;
     }
     
+    uint32_t lines = 0;
     eTime = esp_timer_get_time();
     TIC
     // Start reading
-    while (!feof(GcodeFile))
+    while (!feof(GcodeFile) && ! readDone)
     {
         if (!readLine()) break;
 
-        if (processLine() && printStarted && nextE > currentE && !(currentPos == nextPos))
+        if (processLine() && draw && nextE > currentE && !(currentPos == nextPos))
         {
             // Transform points to camera coordinates
             Vec3 p1(currentPos.x - camPos.x, camPos.z - currentPos.z, currentPos.y - camPos.y);
@@ -228,11 +228,15 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
                 Vec3 d1(p1.x*near / p1.z, p1.y*near / p1.z, p1.z);
                 Vec3 d2(p2.x*near / p2.z, p2.y*near / p2.z, p2.z);
 
-                Vec3f dir = p2-p1;
-                dir.Normalize();
-                uint32_t color = 23 * abs(dir*light) + 8;
+                if (!(d1 == d2))
+                {
+                    Vec3f dir = p2-p1;
+                    dir.Normalize();
+                    uint32_t color = (uint32_t)(23 * abs(dir*light) + 8) << 11;
                 
-                tft->drawLine(160 + d1.x, 160 + d1.y, 160 + d2.x, 160 + d2.y, color << 11);
+                    tft->drawLine(160 + d1.x, 160 + d1.y, 160 + d2.x, 160 + d2.y, color);
+                    lines++;
+                }
             }
             else
             {
@@ -253,6 +257,7 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
         }
     }
     TOC
+    printf("Total Lines: %d\n", lines);
 
     // Close file
     fclose(GcodeFile);
@@ -291,7 +296,7 @@ void GcodePreview_Scr::parseComment(const char* line)
     {
         maxPos.z = strtof(&p[5], nullptr)*1000;
     }
-    else if ((p = strstr(line, "Generated")))
+    else if (strstr(line, "Generated"))
     {
         int32_t x = (maxPos.x + minPos.x) / 2;
         int32_t z = (maxPos.z + minPos.z) / 2;
@@ -300,9 +305,16 @@ void GcodePreview_Scr::parseComment(const char* line)
         camPos = Vec3(x, min(y1, y2), z);
         ESP_LOGD("GcodePreview_Scr", "camPos(%d, %d, %d)", camPos.x, camPos.y, camPos.z);
     }
-    else if ((p = strstr(line, "LAYER:0")))
+    else if (strstr(line, "LAYER:0"))
     {
-        printStarted = true;
+        draw = true;
+    }
+    else if ((p = strstr(line, "TYPE:")))
+    {
+        if (strstr(line, "FILL") || strstr(line, "INNER"))
+            draw = false;
+        else
+            draw = true;
     }
     else
     {
@@ -323,12 +335,25 @@ void GcodePreview_Scr::render(tftLCD *tft)
     //tft->fillCircle(pos.x, pos.y, 5, reColor);
 }
 
+void GcodePreview_Scr::handleTouch(const Screen::touchEvent event, const Vec2h pos)
+{
+    if (event == press && pos.x > 320)
+    {
+        if(pos.y > 270)
+        {
+            readDone = true;
+            _UI->selectedFile.clear();
+            _UI->setScreen(lcdUI::FileBrowser);
+        }
+    }
+}
+
 void GcodePreview_Scr::raster(tftLCD *tft)
 {
     //tft->fillRect(0, 0, 320, 320, TFT_BLACK);
 
-    camPos = Vec3(0, -86, 100);
-    int32_t cube[8][3] = {{-50,-50, 50},{-50,-50,150},{-50,50,50},{50,-50,50},{50,50,50},{-50,50,150},{50,-50,150},{50,50,150}};
+    int32_t cube[8][3] = {{minPos.x, minPos.y, minPos.z},{minPos.x, minPos.y, maxPos.z},{minPos.x, maxPos.y, minPos.z},{maxPos.x, minPos.y, minPos.z},
+                        {maxPos.x, maxPos.y, minPos.z},{minPos.x, maxPos.y, maxPos.z},{maxPos.x, minPos.y, maxPos.z},{maxPos.x, maxPos.y, maxPos.z}};
     int32_t line[12][2] = {{0,1},{0,2},{0,3},{1,5},{1,6},{2,4},{2,5},{3,4},{3,6},{4,7},{5,7},{6,7}};
 
     int32_t px1;
