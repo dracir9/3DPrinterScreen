@@ -21,7 +21,6 @@ private:
     bool processLine();
     void renderGCode(tftLCD *tft);
     void parseComment(const char* line);
-    uint16_t fletcher16(const char *data, const uint32_t count);
     void raster(tftLCD *tft);
 
     // SD file variables
