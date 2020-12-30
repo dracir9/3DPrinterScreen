@@ -34,7 +34,7 @@ bool GcodePreview_Scr::readLine()
             }
             bufPos = 0;
         }
-        if (readBuffer[bufPos] <= 0 || readBuffer[bufPos] == '\n' || readBuffer[bufPos] <= '\r') // End of line encountered
+        if (readBuffer[bufPos] <= 0 || readBuffer[bufPos] == '\r' || readBuffer[bufPos] == '\n') // End of line encountered
         {
             gCodeLine[i] = '\0';    // Ensure null-terminated string
             commentLine[j] = '\0';
@@ -66,9 +66,8 @@ bool GcodePreview_Scr::readLine()
 
 bool GcodePreview_Scr::processLine()
 {
-
-    // Parse comments for usefull information
-    if (strlen(commentLine) > 1);
+    // Parse comments for useful information
+    if (strlen(commentLine) > 5)
         parseComment(commentLine);
 
     // Should be safe to parse
@@ -271,32 +270,40 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
 
 void GcodePreview_Scr::parseComment(const char* line)
 {
-    char *p;
-    if ((p = strstr(line, "MINX:")))
+    uint16_t ID = fletcher16(&line[1], 5);
+    switch (ID)
     {
-        minPos.x = strtof(&p[5], nullptr)*1000;
-    }
-    else if ((p = strstr(line, "MAXX:")))
+    case 31094: // MINX:
     {
-        maxPos.x = strtof(&p[5], nullptr)*1000;
+        minPos.x = strtof(&line[6], nullptr)*1000;
+        break;
     }
-    else if ((p = strstr(line, "MINY:")))
+    case 30584: // MAXX:
     {
-        minPos.y = strtof(&p[5], nullptr)*1000;
+        maxPos.x = strtof(&line[6], nullptr)*1000;
+        break;
     }
-    else if ((p = strstr(line, "MAXY:")))
+    case 31607: // MINY:
     {
-        maxPos.y = strtof(&p[5], nullptr)*1000;
+        minPos.y = strtof(&line[6], nullptr)*1000;
+        break;
     }
-    else if ((p = strstr(line, "MINZ:")))
+    case 31097: // MAXY:
     {
-        minPos.z = strtof(&p[5], nullptr)*1000;
+        maxPos.y = strtof(&line[6], nullptr)*1000;
+        break;
     }
-    else if ((p = strstr(line, "MAXZ:")))
+    case 32120: // MINZ:
     {
-        maxPos.z = strtof(&p[5], nullptr)*1000;
+        minPos.z = strtof(&line[6], nullptr)*1000;
+        break;
     }
-    else if (strstr(line, "Generated"))
+    case 31610: // MAXZ:
+    {
+        maxPos.z = strtof(&line[6], nullptr)*1000;
+        break;
+    }
+    case 32241: //Generated
     {
         int32_t x = (maxPos.x + minPos.x) / 2;
         int32_t z = (maxPos.z + minPos.z) / 2;
@@ -304,22 +311,44 @@ void GcodePreview_Scr::parseComment(const char* line)
         int32_t y2 = (160 * minPos.y - (maxPos.z - minPos.z)*near/2) / 160;
         camPos = Vec3(x, min(y1, y2), z);
         ESP_LOGD("GcodePreview_Scr", "camPos(%d, %d, %d)", camPos.x, camPos.y, camPos.z);
+        break;
     }
-    else if (strstr(line, "LAYER:0"))
+    case 26493: // LAYER
     {
-        draw = true;
+        if (line[7] == '0');
+            draw = true;
+        break;
     }
-    else if ((p = strstr(line, "TYPE:")))
+    case 48252: //TYPE:
     {
         if (strstr(line, "FILL") || strstr(line, "INNER"))
             draw = false;
         else
             draw = true;
+        break;
     }
-    else
+    default:
     {
-        ESP_LOGV("GcodePreview_Scr", "Unseen comment: %s\n", line);
+        ESP_LOGV("GcodePreview_Scr", "Unseen comment: \"%s\", ID: %d\n", line, ID);
+        break;
     }
+    }
+}
+
+uint16_t GcodePreview_Scr::fletcher16(const char *data, const uint32_t count)
+{
+
+   uint8_t sum1 = 0;
+   uint8_t sum2 = 0;
+
+   for ( uint32_t index = 0; index < count; ++index )
+   {
+
+      sum1 += data[index];
+      sum2 += sum1;
+   }
+
+   return (sum2 << 8) | sum1;
 }
 
 void GcodePreview_Scr::update(const uint32_t deltaTime)
