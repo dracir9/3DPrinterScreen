@@ -9,7 +9,8 @@
 - In order for some shields to work add wires to the bottom of the board as follows:
  ![wiring](/images/wiring.jpg)
 
-
+## Current features
+ - [x] SD card browser
  
 ## Planned features
  - [ ] Full control through gcodes
