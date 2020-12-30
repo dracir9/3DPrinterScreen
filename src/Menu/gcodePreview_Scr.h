@@ -45,9 +45,9 @@ private:
     Vec3 offset;
     Vec3 minPos;
     Vec3 maxPos;
-    float currentE;
-    float nextE;
-    float offsetE;
+    float currentE = 0.0f;
+    float nextE = 0.0f;
+    float offsetE = 0.0f;
 
     // Camera settings
     int32_t near = 200;

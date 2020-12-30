@@ -34,7 +34,7 @@ bool GcodePreview_Scr::readLine()
             }
             bufPos = 0;
         }
-        if (readBuffer[bufPos] <= 0 || readBuffer[bufPos] == '\n' || readBuffer[bufPos] <= '\r') // End of line encountered
+        if (readBuffer[bufPos] <= 0 || readBuffer[bufPos] == '\r' || readBuffer[bufPos] == '\n') // End of line encountered
         {
             gCodeLine[i] = '\0';    // Ensure null-terminated string
             commentLine[j] = '\0';
@@ -66,9 +66,8 @@ bool GcodePreview_Scr::readLine()
 
 bool GcodePreview_Scr::processLine()
 {
-
-    // Parse comments for usefull information
-    if (strlen(commentLine) > 1);
+    // Parse comments for useful information
+    if (strlen(commentLine) > 5)
         parseComment(commentLine);
 
     // Should be safe to parse
@@ -250,7 +249,7 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
 
         currentPos = nextPos;
         currentE = nextE;
-        if (esp_timer_get_time() - eTime > 1000000)
+        if (esp_timer_get_time() - eTime > 1000000) // Allow some time for other tasks
         {
             vTaskDelay(2);
             eTime = esp_timer_get_time();
