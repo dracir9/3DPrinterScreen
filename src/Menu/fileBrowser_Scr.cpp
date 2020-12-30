@@ -279,7 +279,7 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
             if ((isDir & 1<<k) > 0)
                 tft->drawBmpSPIFFS("/spiffs/folder_24.bmp", 212 + 240*i, 133 + 50*j);   // Draw folder icon
             else if (isGcode(dirList[k]))
-                tft->fillRect(212 + 240*i, 133 + 50*j, 24, 24, TFT_RED);
+                tft->drawBmpSPIFFS("/spiffs/gcode_24.bmp", 212 + 240*i, 133 + 50*j);    // Draw gcode icon
             else
                 tft->drawBmpSPIFFS("/spiffs/file_24.bmp", 212 + 240*i, 133 + 50*j);     // Draw file icon
             k++;
