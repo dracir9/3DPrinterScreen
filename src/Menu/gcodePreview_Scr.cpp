@@ -190,6 +190,7 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
         return;
     }
 
+    // ZBuffer maps to only half of the screen to save RAM.
     Zbuffer = (uint16_t*) calloc(320*160, sizeof(uint16_t));
     if (Zbuffer == NULL)
     {
@@ -197,6 +198,7 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
         readDone = true;
         return;
     }
+    memset(Zbuffer, UINT16_MAX, 320*160*2);
 
     // Open G-Code
     GcodeFile = fopen(_UI->selectedFile.c_str(), "r");
@@ -232,8 +234,9 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
                     Vec3f dir = p2-p1;
                     dir.Normalize();
                     uint32_t color = (uint32_t)(23 * abs(dir*light) + 8) << 11;
+                    const static Vec3 offset(160, 160, 0);
                 
-                    tft->drawLine(160 + d1.x, 160 + d1.y, 160 + d2.x, 160 + d2.y, color);
+                    drawLineZbuf(tft, offset + d1, offset + d2, color);
                     lines++;
                 }
             }
@@ -303,6 +306,8 @@ void GcodePreview_Scr::parseComment(const char* line)
         int32_t y2 = (160 * minPos.y - (maxPos.z - minPos.z)*near/2) / 160;
         camPos = Vec3(x, min(y1, y2), z);
         ESP_LOGD("GcodePreview_Scr", "camPos(%d, %d, %d)", camPos.x, camPos.y, camPos.z);
+        zCmin = minPos.y - camPos.y;
+        zCmax = maxPos.y - camPos.y;
     }
     else if (strstr(line, "LAYER:0"))
     {
@@ -365,19 +370,38 @@ void GcodePreview_Scr::drawLineZbuf(tftLCD *tft, Vec3 u, Vec3 v, const uint32_t 
 
 void GcodePreview_Scr::drawPixelZbuf(tftLCD *tft, Vec3 p, const uint32_t color)
 {
-    //tft->drawPixel(p.x, p.y, color);
-    tft->drawPixel(p.x, p.z, TFT_YELLOW);
+    uint32_t i = 0;
+    if (p.y > 160)                                  // Using half screen Zbuffer for reduced memory usage
+    {
+        i = p.x + (p.y-160)*320;
+    }
+    else
+    {
+        i = p.x + p.y*320;
+        if (i < minidx)                             // Clear Zbuffer for upper part of the screen
+        {
+            memset(Zbuffer, UINT16_MAX, minidx-i);
+            minidx = i;
+        }
+    }
+
+    int32_t z = 65535LL*(p.z - zCmin)/(zCmax-zCmin);
+    assert(z >= 0 && z < 65536);
+    if (z < Zbuffer[i])
+    {
+        Zbuffer[i] = z;
+        tft->drawPixel(p.x, p.y, color);
+    }
 }
 
 void GcodePreview_Scr::update(const uint32_t deltaTime)
 {
-    angle += omega*deltaTime/1000000;
+    
 }
 
 void GcodePreview_Scr::render(tftLCD *tft)
 {
     renderGCode(tft);
-    drawLineZbuf(tft, Vec3(240,160,160), Vec3(240 + 100*cos(angle), 160 + 100*sin(angle), 160 + 100*sin(angle)), TFT_WHITE);
     //raster(tft);
     //tft->fillRect(pos.x-8, pos.y-8, 16, 16, TFT_BLACK);
     //tft->fillCircle(pos.x, pos.y, 5, reColor);

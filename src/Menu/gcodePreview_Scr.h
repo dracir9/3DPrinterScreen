@@ -56,9 +56,9 @@ private:
     int32_t near = 200;
     Vec3 camPos;
     Vec3f light = Vec3f(1.0f, 0.0f, 0.0f);
-
-    float angle = 0.0f;
-    float omega = 0.5f;
+    int32_t zCmin = 0;
+    int32_t zCmax = 0;
+    uint32_t minidx = 160*320;
 };
 
 #endif
