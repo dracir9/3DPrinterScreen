@@ -190,7 +190,7 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
         return;
     }
 
-    uint16_t* Zbuffer = (uint16_t*) calloc(320*160, sizeof(uint16_t));
+    Zbuffer = (uint16_t*) calloc(320*160, sizeof(uint16_t));
     if (Zbuffer == NULL)
     {
         ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for Z buffer");
@@ -321,14 +321,63 @@ void GcodePreview_Scr::parseComment(const char* line)
     }
 }
 
+void GcodePreview_Scr::drawLineZbuf(tftLCD *tft, Vec3 u, Vec3 v, const uint32_t color)
+{
+    // Other
+    int32_t dx = abs(v.x - u.x),
+    dy = abs(v.y - u.y);
+
+    int32_t* i;     // Major iterator
+    int32_t* j;     // Minor iterator
+    int32_t end;    // End point
+    int32_t step;
+
+    if (dx >= dy) {
+        if (u.x > v.x) swap_coord(u, v);
+        i = &u.x;
+        j = &u.y;
+        end = v.x;
+        step = (u.y > v.y)? -1 : 1;
+    }
+    else{
+        if (u.y > v.y) swap_coord(u, v);
+        swap_coord(dx, dy);
+        i = &u.y;
+        j = &u.x;
+        end = v.y;
+        step = (u.x > v.x)? -1 : 1;
+    }
+
+    int32_t err = dx >> 1;
+    int32_t zi = u.z, xi = *i;
+
+    for (; *i <= end; (*i)++) {
+        drawPixelZbuf(tft, u, color);
+        err -= dy;
+        if (err < 0) {
+            err += dx;
+            *j += step;
+        }
+        u.z = map(*i, xi, end, zi, v.z);
+        //u.z = zi + dz*(xi-*i)/dx;
+    }
+}
+
+void GcodePreview_Scr::drawPixelZbuf(tftLCD *tft, Vec3 p, const uint32_t color)
+{
+    //tft->drawPixel(p.x, p.y, color);
+    tft->drawPixel(p.x, p.z, TFT_YELLOW);
+}
+
 void GcodePreview_Scr::update(const uint32_t deltaTime)
 {
-    
+    angle += omega*deltaTime/1000000;
 }
 
 void GcodePreview_Scr::render(tftLCD *tft)
 {
     renderGCode(tft);
+    drawLineZbuf(tft, Vec3(240,160,160), Vec3(240 + 100*cos(angle), 160 + 100*sin(angle), 160 + 100*sin(angle)), TFT_WHITE);
     //raster(tft);
     //tft->fillRect(pos.x-8, pos.y-8, 16, 16, TFT_BLACK);
     //tft->fillCircle(pos.x, pos.y, 5, reColor);

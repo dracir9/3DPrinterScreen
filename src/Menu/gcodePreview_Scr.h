@@ -21,15 +21,18 @@ private:
     bool processLine();
     void renderGCode(tftLCD *tft);
     void parseComment(const char* line);
+    void drawLineZbuf(tftLCD *tft, Vec3 u, Vec3 v, const uint32_t color);
+    void drawPixelZbuf(tftLCD *tft, Vec3 p, const uint32_t color);
     void raster(tftLCD *tft);
 
     // SD file variables
-    FILE* GcodeFile;
+    FILE* GcodeFile = nullptr;
     static constexpr uint32_t maxLineLen = 96;
     static constexpr uint32_t bufferLen = 2048;
-    char* readBuffer;
-    char* gCodeLine;
-    char* commentLine;
+    char* readBuffer = nullptr;
+    char* gCodeLine = nullptr;
+    char* commentLine = nullptr;
+    uint16_t* Zbuffer = nullptr;
     uint16_t bufPos = 0;
     uint16_t readLen = 0;
 
@@ -53,6 +56,9 @@ private:
     int32_t near = 200;
     Vec3 camPos;
     Vec3f light = Vec3f(1.0f, 0.0f, 0.0f);
+
+    float angle = 0.0f;
+    float omega = 0.5f;
 };
 
 #endif
