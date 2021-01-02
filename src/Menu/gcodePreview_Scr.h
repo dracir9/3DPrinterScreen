@@ -53,9 +53,9 @@ private:
     float offsetE = 0.0f;
 
     // Camera settings
-    int32_t near = 200;
+    static constexpr int32_t near = 200;
     Vec3 camPos;
-    Vec3f light = Vec3f(1.0f, 0.0f, 0.0f);
+    const Vec3f light = Vec3f(1.0f, 0.0f, 0.0f);
     int32_t zCmin = 0;
     int32_t zCmax = 0;
     uint32_t minidx = 160*320;

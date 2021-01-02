@@ -19,7 +19,7 @@ bool GcodePreview_Scr::readLine()
     bool commentMode = false;
     *commentLine = '\0';
     uint8_t j = 0;
-    for (int16_t i = 0; i < maxLineLen; i++)
+    for (int16_t i = 0; i < maxLineLen; i++, bufPos++)
     {
         if (bufPos >= readLen) // Reached end of read buffer
         {
@@ -41,7 +41,6 @@ bool GcodePreview_Scr::readLine()
             if (i == 0) // If empty line keep reading
             {
                 i = -1;
-                bufPos++;
                 continue;
             }
             return true;
@@ -56,8 +55,6 @@ bool GcodePreview_Scr::readLine()
             commentLine[j++] = readBuffer[bufPos];
         else
             gCodeLine[i] = readBuffer[bufPos]; // Fill line buffer
-
-        bufPos++;
     }
 
     ESP_LOGE("GcodePreview_Scr", "Very long line in file \"%s\". ABORT!", _UI->selectedFile.c_str());
@@ -198,7 +195,7 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
         readDone = true;
         return;
     }
-    memset(Zbuffer, UINT16_MAX, 320*160*2);
+    memset(Zbuffer, UINT16_MAX, 320*160*sizeof(uint16_t));
 
     // Open G-Code
     GcodeFile = fopen(_UI->selectedFile.c_str(), "r");
@@ -234,9 +231,9 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
                     Vec3f dir = p2-p1;
                     dir.Normalize();
                     uint32_t color = (uint32_t)(23 * abs(dir*light) + 8) << 11;
-                    const static Vec3 offset(160, 160, 0);
                 
-                    drawLineZbuf(tft, offset + d1, offset + d2, color);
+                    static const Vec3 scrOff(160, 160, 0);
+                    drawLineZbuf(tft, scrOff + d1, scrOff + d2, color);
                     lines++;
                 }
             }
@@ -364,14 +361,14 @@ void GcodePreview_Scr::drawLineZbuf(tftLCD *tft, Vec3 u, Vec3 v, const uint32_t 
             *j += step;
         }
         u.z = map(*i, xi, end, zi, v.z);
-        //u.z = zi + dz*(xi-*i)/dx;
+        //u.z = zi + dz*(*i-xi)/dx;
     }
 }
 
 void GcodePreview_Scr::drawPixelZbuf(tftLCD *tft, Vec3 p, const uint32_t color)
 {
     uint32_t i = 0;
-    if (p.y > 160)                                  // Using half screen Zbuffer for reduced memory usage
+    if (p.y >= 160)                                  // Using half screen Zbuffer for reduced memory usage
     {
         i = p.x + (p.y-160)*320;
     }
@@ -380,7 +377,7 @@ void GcodePreview_Scr::drawPixelZbuf(tftLCD *tft, Vec3 p, const uint32_t color)
         i = p.x + p.y*320;
         if (i < minidx)                             // Clear Zbuffer for upper part of the screen
         {
-            memset(Zbuffer, UINT16_MAX, minidx-i);
+            memset(Zbuffer + i, UINT16_MAX, (minidx-i)*sizeof(uint16_t));
             minidx = i;
         }
     }
