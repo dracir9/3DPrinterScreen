@@ -327,7 +327,7 @@ void GcodePreview_Scr::drawLineZbuf(tftLCD *tft, Vec3 u, Vec3 v, const uint32_t 
 {
     // Other
     int32_t dx = abs(v.x - u.x),
-    dy = abs(v.y - u.y);
+            dy = abs(v.y - u.y);
 
     int32_t* i;     // Major iterator
     int32_t* j;     // Minor iterator
@@ -349,19 +349,27 @@ void GcodePreview_Scr::drawLineZbuf(tftLCD *tft, Vec3 u, Vec3 v, const uint32_t 
         end = v.y;
         step = (u.x > v.x)? -1 : 1;
     }
+    if (dx == 0) dx = 1;
 
-    int32_t err = dx >> 1;
-    int32_t zi = u.z, xi = *i;
+    int32_t err = dx >> 1,
+            errZ = err,
+            stepZ = (u.z > v.z)? -1 : 1,
+            dz = abs((v.z-u.z)%dx),
+            incZ = (v.z-u.z)/dx;
 
     for (; *i <= end; (*i)++) {
         drawPixelZbuf(tft, u, color);
+        u.z += incZ;
         err -= dy;
+        errZ -= dz;
         if (err < 0) {
             err += dx;
             *j += step;
         }
-        u.z = map(*i, xi, end, zi, v.z);
-        //u.z = zi + dz*(*i-xi)/dx;
+        if (errZ < 0){
+            errZ += dx;
+            u.z += stepZ;
+        }
     }
 }
 
