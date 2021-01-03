@@ -36,7 +36,7 @@ bool lcdUI::begin(uint8_t fps)
 {
     if (booted) return false;
 
-    frameTime = configTICK_RATE_HZ/fps;
+    frameTime = max(configTICK_RATE_HZ/fps, 2);
 
     tft.begin();
     tft.setRotation(1);

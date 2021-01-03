@@ -47,6 +47,7 @@ public:
     uint32_t getUpdateTime() const;
     bool initSD();
     bool checkSD() const;
+    uint8_t getFrameTime(){ return frameTime; }
 
     friend void renderUITask(void* arg);
     friend void handleTouchTask(void* arg);
