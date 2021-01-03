@@ -216,79 +216,90 @@ bool GcodePreview_Scr::initRender()
     return true;
 
     init_fail:
-    readDone = true;
+    readState = 255;
     return false;
 }
 
 void GcodePreview_Scr::renderGCode(tftLCD *tft)
 {
-    if (readDone) return;
-
-    if (!initRender()) return;
-    
-    uint32_t lines = 0;
-    eTime = esp_timer_get_time();
-    TIC
-    // Start reading
-    while (readLine() && ! readDone)
+    switch (readState)
     {
-        if (processLine() && draw && nextE > currentE && !(currentPos == nextPos))
+    case 255:
+        return;
+
+    case 0:
+        if (initRender())
         {
-            // Transform points to camera coordinates
-            Vec3 p1(currentPos.x - camPos.x, camPos.z - currentPos.z, currentPos.y - camPos.y);
-            Vec3 p2(nextPos.x - camPos.x, camPos.z - nextPos.z, nextPos.y - camPos.y);
+            readState = 1;
+            TIC
+        }
+        break;
 
-            if(p1.z > 0 && p2.z > 0)
+    case 1:
+    {
+        eTime = esp_timer_get_time();
+        // Start reading
+        while (esp_timer_get_time() - eTime < 33333 && readLine() && readState == 1)
+        {
+            if (processLine() && draw && nextE > currentE && !(currentPos == nextPos))
             {
-                // Apply perspective transformation
-                Vec3 d1(p1.x*near / p1.z, p1.y*near / p1.z, p1.z);
-                Vec3 d2(p2.x*near / p2.z, p2.y*near / p2.z, p2.z);
+                // Transform points to camera coordinates
+                Vec3 p1(currentPos.x - camPos.x, camPos.z - currentPos.z, currentPos.y - camPos.y);
+                Vec3 p2(nextPos.x - camPos.x, camPos.z - nextPos.z, nextPos.y - camPos.y);
 
-                if (!(d1 == d2))
+                if(p1.z > 0 && p2.z > 0)
                 {
-                    Vec3f dir = p2-p1;
-                    dir.Normalize();
-                    uint32_t color = (uint32_t)(23 * abs(dir*light) + 8) << 11;
-                
-                    static const Vec3 scrOff(160, 160, 0);
-                    drawLineZbuf(tft, scrOff + d1, scrOff + d2, color);
-                    lines++;
+                    // Apply perspective transformation
+                    Vec3 d1(p1.x*near / p1.z, p1.y*near / p1.z, p1.z);
+                    Vec3 d2(p2.x*near / p2.z, p2.y*near / p2.z, p2.z);
+
+                    if (!(d1 == d2))
+                    {
+                        Vec3f dir = p2-p1;
+                        dir.Normalize();
+                        uint32_t color = (uint32_t)(23 * abs(dir*light) + 8) << 11;
+                    
+                        static const Vec3 scrOff(160, 160, 0);
+                        drawLineZbuf(tft, scrOff + d1, scrOff + d2, color);
+                        lines++;
+                    }
+                }
+                else
+                {
+                    if (p1.z <= 0)
+                        ESP_LOGE("GcodePreview_Scr", "p1.Z(%d) <= 0!", p1.z);
+
+                    if (p2.z <= 0)
+                        ESP_LOGE("GcodePreview_Scr", "p2.Z(%d) <= 0!", p2.z);
                 }
             }
-            else
-            {
-                if (p1.z <= 0)
-                    ESP_LOGE("GcodePreview_Scr", "p1.Z(%d) <= 0!", p1.z);
 
-                if (p2.z <= 0)
-                    ESP_LOGE("GcodePreview_Scr", "p2.Z(%d) <= 0!", p2.z);
-            }
+            currentPos = nextPos;
+            currentE = nextE;
         }
 
-        currentPos = nextPos;
-        currentE = nextE;
-        if (esp_timer_get_time() - eTime > 1000000) // Allow some time for other tasks
-        {
-            vTaskDelay(2);
-            eTime = esp_timer_get_time();
-        }
+        if (feof(GcodeFile)) readState = 2;
+        break;
     }
-    TOC
-    printf("Total Lines: %d\n", lines);
+    case 2:
+        TOC
+        ESP_LOGD(__FILE__, "Total Lines: %d\n", lines);
+        // Close file
+        fclose(GcodeFile);
+        free(readBuffer);
+        free(gCodeLine);
+        free(commentLine);
+        free(Zbuffer);
+        GcodeFile = nullptr;
+        readBuffer = nullptr;
+        gCodeLine = nullptr;
+        commentLine = nullptr;
+        Zbuffer = nullptr;
 
-    // Close file
-    fclose(GcodeFile);
-    free(readBuffer);
-    free(gCodeLine);
-    free(commentLine);
-    free(Zbuffer);
-    GcodeFile = nullptr;
-    readBuffer = nullptr;
-    gCodeLine = nullptr;
-    commentLine = nullptr;
-    Zbuffer = nullptr;
-
-    readDone = true;
+    default:
+        readState = 255;
+        break;
+    }
 }
 
 void GcodePreview_Scr::parseComment(const char* line)
@@ -441,7 +452,7 @@ void GcodePreview_Scr::handleTouch(const Screen::touchEvent event, const Vec2h p
     {
         if(pos.y > 270)
         {
-            readDone = true;
+            readState = 255;
             _UI->selectedFile.clear();
             _UI->setScreen(lcdUI::FileBrowser);
         }

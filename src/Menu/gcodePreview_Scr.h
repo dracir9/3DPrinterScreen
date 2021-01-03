@@ -38,7 +38,8 @@ private:
     uint16_t bufPos = 0;
     uint16_t readLen = 0;
 
-    bool readDone = false;
+    uint8_t readState = 0;
+    uint32_t lines = 0;
     int64_t eTime = 0;
 
     // Machine state (in um)

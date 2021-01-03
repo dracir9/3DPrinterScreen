@@ -12,7 +12,7 @@
     const int64_t Utils::toc()
     {
         int64_t eTime = esp_timer_get_time()-startTime;
-        printf("Elapsed time: %lu\n", (unsigned long)eTime);
+        ESP_LOGD("Utility", "Elapsed time: %lu\n", (unsigned long)eTime);
         return eTime;
     }
 #endif
