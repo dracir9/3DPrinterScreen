@@ -25,7 +25,7 @@ private:
     void parseComment(const char* line);
     void drawLineZbuf(tftLCD *tft, Vec3 u, Vec3 v, const uint32_t color);
     void drawPixelZbuf(tftLCD *tft, Vec3 p, const uint32_t color);
-    void raster(tftLCD *tft);
+    void drawInfo(tftLCD *tft);
 
     // SD file variables
     FILE* GcodeFile = nullptr;
@@ -38,9 +38,13 @@ private:
     uint16_t bufPos = 0;
     uint16_t readLen = 0;
 
+    // Status and info
     uint8_t readState = 0;
     uint32_t lines = 0;
     int64_t eTime = 0;
+    uint8_t displayed = 0;
+    int32_t printTime = 0;
+    float filament = 0.0f;
 
     // Machine state (in um)
     bool draw = false;

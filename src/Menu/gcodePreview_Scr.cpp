@@ -6,11 +6,17 @@ GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI)
     _UI = UI;
     _UI->tft.fillScreen(TFT_BLACK);
     _UI->tft.drawRect(0, 0, 320, 320, TFT_GREEN);
-    _UI->tft.drawRect(32, 32, 256, 256, TFT_OLIVE);
+    _UI->tft.drawRect(320, 0, 160, 50, TFT_BLUE);
+    _UI->tft.fillRect(320, 220, 160, 50, 0x0AE0);
     _UI->tft.drawRect(320, 270, 160, 50, TFT_ORANGE);
     _UI->tft.setTextFont(2);
+    _UI->tft.setTextSize(1);
     _UI->tft.setTextDatum(CC_DATUM);
     _UI->tft.setTextPadding(0);
+    _UI->tft.drawString("Info", 400, 25);
+    _UI->tft.setTextColor(TFT_WHITE, 0x0AE0);
+    _UI->tft.drawString("Start!", 400, 245);
+    _UI->tft.setTextColor(TFT_WHITE, TFT_BLACK);
     _UI->tft.drawString("Return", 400, 295);
 }
 
@@ -283,7 +289,7 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
     }
     case 2:
         TOC
-        ESP_LOGD(__FILE__, "Total Lines: %d\n", lines);
+        ESP_LOGD(__FILE__, "Total Lines: %d", lines);
         // Close file
         fclose(GcodeFile);
         free(readBuffer);
@@ -304,6 +310,7 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
 
 void GcodePreview_Scr::parseComment(const char* line)
 {
+    // Only tested with Ultimaker Cura
     char *p;
     if ((p = strstr(line, "MINX:")))
     {
@@ -344,16 +351,24 @@ void GcodePreview_Scr::parseComment(const char* line)
     {
         draw = true;
     }
-    else if ((p = strstr(line, "TYPE:")))
+    else if (strstr(line, "TYPE:"))
     {
         if (strstr(line, "FILL") || strstr(line, "INNER"))
             draw = false;
         else
             draw = true;
     }
+    else if ((p = strstr(line, "Filament")))
+    {
+        filament = strtof(&p[15], nullptr);
+    }
+    else if ((p = strstr(line, "TIME:")))
+    {
+        printTime = atoi(&p[5]);
+    }
     else
     {
-        ESP_LOGV("GcodePreview_Scr", "Unseen comment: %s\n", line);
+        ESP_LOGV("GcodePreview_Scr", "Unseen comment: %s", line);
     }
 }
 
@@ -441,9 +456,7 @@ void GcodePreview_Scr::update(const uint32_t deltaTime)
 void GcodePreview_Scr::render(tftLCD *tft)
 {
     renderGCode(tft);
-    //raster(tft);
-    //tft->fillRect(pos.x-8, pos.y-8, 16, 16, TFT_BLACK);
-    //tft->fillCircle(pos.x, pos.y, 5, reColor);
+    drawInfo(tft);
 }
 
 void GcodePreview_Scr::handleTouch(const Screen::touchEvent event, const Vec2h pos)
@@ -459,32 +472,37 @@ void GcodePreview_Scr::handleTouch(const Screen::touchEvent event, const Vec2h p
     }
 }
 
-void GcodePreview_Scr::raster(tftLCD *tft)
+void GcodePreview_Scr::drawInfo(tftLCD *tft)
 {
-    //tft->fillRect(0, 0, 320, 320, TFT_BLACK);
+    if (displayed >= 2) return;
+    // Text settings
+    tft->setTextDatum(TL_DATUM);
+    tft->setTextFont(2);
+    tft->setTextSize(1);
+    tft->setTextPadding(0);
+    String txt;
 
-    int32_t cube[8][3] = {{minPos.x, minPos.y, minPos.z},{minPos.x, minPos.y, maxPos.z},{minPos.x, maxPos.y, minPos.z},{maxPos.x, minPos.y, minPos.z},
-                        {maxPos.x, maxPos.y, minPos.z},{minPos.x, maxPos.y, maxPos.z},{maxPos.x, minPos.y, maxPos.z},{maxPos.x, maxPos.y, maxPos.z}};
-    int32_t line[12][2] = {{0,1},{0,2},{0,3},{1,5},{1,6},{2,4},{2,5},{3,4},{3,6},{4,7},{5,7},{6,7}};
-
-    int32_t px1;
-    int32_t py1;
-    int32_t px2;
-    int32_t py2;
-
-    for (uint8_t i = 0; i < 12; i++)
+    if (filament > 0.0f)
     {
-        // Transform points to camera coordinates
-        Vec3 p1(cube[line[i][0]][0] - camPos.x, camPos.z - cube[line[i][0]][2], cube[line[i][0]][1] - camPos.y);
-        Vec3 p2(cube[line[i][1]][0] - camPos.x, camPos.z - cube[line[i][1]][2], cube[line[i][1]][1] - camPos.y);
+        tft->drawString("Filament cost: " , 328, 55);
+        txt = String(filament, 3) + " m";
+        tft->drawString(txt, 335, 71);
+        displayed++;
+    }
 
-        // Apply perspective transformation
-        px1 = p1.x*near / p1.z;
-        py1 = p1.y*near / p1.z;
-        px2 = p2.x*near / p2.z;
-        py2 = p2.y*near / p2.z;
-
-        tft->drawLine(160+px1, 160+py1, 160+px2, 160+py2, TFT_CYAN);
-        //printf("%d:From (%d, %d) to (%d, %d)\n", i, px1, py1, px2, py2);
+    if (printTime > 0)
+    {
+        tft->drawString("Estimated time: " , 328, 95);
+        uint8_t seconds = printTime % 60;
+        uint8_t minutes = printTime/60 % 60;
+        uint8_t hours = printTime/3600 % 24;
+        uint16_t days = printTime/86400;
+        txt = "";
+        if (days > 0) txt += String(days) + " d, ";
+        if (hours > 0) txt += String(hours) + " h, ";
+        if (minutes > 0) txt += String(minutes) + " min, ";
+        txt += String(seconds) + " s";
+        tft->drawString(txt, 335, 111);
+        displayed++;
     }
 }
