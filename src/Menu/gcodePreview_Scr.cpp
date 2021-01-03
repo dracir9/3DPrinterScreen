@@ -14,6 +14,20 @@ GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI)
     _UI->tft.drawString("Return", 400, 295);
 }
 
+GcodePreview_Scr::~GcodePreview_Scr()
+{
+    if (Zbuffer)
+        free(Zbuffer);
+    if (GcodeFile)
+        fclose(GcodeFile);
+    if (readBuffer)
+        free(readBuffer);
+    if (gCodeLine)
+        free(gCodeLine);
+    if (commentLine)
+        free(commentLine);
+}
+
 bool GcodePreview_Scr::readLine()
 {
     bool commentMode = false;
@@ -264,6 +278,11 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
     free(gCodeLine);
     free(commentLine);
     free(Zbuffer);
+    GcodeFile = nullptr;
+    readBuffer = nullptr;
+    gCodeLine = nullptr;
+    commentLine = nullptr;
+    Zbuffer = nullptr;
 
     readDone = true;
 }
@@ -332,14 +351,14 @@ void GcodePreview_Scr::drawLineZbuf(tftLCD *tft, Vec3 u, Vec3 v, const uint32_t 
     int32_t* i;     // Major iterator
     int32_t* j;     // Minor iterator
     int32_t end;    // End point
-    int32_t step;
+    int32_t step = 1;
 
     if (dx >= dy) {
         if (u.x > v.x) swap_coord(u, v);
         i = &u.x;
         j = &u.y;
         end = v.x;
-        step = (u.y > v.y)? -1 : 1;
+        if (u.y > v.y) step = -1;
     }
     else{
         if (u.y > v.y) swap_coord(u, v);
@@ -347,7 +366,7 @@ void GcodePreview_Scr::drawLineZbuf(tftLCD *tft, Vec3 u, Vec3 v, const uint32_t 
         i = &u.y;
         j = &u.x;
         end = v.y;
-        step = (u.x > v.x)? -1 : 1;
+        if (u.x > v.x) step = -1;
     }
     if (dx == 0) dx = 1;
 
