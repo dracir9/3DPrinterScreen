@@ -172,33 +172,28 @@ bool GcodePreview_Scr::processLine()
     return true;
 }
 
-void GcodePreview_Scr::renderGCode(tftLCD *tft)
+bool GcodePreview_Scr::initRender()
 {
-    if (readDone) return;
-
     // Setup memory buffers
     readBuffer = (char*)malloc(bufferLen);
     if (readBuffer == NULL)
     {
         ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for read buffer");
-        readDone = true;
-        return;
+        goto init_fail;
     }
 
     gCodeLine = (char*)malloc(maxLineLen);
     if (gCodeLine == NULL)
     {
         ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for line buffer");
-        readDone = true;
-        return;
+        goto init_fail;
     }
 
     commentLine = (char*)malloc(maxLineLen);
     if (gCodeLine == NULL)
     {
         ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for comment buffer");
-        readDone = true;
-        return;
+        goto init_fail;
     }
 
     // ZBuffer maps to only half of the screen to save RAM.
@@ -206,8 +201,7 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
     if (Zbuffer == NULL)
     {
         ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for Z buffer");
-        readDone = true;
-        return;
+        goto init_fail;
     }
     memset(Zbuffer, UINT16_MAX, 320*160*sizeof(uint16_t));
 
@@ -216,18 +210,28 @@ void GcodePreview_Scr::renderGCode(tftLCD *tft)
     if (GcodeFile == NULL)
     {
         ESP_LOGE("GcodePreview_Scr", "Failed to open file \"%s\"", _UI->selectedFile.c_str());
-        readDone = true;
-        return;
+        goto init_fail;
     }
+
+    return true;
+
+    init_fail:
+    readDone = true;
+    return false;
+}
+
+void GcodePreview_Scr::renderGCode(tftLCD *tft)
+{
+    if (readDone) return;
+
+    if (!initRender()) return;
     
     uint32_t lines = 0;
     eTime = esp_timer_get_time();
     TIC
     // Start reading
-    while (!feof(GcodeFile) && ! readDone)
+    while (readLine() && ! readDone)
     {
-        if (!readLine()) break;
-
         if (processLine() && draw && nextE > currentE && !(currentPos == nextPos))
         {
             // Transform points to camera coordinates

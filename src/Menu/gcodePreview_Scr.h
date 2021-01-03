@@ -20,6 +20,7 @@ public:
 private:
     bool readLine();
     bool processLine();
+    bool initRender();
     void renderGCode(tftLCD *tft);
     void parseComment(const char* line);
     void drawLineZbuf(tftLCD *tft, Vec3 u, Vec3 v, const uint32_t color);
