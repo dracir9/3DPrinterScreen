@@ -7,13 +7,13 @@ void renderUITask(void* arg)
     fflush(stdout);
     lcdUI* UI = (lcdUI*)arg;
     TickType_t xLastWakeTime;
-    const TickType_t xFrequency = configTICK_RATE_HZ/(UI? UI->fps : 5);
+    const TickType_t xFrameTime = UI? UI->frameTime : 200;
 
     while ( UI )
     {
         xLastWakeTime = xTaskGetTickCount();
         UI->updateDisplay();
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        vTaskDelayUntil(&xLastWakeTime, xFrameTime);
     }
     vTaskDelete(NULL);
 }
@@ -32,11 +32,11 @@ void handleTouchTask(void* arg)
     vTaskDelete(NULL);
 }
 
-bool lcdUI::begin(uint8_t upsD)
+bool lcdUI::begin(uint8_t fps)
 {
     if (booted) return false;
 
-    fps = upsD;
+    frameTime = configTICK_RATE_HZ/fps;
 
     tft.begin();
     tft.setRotation(1);
