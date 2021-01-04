@@ -90,7 +90,7 @@ void FileBrowser_Scr::updatePath(const std::string &newPath, const bool relative
     filePage++;             // Trigger page load
 }
 
-void FileBrowser_Scr::handleTouch(const touchEvent event, const Vector2<int16_t> pos)
+void FileBrowser_Scr::handleTouch(const touchEvent event, const Vec2h pos)
 {
     if (event == press)
     {
@@ -131,7 +131,7 @@ void FileBrowser_Scr::handleTouch(const touchEvent event, const Vector2<int16_t>
         {
             uint8_t idx = (pos.y - 120) / 50;
             if (pos.x >= 240) idx += 4;
-            ESP_LOGD("Touch", "IDX: %d", idx);
+            ESP_LOGV("Touch", "IDX: %d", idx);
             if ((isDir & (1 << idx)) > 0) updatePath(dirList[idx], true);
             else if (isGcode(dirList[idx]))
                 sendFile(dirList[idx]);
@@ -279,9 +279,9 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
             if ((isDir & 1<<k) > 0)
                 tft->drawBmpSPIFFS("/spiffs/folder_24.bmp", 212 + 240*i, 133 + 50*j);   // Draw folder icon
             else if (isGcode(dirList[k]))
-                tft->drawBmpSPIFFS("/spiffs/file_24.bmp", 212 + 240*i, 133 + 50*j);     // Draw file icon
+                tft->drawBmpSPIFFS("/spiffs/gcode_24.bmp", 212 + 240*i, 133 + 50*j);    // Draw gcode icon
             else
-                tft->fillRect(212 + 240*i, 133 + 50*j, 24, 24, TFT_RED);
+                tft->drawBmpSPIFFS("/spiffs/file_24.bmp", 212 + 240*i, 133 + 50*j);     // Draw file icon
             k++;
         }
     }

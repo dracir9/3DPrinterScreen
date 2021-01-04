@@ -6,7 +6,32 @@ GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI)
     _UI = UI;
     _UI->tft.fillScreen(TFT_BLACK);
     _UI->tft.drawRect(0, 0, 320, 320, TFT_GREEN);
-    _UI->tft.drawRect(32, 32, 256, 256, TFT_OLIVE);
+    _UI->tft.drawRect(320, 0, 160, 50, TFT_BLUE);
+    _UI->tft.fillRect(320, 220, 160, 50, 0x0AE0);
+    _UI->tft.drawRect(320, 270, 160, 50, TFT_ORANGE);
+    _UI->tft.setTextFont(2);
+    _UI->tft.setTextSize(1);
+    _UI->tft.setTextDatum(CC_DATUM);
+    _UI->tft.setTextPadding(0);
+    _UI->tft.drawString("Info", 400, 25);
+    _UI->tft.setTextColor(TFT_WHITE, 0x0AE0);
+    _UI->tft.drawString("Start!", 400, 245);
+    _UI->tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    _UI->tft.drawString("Return", 400, 295);
+}
+
+GcodePreview_Scr::~GcodePreview_Scr()
+{
+    if (Zbuffer)
+        free(Zbuffer);
+    if (GcodeFile)
+        fclose(GcodeFile);
+    if (readBuffer)
+        free(readBuffer);
+    if (gCodeLine)
+        free(gCodeLine);
+    if (commentLine)
+        free(commentLine);
 }
 
 bool GcodePreview_Scr::readLine()
@@ -14,7 +39,7 @@ bool GcodePreview_Scr::readLine()
     bool commentMode = false;
     *commentLine = '\0';
     uint8_t j = 0;
-    for (int16_t i = 0; i < maxLineLen; i++)
+    for (int16_t i = 0; i < maxLineLen; i++, bufPos++)
     {
         if (bufPos >= readLen) // Reached end of read buffer
         {
@@ -29,13 +54,13 @@ bool GcodePreview_Scr::readLine()
             }
             bufPos = 0;
         }
-        if (readBuffer[bufPos] <= 0 || readBuffer[bufPos] == '\n' || readBuffer[bufPos] <= '\r') // End of line encountered
+        if (readBuffer[bufPos] <= 0 || readBuffer[bufPos] == '\r' || readBuffer[bufPos] == '\n') // End of line encountered
         {
-            gCodeLine[i] = '\0';
+            gCodeLine[i] = '\0';    // Ensure null-terminated string
+            commentLine[j] = '\0';
             if (i == 0) // If empty line keep reading
             {
                 i = -1;
-                bufPos++;
                 continue;
             }
             return true;
@@ -50,22 +75,23 @@ bool GcodePreview_Scr::readLine()
             commentLine[j++] = readBuffer[bufPos];
         else
             gCodeLine[i] = readBuffer[bufPos]; // Fill line buffer
-
-        bufPos++;
     }
 
     ESP_LOGE("GcodePreview_Scr", "Very long line in file \"%s\". ABORT!", _UI->selectedFile.c_str());
     return false;
 }
 
-bool GcodePreview_Scr::processComand()
+bool GcodePreview_Scr::processLine()
 {
-
-    // Parse comments for usefull information
-    parseComment(commentLine);
+    // Parse comments for useful information
+    if (strlen(commentLine) > 5)
+        parseComment(commentLine);
 
     // Should be safe to parse
-    parser.parse(gCodeLine);
+    if (strlen(gCodeLine) > 1)
+        parser.parse(gCodeLine);
+    else
+        return false;
 
     switch (parser.command_letter)
     {
@@ -96,7 +122,7 @@ bool GcodePreview_Scr::processComand()
             break;
 
         case 28:
-            nextPos = Vector3<int32_t>();
+            nextPos = Vec3();
             nextE = 0.0f;
             break;
 
@@ -152,82 +178,141 @@ bool GcodePreview_Scr::processComand()
     return true;
 }
 
-void GcodePreview_Scr::renderGCode(tftLCD *tft)
+bool GcodePreview_Scr::initRender()
 {
-    if (readDone) return;
-
     // Setup memory buffers
     readBuffer = (char*)malloc(bufferLen);
     if (readBuffer == NULL)
     {
         ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for read buffer");
-        readDone = true;
-        return;
+        goto init_fail;
     }
 
     gCodeLine = (char*)malloc(maxLineLen);
     if (gCodeLine == NULL)
     {
         ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for line buffer");
-        readDone = true;
-        return;
+        goto init_fail;
     }
 
     commentLine = (char*)malloc(maxLineLen);
     if (gCodeLine == NULL)
     {
         ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for comment buffer");
-        readDone = true;
-        return;
+        goto init_fail;
     }
+
+    // ZBuffer maps to only half of the screen to save RAM.
+    Zbuffer = (uint16_t*) calloc(320*160, sizeof(uint16_t));
+    if (Zbuffer == NULL)
+    {
+        ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for Z buffer");
+        goto init_fail;
+    }
+    memset(Zbuffer, UINT16_MAX, 320*160*sizeof(uint16_t));
 
     // Open G-Code
     GcodeFile = fopen(_UI->selectedFile.c_str(), "r");
     if (GcodeFile == NULL)
     {
         ESP_LOGE("GcodePreview_Scr", "Failed to open file \"%s\"", _UI->selectedFile.c_str());
-        readDone = true;
-        return;
+        goto init_fail;
     }
 
-    TIC
-    // Start reading
-    while (!feof(GcodeFile))
+    return true;
+
+    init_fail:
+    readState = 255;
+    return false;
+}
+
+void GcodePreview_Scr::renderGCode(tftLCD *tft)
+{
+    switch (readState)
     {
-        if (!readLine()) break;
+    case 255:
+        return;
 
-        processComand();
-
-        if (nextE > currentE)
+    case 0:
+        if (initRender())
         {
-            float scale = 256.0f / max(maxPos.x-minPos.x, maxPos.y-minPos.y);
-            Vector3<int32_t> startVec = (currentPos - minPos)*scale;
-            Vector3<int32_t> endVec = (nextPos - minPos)*scale;
-            
-            tft->drawLine(32 + startVec.x, 32 + startVec.y, 32 + endVec.x, 32 + endVec.y, TFT_RED);
-            //printf("Line from (%d, %d) to (%d, %d)\n", currentPos.x, currentPos.y, nextPos.x, nextPos.y);
+            readState = 1;
+            TIC
+        }
+        break;
+
+    case 1:
+    {
+        eTime = esp_timer_get_time();
+        // Start reading
+        while (esp_timer_get_time() - eTime < 33333 && readLine() && readState == 1)
+        {
+            if (processLine() && draw && nextE > currentE && !(currentPos == nextPos))
+            {
+                // Transform points to camera coordinates
+                Vec3 p1(currentPos.x - camPos.x, camPos.z - currentPos.z, currentPos.y - camPos.y);
+                Vec3 p2(nextPos.x - camPos.x, camPos.z - nextPos.z, nextPos.y - camPos.y);
+
+                if(p1.z > 0 && p2.z > 0)
+                {
+                    // Apply perspective transformation
+                    Vec3 d1(p1.x*near / p1.z, p1.y*near / p1.z, p1.z);
+                    Vec3 d2(p2.x*near / p2.z, p2.y*near / p2.z, p2.z);
+
+                    if (!(d1 == d2))
+                    {
+                        Vec3f dir = p2-p1;
+                        dir.Normalize();
+                        uint32_t color = (uint32_t)(23 * abs(dir*light) + 8) << 11;
+                    
+                        static const Vec3 scrOff(160, 160, 0);
+                        drawLineZbuf(tft, scrOff + d1, scrOff + d2, color);
+                        lines++;
+                    }
+                }
+                else
+                {
+                    if (p1.z <= 0)
+                        ESP_LOGE("GcodePreview_Scr", "p1.Z(%d) <= 0!", p1.z);
+
+                    if (p2.z <= 0)
+                        ESP_LOGE("GcodePreview_Scr", "p2.Z(%d) <= 0!", p2.z);
+                }
+            }
+
+            currentPos = nextPos;
+            currentE = nextE;
         }
 
-        currentPos = nextPos;
-        currentE = nextE;
-        reColor += 10;
+        if (feof(GcodeFile)) readState = 2;
+        break;
     }
+    case 2:
+        TOC
+        ESP_LOGD(__FILE__, "Total Lines: %d", lines);
+        // Close file
+        fclose(GcodeFile);
+        free(readBuffer);
+        free(gCodeLine);
+        free(commentLine);
+        free(Zbuffer);
+        GcodeFile = nullptr;
+        readBuffer = nullptr;
+        gCodeLine = nullptr;
+        commentLine = nullptr;
+        Zbuffer = nullptr;
 
-    TOC
-    // Close file
-    fclose(GcodeFile);
-    free(readBuffer);
-    free(gCodeLine);
-    free(commentLine);
-
-    readDone = true;
+    default:
+        readState = 255;
+        break;
+    }
 }
 
 void GcodePreview_Scr::parseComment(const char* line)
 {
+    // Only tested with Ultimaker Cura
     char *p;
-    p = strstr(line, "MINX:");
-    if (p)
+    if ((p = strstr(line, "MINX:")))
     {
         minPos.x = strtof(&p[5], nullptr)*1000;
     }
@@ -251,27 +336,173 @@ void GcodePreview_Scr::parseComment(const char* line)
     {
         maxPos.z = strtof(&p[5], nullptr)*1000;
     }
+    else if (strstr(line, "Generated"))
+    {
+        int32_t x = (maxPos.x + minPos.x) / 2;
+        int32_t z = (maxPos.z + minPos.z) / 2;
+        int32_t y1 = (160 * minPos.y - (maxPos.x - minPos.x)*near/2) / 160;
+        int32_t y2 = (160 * minPos.y - (maxPos.z - minPos.z)*near/2) / 160;
+        camPos = Vec3(x, min(y1, y2), z);
+        ESP_LOGD("GcodePreview_Scr", "camPos(%d, %d, %d)", camPos.x, camPos.y, camPos.z);
+        zCmin = minPos.y - camPos.y;
+        zCmax = maxPos.y - camPos.y;
+    }
+    else if (strstr(line, "LAYER:0"))
+    {
+        draw = true;
+    }
+    else if (strstr(line, "TYPE:"))
+    {
+        if (strstr(line, "FILL") || strstr(line, "INNER"))
+            draw = false;
+        else
+            draw = true;
+    }
+    else if ((p = strstr(line, "Filament")))
+    {
+        filament = strtof(&p[15], nullptr);
+    }
+    else if ((p = strstr(line, "TIME:")))
+    {
+        printTime = atoi(&p[5]);
+    }
+    else
+    {
+        ESP_LOGV("GcodePreview_Scr", "Unseen comment: %s", line);
+    }
+}
+
+void GcodePreview_Scr::drawLineZbuf(tftLCD *tft, Vec3 u, Vec3 v, const uint32_t color)
+{
+    // Other
+    int32_t dx = abs(v.x - u.x),
+            dy = abs(v.y - u.y);
+
+    int32_t* i;     // Major iterator
+    int32_t* j;     // Minor iterator
+    int32_t end;    // End point
+    int32_t step = 1;
+
+    if (dx >= dy) {
+        if (u.x > v.x) swap_coord(u, v);
+        i = &u.x;
+        j = &u.y;
+        end = v.x;
+        if (u.y > v.y) step = -1;
+    }
+    else{
+        if (u.y > v.y) swap_coord(u, v);
+        swap_coord(dx, dy);
+        i = &u.y;
+        j = &u.x;
+        end = v.y;
+        if (u.x > v.x) step = -1;
+    }
+    if (dx == 0) dx = 1;
+
+    int32_t err = dx >> 1,
+            errZ = err,
+            stepZ = (u.z > v.z)? -1 : 1,
+            dz = abs((v.z-u.z)%dx),
+            incZ = (v.z-u.z)/dx;
+
+    for (; *i <= end; (*i)++) {
+        drawPixelZbuf(tft, u, color);
+        u.z += incZ;
+        err -= dy;
+        errZ -= dz;
+        if (err < 0) {
+            err += dx;
+            *j += step;
+        }
+        if (errZ < 0){
+            errZ += dx;
+            u.z += stepZ;
+        }
+    }
+}
+
+void GcodePreview_Scr::drawPixelZbuf(tftLCD *tft, Vec3 p, const uint32_t color)
+{
+    uint32_t i = 0;
+    if (p.y >= 160)                                  // Using half screen Zbuffer for reduced memory usage
+    {
+        i = p.x + (p.y-160)*320;
+    }
+    else
+    {
+        i = p.x + p.y*320;
+        if (i < minidx)                             // Clear Zbuffer for upper part of the screen
+        {
+            memset(Zbuffer + i, UINT16_MAX, (minidx-i)*sizeof(uint16_t));
+            minidx = i;
+        }
+    }
+
+    int32_t z = 65535LL*(p.z - zCmin)/(zCmax-zCmin);
+    assert(z >= 0 && z < 65536);
+    if (z < Zbuffer[i])
+    {
+        Zbuffer[i] = z;
+        tft->drawPixel(p.x, p.y, color);
+    }
 }
 
 void GcodePreview_Scr::update(const uint32_t deltaTime)
 {
-    pos += vel * ((float)deltaTime/1000000.0f);
-    if((pos.x > 474.0f && vel.x > 0) || (pos.x < 5.0f && vel.x < 0))
-    {
-        vel.x = -vel.x;
-    }
-
-    if((pos.y > 314.0f && vel.y > 0) || (pos.y < 5.0f && vel.y < 0))
-    {
-        vel.y = -vel.y;
-    }
-
-    reColor++;
+    
 }
 
 void GcodePreview_Scr::render(tftLCD *tft)
 {
     renderGCode(tft);
-    //tft->fillRect(pos.x-8, pos.y-8, 16, 16, TFT_BLACK);
-    //tft->fillCircle(pos.x, pos.y, 5, reColor);
+    drawInfo(tft);
+}
+
+void GcodePreview_Scr::handleTouch(const Screen::touchEvent event, const Vec2h pos)
+{
+    if (event == press && pos.x > 320)
+    {
+        if(pos.y > 270)
+        {
+            readState = 255;
+            _UI->selectedFile.clear();
+            _UI->setScreen(lcdUI::FileBrowser);
+        }
+    }
+}
+
+void GcodePreview_Scr::drawInfo(tftLCD *tft)
+{
+    if (displayed >= 2) return;
+    // Text settings
+    tft->setTextDatum(TL_DATUM);
+    tft->setTextFont(2);
+    tft->setTextSize(1);
+    tft->setTextPadding(0);
+    String txt;
+
+    if (filament > 0.0f)
+    {
+        tft->drawString("Filament cost: " , 328, 55);
+        txt = String(filament, 3) + " m";
+        tft->drawString(txt, 335, 71);
+        displayed++;
+    }
+
+    if (printTime > 0)
+    {
+        tft->drawString("Estimated time: " , 328, 95);
+        uint8_t seconds = printTime % 60;
+        uint8_t minutes = printTime/60 % 60;
+        uint8_t hours = printTime/3600 % 24;
+        uint16_t days = printTime/86400;
+        txt = "";
+        if (days > 0) txt += String(days) + " d, ";
+        if (hours > 0) txt += String(hours) + " h, ";
+        if (minutes > 0) txt += String(minutes) + " min, ";
+        txt += String(seconds) + " s";
+        tft->drawString(txt, 335, 111);
+        displayed++;
+    }
 }

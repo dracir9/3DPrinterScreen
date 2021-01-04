@@ -1,31 +1,26 @@
 
 #include "lcdUI.h"
 
-#ifdef TAG
-#undef TAG
-#endif
-#define TAG "lcdUI"
-
 void renderUITask(void* arg)
 {
-    ESP_LOGD(TAG, "Starting render task");
+    ESP_LOGD(__FILE__, "Starting render task");
     fflush(stdout);
     lcdUI* UI = (lcdUI*)arg;
     TickType_t xLastWakeTime;
-    const TickType_t xFrequency = configTICK_RATE_HZ/(UI? UI->fps : 5);
+    const TickType_t xFrameTime = UI? UI->frameTime : 200;
 
     while ( UI )
     {
         xLastWakeTime = xTaskGetTickCount();
         UI->updateDisplay();
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        vTaskDelayUntil(&xLastWakeTime, xFrameTime);
     }
     vTaskDelete(NULL);
 }
 
 void handleTouchTask(void* arg)
 {
-    ESP_LOGD(TAG, "Starting touch task");
+    ESP_LOGD(__FILE__, "Starting touch task");
     fflush(stdout);
     lcdUI* UI = (lcdUI*)arg;
 
@@ -37,11 +32,11 @@ void handleTouchTask(void* arg)
     vTaskDelete(NULL);
 }
 
-bool lcdUI::begin(uint8_t upsD)
+bool lcdUI::begin(uint8_t fps)
 {
     if (booted) return false;
 
-    fps = upsD;
+    frameTime = max(configTICK_RATE_HZ/fps, 2);
 
     tft.begin();
     tft.setRotation(1);
@@ -51,20 +46,20 @@ bool lcdUI::begin(uint8_t upsD)
     SPIMutex = xSemaphoreCreateMutex();
     if (SPIMutex == NULL)
     {
-        ESP_LOGE(TAG, "Failed to create SPI Mutex");
+        ESP_LOGE(__FILE__, "Failed to create SPI Mutex");
         return false;
     }
     xTaskCreate(renderUITask, "Render task", 4096, this, 3, &renderTask);
     if (renderTask == NULL)
     {
-        ESP_LOGE(TAG, "Failed to create render task");
+        ESP_LOGE(__FILE__, "Failed to create render task");
         return false;
     }
     delay(100); // Allow some time for the task to start
     xTaskCreate(handleTouchTask, "touch task", 4096, this, 2, &touchTask);
     if (touchTask == NULL)
     {
-        ESP_LOGE(TAG, "Failed to create touch task");
+        ESP_LOGE(__FILE__, "Failed to create touch task");
         return false;
     }
     delay(100);
@@ -156,7 +151,7 @@ void lcdUI::setScreen(menu idx)
 bool lcdUI::updateObjects()
 {
     if (menuID == newMenuID) return true;
-    ESP_LOGD(TAG, "change to idx %d!\n", newMenuID);
+    ESP_LOGD(__FILE__, "Change screen to ID: %d\n", newMenuID);
 
     delete base;
 
@@ -203,7 +198,7 @@ bool lcdUI::initSD()
 {
     if (!hasSD && SD.begin(5, SPI, 40000000U, "/sdcard"))
     {
-        ESP_LOGD(TAG, "SD Card initialized.");
+        ESP_LOGD(__FILE__, "SD Card initialized.");
         hasSD = true;
     }
     return hasSD;

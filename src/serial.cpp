@@ -143,7 +143,7 @@
           Every normal extrude-only move will be classified as retract depending on the direction.
  * M211 - Enable, Disable, and/or Report software endstops: S<0|1> (Requires MIN_SOFTWARE_ENDSTOPS or MAX_SOFTWARE_ENDSTOPS)
  * M218 - Set/get a tool offset: "M218 T<index> X<offset> Y<offset>". (Requires 2 or more extruders)
- * M220 - Set Feedrate Percentage: "M220 S<percent>" (i.e., "FR" on the LCD)
+ * M220 - Set Feedrate Percen__FILE__e: "M220 S<percent>" (i.e., "FR" on the LCD)
  * M221 - Set Flow Percentage: "M221 S<percent>"
  * M226 - Wait until a pin is in a given state: "M226 P<pin> S<state>"
  * M240 - Trigger a camera to take a photograph. (Requires CHDK or PHOTOGRAPH_PIN)

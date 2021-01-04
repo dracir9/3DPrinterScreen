@@ -5,11 +5,6 @@
 #include <Arduino.h>
 #include "widgets.h"
 
-#ifdef TAG
-#undef TAG
-#endif
-#define TAG "grid"
-
 template<uint8_t COL, uint8_t ROW>
 class grid : public widget
 {
@@ -24,7 +19,7 @@ public:
     grid(bool updt = true);
     ~grid();
 
-    vector2<int16_t> getSize(tftLCD *tft);
+    Vec2h getSize(tftLCD *tft);
     void render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h);
 };
 
@@ -45,13 +40,13 @@ grid<COL, ROW>::grid(bool updt = true):
 template<uint8_t COL, uint8_t ROW>
 grid<COL, ROW>::~grid()
 {
-    ESP_LOGV(TAG, "Delete verticalBox\n");
+    ESP_LOGV(__FILE__, "Delete verticalBox\n");
 }
 
 template<uint8_t COL, uint8_t ROW>
-vector2<int16_t> grid<COL, ROW>::getSize(tftLCD *tft)
+Vec2h grid<COL, ROW>::getSize(tftLCD *tft)
 {
-    return vector2<int16_t>();
+    return Vec2h();
 }
 
 #endif

@@ -5,11 +5,6 @@
 #include <Arduino.h>
 #include "Widgets/verticalBox.h"
 
-#ifdef TAG
-#undef TAG
-#endif
-#define TAG "horizontalBox"
-
 /**************************************************************************
     Arrange widgets horizontally
 **************************************************************************/
@@ -20,7 +15,7 @@ class horizontalBox : public verticalBox<NUM>
 public:
     horizontalBox(bool updt = true);
 
-    Vector2<int16_t> getSize(tftLCD *tft);
+    Vec2h getSize(tftLCD *tft);
     void draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) const;
 };
 
@@ -36,14 +31,14 @@ horizontalBox<NUM>::horizontalBox(bool updt):
 }
 
 template<uint8_t NUM>
-Vector2<int16_t> horizontalBox<NUM>::getSize(tftLCD *tft)
+Vec2h horizontalBox<NUM>::getSize(tftLCD *tft)
 {
-    Vector2<int16_t> size0;
+    Vec2h size0;
     bool fillX = false, fillY = false;
     for (uint8_t i = 0; i < NUM; i++)
     {
         if(!verticalBox<NUM>::child[i]) continue;
-        Vector2<int16_t> size1 = verticalBox<NUM>::child[i]->getSize(tft);
+        Vec2h size1 = verticalBox<NUM>::child[i]->getSize(tft);
         if (size1.y == 0) // Calculate Y
         {
             size0.y = 0;
@@ -99,9 +94,9 @@ Vector2<int16_t> horizontalBox<NUM>::getSize(tftLCD *tft)
 template<uint8_t NUM>
 void horizontalBox<NUM>::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h) const
 {
-    ESP_LOGV(TAG, "horizontal Box render start\n");
+    ESP_LOGV(__FILE__, "horizontal Box render start\n");
 
-    Vector2<int16_t> size;
+    Vec2h size;
     uint16_t resWidth = 0;
     uint8_t fillNum = 0;
     for (uint8_t i = 0; i < NUM; i++)
@@ -175,6 +170,6 @@ void horizontalBox<NUM>::draw(tftLCD *tft, int16_t x, int16_t y, int16_t w, int1
         tft->drawRect(x, y, tft->width(), abs(size.y), TFT_GREEN);
     #endif
 
-    ESP_LOGV(TAG, "vertical Box render end\n");
+    ESP_LOGV(__FILE__, "vertical Box render end\n");
 }
 #endif

@@ -14,7 +14,7 @@ public:
 
     void render(tftLCD *tft) override;
 
-    void handleTouch(const Screen::touchEvent event, const Vector2<int16_t> pos) override;
+    void handleTouch(const Screen::touchEvent event, const Vec2h pos) override;
 
 private:
     void printDirectory(File dir, const int numTabs);

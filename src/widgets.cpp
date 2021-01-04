@@ -1,12 +1,8 @@
 
 #include "widgets.h"
 
-#ifdef TAG
-#undef TAG
-#endif
-#define TAG "widgets"
 
-Vector2<int16_t> arrangeSize(Vector2<int16_t> size, fillMode arrange)
+Vec2h arrangeSize(Vec2h size, fillMode arrange)
 {
     size.x = abs(size.x);
     size.y = abs(size.y);
@@ -73,21 +69,21 @@ void widget::render(tftLCD *tft, int16_t x, int16_t y, int16_t w, int16_t h)
 ********************************************************************************/
 Screen::Screen()
 {
-    ESP_LOGV(TAG, "Created Screen\n");
+    ESP_LOGV(__FILE__, "Created Screen\n");
 }
 
 Screen::~Screen()
 {
-    ESP_LOGV(TAG, "Deleted Screen\n");
+    ESP_LOGV(__FILE__, "Deleted Screen\n");
 }
 
 void Screen::render(tftLCD *tft)
 {
-    ESP_LOGV(TAG, "Screen render start\n");
+    ESP_LOGV(__FILE__, "Screen render start\n");
 
     if (child) child->render(tft, 0, 0, tft->width(), tft->height());
 
-    ESP_LOGV(TAG, "Screen render end\n");
+    ESP_LOGV(__FILE__, "Screen render end\n");
 }
 
 void Screen::attachToRoot(widget *chld)
@@ -95,7 +91,7 @@ void Screen::attachToRoot(widget *chld)
     child=chld;
 }
 
-void Screen::handleTouch(touchEvent event, Vector2<int16_t> pos)
+void Screen::handleTouch(touchEvent event, Vec2h pos)
 {
     return;
 }

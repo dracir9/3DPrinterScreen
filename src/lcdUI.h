@@ -37,17 +37,17 @@ public:
 /**
  * Initialize render and touch screen tasks
  * 
- * @param       upsD Maximum display updates per second
- * @param       upsT Maximum touch reads per second
+ * @param       fps Maximum frames per second
  * @return      True if successfully initiated
  */
-    bool begin(uint8_t upsD = 30);
+    bool begin(uint8_t fps = 30);
     bool updateDisplay();
     bool processTouch();
     void setScreen(menu idx);
     uint32_t getUpdateTime() const;
     bool initSD();
     bool checkSD() const;
+    uint8_t getFrameTime(){ return frameTime; }
 
     friend void renderUITask(void* arg);
     friend void handleTouchTask(void* arg);
@@ -65,7 +65,7 @@ private:
     bool hasSD = false;
     bool prevPressed;
 
-    uint8_t fps = 30;
+    uint8_t frameTime = 33;         // Minimum frame time
     xTaskHandle renderTask;
     xTaskHandle touchTask;
     SemaphoreHandle_t SPIMutex;
@@ -75,7 +75,7 @@ private:
     int64_t lastRender = 0;
     int64_t nextCheck = 0;
     unsigned long updateTime = 0;
-    Vector2<int16_t> Tpos;
+    Vec2h Tpos;
 
     bool updateObjects();
 };
