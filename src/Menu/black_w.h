@@ -10,6 +10,7 @@ public:
     Black_W(lcdUI* UI);
 
     void update(uint32_t deltaTime) override;
+    void render(tftLCD *tft) override;
 
 private:
 };

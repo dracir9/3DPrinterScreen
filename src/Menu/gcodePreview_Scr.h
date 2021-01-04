@@ -4,6 +4,7 @@
 
 #include "lcdUI.h"
 #include "parser.h"
+#include "Ulitity/utility.h"
 
 class GcodePreview_Scr final : public Screen
 {

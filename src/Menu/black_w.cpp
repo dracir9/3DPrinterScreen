@@ -13,3 +13,8 @@ void Black_W::update(uint32_t deltaTime)
 {
 
 }
+
+void Black_W::render(tftLCD *tft)
+{
+    
+}
