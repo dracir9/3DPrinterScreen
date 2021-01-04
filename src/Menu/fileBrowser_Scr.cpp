@@ -1,10 +1,10 @@
 
 #include "fileBrowser_Scr.h"
 
-FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI)
+FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI):
+    Screen(UI)
 {
-    UI->tft.fillScreen(TFT_BLACK);
-    _UI = UI;
+    _UI->tft.fillScreen(TFT_BLACK);
     _UI->tft.drawRect(0, 0, 480, 70, TFT_RED);
     
     _UI->tft.setTextDatum(CC_DATUM);

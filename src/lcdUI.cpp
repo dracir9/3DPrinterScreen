@@ -162,7 +162,7 @@ bool lcdUI::updateObjects()
             base = new Black_W(this);
             break;
         case menu::info:
-            base = new Info_W();
+            base = new Info_W(this);
             break;
         case menu::main:
             break;

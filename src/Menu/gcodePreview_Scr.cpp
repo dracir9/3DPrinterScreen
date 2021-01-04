@@ -1,9 +1,9 @@
 
 #include "gcodePreview_Scr.h"
 
-GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI)
+GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI):
+    Screen(UI)
 {
-    _UI = UI;
     _UI->tft.fillScreen(TFT_BLACK);
     _UI->tft.drawRect(0, 0, 320, 320, TFT_GREEN);
     _UI->tft.drawRect(320, 0, 160, 50, TFT_BLUE);

@@ -23,7 +23,7 @@ public:
         hold
     };
     
-    Screen();
+    Screen(lcdUI* UI);
     virtual ~Screen();
 
     virtual void render(tftLCD *tft) = 0;
