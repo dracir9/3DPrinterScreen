@@ -2,7 +2,7 @@
 #ifndef INFO_W_H
 #define INFO_W_H
 
-#include "widgets.h"
+#include "lcdUI.h"
 
 class grid
 {
@@ -34,7 +34,8 @@ public:
     void render(tftLCD *tft) override;
 
 private:
-    bool init = true;
+    const uint8_t tools = 3;
+    int nextP = 0;
 };
 
 #endif

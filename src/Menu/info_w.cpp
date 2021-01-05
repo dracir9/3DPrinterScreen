@@ -4,7 +4,43 @@
 Info_W::Info_W(lcdUI* UI):
     Screen(UI)
 {
-    ESP_LOGV(__FILE__, "Create info\n");
+    _UI->tft.setTextFont(2);
+    _UI->tft.setTextSize(1);
+    _UI->tft.setTextPadding(0);
+
+    _UI->tft.fillRect(0, 0, 480, 32, TFT_RED);
+    _UI->tft.setTextDatum(CC_DATUM);
+    _UI->tft.setTextColor(TFT_WHITE);
+    _UI->tft.drawString("Hello world!", 240, 16);
+    
+    _UI->tft.fillRoundRect(0, 73, 66, 25, 4, TFT_NAVY);
+    _UI->tft.setTextColor(TFT_WHITE);
+    _UI->tft.drawString("Current", 33, 85);
+    _UI->tft.fillRoundRect(0, 106, 66, 25, 4, TFT_NAVY);
+    _UI->tft.drawString("Target", 33, 118);
+    _UI->tft.setTextColor(TFT_BLACK);
+    _UI->tft.setTextDatum(CC_DATUM);
+    for (uint8_t i = 0; i < tools; i++)
+    {
+        _UI->tft.fillRoundRect(74 + 138*i, 40, 130, 25, 4, TFT_WHITE);
+        _UI->tft.fillRoundRect(74 + 138*i, 73, 130, 25, 4, TFT_DARKCYAN);
+        _UI->tft.fillRoundRect(74 + 138*i, 106, 130, 25, 4, TFT_DARKCYAN);
+        if(i==0)
+        {
+            _UI->tft.drawString("HB", 138, 52);
+        }
+        else
+        {
+            _UI->tft.drawString("E" + String(i), 138+138*i, 52);
+        }
+    }
+    _UI->tft.drawRoundRect(0, 40, 480, 92, 4, TFT_GREEN);
+    _UI->tft.drawRoundRect(0, 140, 480, 25, 4, TFT_GREEN);
+
+    _UI->tft.drawRoundRect(0, 173, 480, 89, 4, TFT_GREEN);
+    _UI->tft.drawRoundRect(0, 270, 155, 50, 4, TFT_ORANGE);
+    _UI->tft.drawRoundRect(163, 270, 154, 50, 4, TFT_ORANGE);
+    _UI->tft.drawRoundRect(325, 270, 155, 50, 4, TFT_ORANGE);
 }
 
 /**************************************************************************/
@@ -44,123 +80,25 @@ void Info_W::update(uint32_t deltaTime)
 
 void Info_W::render(tftLCD *tft)
 {
-    const uint8_t e=3;
-
-    int16_t x = 0;
-    int16_t y = 0;
-    uint16_t w = 56;
-    uint16_t h = 16;
-
-    tft->setTextFont(0);
-    tft->setTextSize(2);
-    //tft->getTextBounds(String("Current"), 0, 0, &x, &y, &w, &h);
-    const grid temp(w+18, 40, tft->width()-w-18, 91, e, 3, 8);
-    temp.getTLPoint(&x, &y, 0, 3);
-    const grid position(0, y, tft->width(), temp.cellH, 4, 1, 8);
-    position.getTLPoint(&x, &y, 0, 1);
-    const grid info(0, y, tft->width(), tft->height()-y, 4, 2, 8);
-
-   
-    // First draw
-    if (init)
-    {
-        // Header
-        tft->fillRect(0, 0, 480, 32, TFT_RED);
-        tft->setTextDatum(TL_DATUM);
-        tft->setTextColor(TFT_WHITE, TFT_RED);
-        tft->drawString("Hello world!", 5, 10);
-        // End Header
-
-        // Temperature header
-        tft->setTextColor(TFT_BLACK);
-        for (uint8_t i = 0; i < e; i++)
-        {
-            temp.getTLPoint(&x, &y, i, 0);
-            tft->fillRoundRect(x, y, temp.cellW, temp.cellH, 4, TFT_WHITE);
-            temp.getCenterPoint(&x, &y, i, 0);
-            tft->setTextDatum(CC_DATUM);
-            if(i==0)
-            {
-                tft->drawString("HB", x, y);
-            }
-            else
-            {
-                tft->drawString("E", x, y);
-            }
-        }
-        // End Temperature header
-
-        // Temperatures
-        temp.getTLPoint(&x, &y, 0, 1);
-        tft->fillRoundRect(0, y, temp.gridX-temp.space, temp.cellH, 4, TFT_NAVY);
-        temp.getCenterPoint(&x, &y, 0, 1);
-        tft->setCursor(5+w/2, y);
-        tft->setTextColor(TFT_WHITE);
-        tft->printCenter(String("Current"));
-
-
-        temp.getTLPoint(&x, &y, 0, 2);
-        tft->fillRoundRect(0, y, temp.gridX-temp.space, temp.cellH, 4, TFT_NAVY);
-        temp.getCenterPoint(&x, &y, 0, 2);
-        tft->setCursor(5+w/2, y);
-        tft->printCenter(String("Target"));
-                
-        temp.getTLPoint(&x, &y, 0, 0);
-        tft->drawRoundRect(0, y, tft->width(), 92, 4, TFT_GREEN);
-        // End Temperatures
-
-        // Position
-        position.getTLPoint(&x, &y, 0, 0);
-        tft->drawRoundRect(0, y, tft->width(), position.cellH, 4, TFT_GREEN);
-        info.getTLPoint(&x, &y, 0, 0);
-        tft->drawRoundRect(0, y, tft->width(), tft->height()-y, 4, TFT_GREEN);
-        tft->setTextSize(3);
-        info.getCenterPoint(&x, &y, 0, 0);
-        tft->setCursor(x, y);
-        tft->printCenter("SD");
-        tft->setTextSize(2);
-        for (uint8_t c = 0; c < 4; c++)
-        {
-            for (uint8_t r = 0; r < 4; r++)
-            {
-                info.getTLPoint(&x, &y, c, r);
-                tft->drawRect(x, y, info.cellW, info.cellH, TFT_RED);
-            }
-        }
-        init = false;
-    }
-
+    if (millis() < nextP) return;
+    tft->setTextFont(2);
+    tft->setTextSize(1);
+    tft->setTextDatum(CC_DATUM);
+    tft->setTextPadding(100);
 
     // Draw update
-    if (millis()%1000 == 0)
+    tft->setTextColor(TFT_WHITE, TFT_DARKCYAN);
+    for (uint8_t i = 0; i < tools; i++)
     {
-        for (uint8_t i = 0; i < e; i++)
-        {
-            temp.getTLPoint(&x, &y, i, 1);
-            tft->fillRoundRect(x, y, temp.cellW, temp.cellH, 4, TFT_DARKCYAN);
-            temp.getCenterPoint(&x, &y, i, 1);
-            tft->setCursor(x,y);
-            tft->printCenter(String(random(250))+String(char(247)));
-            temp.getTLPoint(&x, &y, i, 2);
-            tft->fillRoundRect(x, y, temp.cellW, temp.cellH, 4, TFT_DARKCYAN);
-            temp.getCenterPoint(&x, &y, i, 2);
-            tft->setCursor(x,y);
-            tft->printCenter(String(random(70))+String(char(247)));
-        }
-        
-        position.getTLPoint(&x, &y, 0, 0);
-        tft->fillRoundRect(1, y+1, tft->width()-2, position.cellH-2, 4, TFT_BLACK);
-        position.getCenterPoint(&x, &y, 0, 0);
-        tft->setCursor(x,y);
-        tft->printCenter(String("X:") + String(random(250)));
-        position.getCenterPoint(&x, &y, 1, 0);
-        tft->setCursor(x,y);
-        tft->printCenter(String("Y:") + String(random(210)));
-        position.getCenterPoint(&x, &y, 2, 0);
-        tft->setCursor(x,y);
-        tft->printCenter(String("Z:") + String(random(200)));
-        position.getCenterPoint(&x, &y, 3, 0);
-        tft->setCursor(x,y);
-        tft->printCenter(String("F_R:") + String(random(150)) + String("%"));
+        tft->drawString(String(random(250)), 139+138*i, 85);
+        tft->drawString(String(random(70)), 139+138*i, 118);
     }
+    tft->setTextColor(TFT_WHITE, TFT_BLACK);
+    //tft->fillRoundRect(1, 101, tft->width()-2, 23, 4, TFT_BLACK);
+    tft->drawString("X: " + String(random(250)), 60, 152);
+    tft->drawString("Y: " + String(random(210)), 180, 152);
+    tft->drawString("Z: " + String(random(200)), 300, 152);
+    tft->drawString("Fr: " + String(random(150)) + "%", 420, 152);
+    
+    nextP = millis() + 1000;
 }
