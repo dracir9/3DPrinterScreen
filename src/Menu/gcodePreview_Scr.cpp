@@ -459,7 +459,7 @@ void GcodePreview_Scr::render(tftLCD *tft)
     drawInfo(tft);
 }
 
-void GcodePreview_Scr::handleTouch(const Screen::touchEvent event, const Vec2h pos)
+void GcodePreview_Scr::handleTouch(const touchEvent event, const Vec2h pos)
 {
     if (event == press && pos.x > 320)
     {

@@ -43,36 +43,6 @@ Info_W::Info_W(lcdUI* UI):
     _UI->tft.drawRoundRect(325, 270, 155, 50, 4, TFT_ORANGE);
 }
 
-/**************************************************************************/
-/*!
-    @brief  Return Top-Left coordinates of a cell (Not constrained tot the actual size of the grid)
-    @param  x    Where the X coordinate will be stored
-    @param  y    Where the Y coordinate will be stored
-    @param  c    Column index
-    @param  r    Row index
-*/
-/**************************************************************************/
-void grid::getTLPoint(int16_t *x, int16_t *y, uint8_t c, uint8_t r) const
-{
-    *x = gridX + cellW*c + space*c;
-    *y = gridY + cellH*r + space*r;
-}
-
-/**************************************************************************/
-/*!
-    @brief  Return center coordinates of a cell (Not constrained tot the actual size of the grid)
-    @param  x    Where the X coordinate will be stored
-    @param  x    Where the Y coordinate will be stored
-    @param  c    Column index
-    @param  r    Row index
-*/
-/**************************************************************************/
-void grid::getCenterPoint(int16_t *x, int16_t *y, uint8_t c, uint8_t r) const
-{
-    *x = gridX + cellW*c + space*c + cellW/2;
-    *y = gridY + cellH*r + space*r + cellH/2;
-}
-
 void Info_W::update(uint32_t deltaTime)
 {
     
@@ -90,8 +60,8 @@ void Info_W::render(tftLCD *tft)
     tft->setTextColor(TFT_WHITE, TFT_DARKCYAN);
     for (uint8_t i = 0; i < tools; i++)
     {
-        tft->drawString(String(random(250)), 139+138*i, 85);
-        tft->drawString(String(random(70)), 139+138*i, 118);
+        tft->drawString(String(random(250)) + "`C", 139+138*i, 85);
+        tft->drawString(String(random(70)) + "`C", 139+138*i, 118);
     }
     tft->setTextColor(TFT_WHITE, TFT_BLACK);
     //tft->fillRoundRect(1, 101, tft->width()-2, 23, 4, TFT_BLACK);
@@ -101,4 +71,26 @@ void Info_W::render(tftLCD *tft)
     tft->drawString("Fr: " + String(random(150)) + "%", 420, 152);
     
     nextP = millis() + 1000;
+}
+
+void Info_W::handleTouch(const touchEvent event, const Vec2h pos)
+{
+    if (event == press)
+    {
+        if (pos.y > 256)
+        {
+            if (pos.x < 160)
+            {
+                if (_UI->checkSD()) _UI->setScreen(lcdUI::FileBrowser);
+            }
+            else if (pos.x < 320)
+            {
+
+            }
+            else
+            {
+
+            }
+        }
+    }
 }

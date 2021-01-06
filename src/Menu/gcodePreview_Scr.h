@@ -16,7 +16,7 @@ public:
 
     void render(tftLCD *tft) override;
 
-    void handleTouch(const Screen::touchEvent event, const Vec2h pos) override;
+    void handleTouch(const touchEvent event, const Vec2h pos) override;
 
 private:
     bool readLine();
