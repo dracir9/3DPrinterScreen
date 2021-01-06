@@ -4,6 +4,7 @@
 Info_W::Info_W(lcdUI* UI):
     Screen(UI)
 {
+    _UI->tft.fillScreen(TFT_BLACK);
     _UI->tft.setTextFont(2);
     _UI->tft.setTextSize(1);
     _UI->tft.setTextPadding(0);
