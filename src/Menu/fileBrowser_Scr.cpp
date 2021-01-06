@@ -12,13 +12,14 @@ FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI):
     _UI->tft.drawString("SD card", 240, 35);
     _UI->tft.setTextFont(2); */
 
-    _UI->tft.drawRoundRect(0, 256, 155, 64, 4, TFT_ORANGE);
-    _UI->tft.drawRoundRect(163, 256, 154, 64, 4, TFT_ORANGE);
-    _UI->tft.drawRoundRect(325, 256, 155, 64, 4, TFT_ORANGE);
-
     // SD Home
     _UI->tft.drawRoundRect(0, 0, 50, 50, 4, TFT_ORANGE);
     _UI->tft.drawBmpSPIFFS("/spiffs/home_24.bmp", 13, 13);
+
+    _UI->tft.drawBmpSPIFFS("/spiffs/return_64.bmp", 45, 264);
+    _UI->tft.drawRoundRect(0, 256, 155, 64, 4, TFT_ORANGE);
+    _UI->tft.drawRoundRect(163, 256, 154, 64, 4, TFT_ORANGE);
+    _UI->tft.drawRoundRect(325, 256, 155, 64, 4, TFT_ORANGE);
 }
 
 void FileBrowser_Scr::update(const uint32_t deltaTime)
@@ -227,7 +228,7 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
     uint8_t k;
     uint8_t idx = path.length()-1;
     tft->setTextFont(2);
-    tft->setTextPadding(68);
+    tft->setTextPadding(0);
     tft->setTextDatum(CC_DATUM);
     
     for (uint8_t i = fileDepth > 4? 4 : fileDepth; i > 0; i--) // For each of the last 3 folders
