@@ -13,13 +13,7 @@ Info_W::Info_W(lcdUI* UI):
     _UI->tft.setTextColor(TFT_WHITE);
     _UI->tft.drawString("Hello world!", 240, 16);
     
-    _UI->tft.fillRoundRect(0, 73, 66, 25, 4, TFT_NAVY);
-    _UI->tft.setTextColor(TFT_WHITE);
-    _UI->tft.drawString("Current", 33, 85);
-    _UI->tft.fillRoundRect(0, 106, 66, 25, 4, TFT_NAVY);
-    _UI->tft.drawString("Target", 33, 118);
     _UI->tft.setTextColor(TFT_BLACK);
-    _UI->tft.setTextDatum(CC_DATUM);
     for (uint8_t i = 0; i < tools; i++)
     {
         _UI->tft.fillRoundRect(74 + 138*i, 40, 130, 25, 4, TFT_WHITE);
@@ -34,13 +28,25 @@ Info_W::Info_W(lcdUI* UI):
             _UI->tft.drawString("E" + String(i), 138+138*i, 52);
         }
     }
+    _UI->tft.fillRoundRect(0, 73, 66, 25, 4, TFT_NAVY);
+    _UI->tft.setTextColor(TFT_WHITE);
+    _UI->tft.drawString("Current", 33, 85);
+    _UI->tft.fillRoundRect(0, 106, 66, 25, 4, TFT_NAVY);
+    _UI->tft.drawString("Target", 33, 118);
     _UI->tft.drawRoundRect(0, 40, 480, 92, 4, TFT_GREEN);
+
     _UI->tft.drawRoundRect(0, 140, 480, 25, 4, TFT_GREEN);
 
-    _UI->tft.drawRoundRect(0, 173, 480, 89, 4, TFT_GREEN);
-    _UI->tft.drawRoundRect(0, 270, 155, 50, 4, TFT_ORANGE);
-    _UI->tft.drawRoundRect(163, 270, 154, 50, 4, TFT_ORANGE);
-    _UI->tft.drawRoundRect(325, 270, 155, 50, 4, TFT_ORANGE);
+    _UI->tft.drawString("Time:", 40, 202);
+    _UI->tft.drawString("--D --:--:--", 40, 218);
+    _UI->tft.drawString("Estimated time:", 440, 202);
+    _UI->tft.drawString("--D --:--:--", 440, 218);
+    _UI->tft.drawRoundRect(0, 173, 480, 75, 4, TFT_GREEN);
+
+    _UI->tft.drawBmpSPIFFS("/spiffs/SDcard_64.bmp", 45, 256);
+    _UI->tft.drawRoundRect(0, 256, 155, 64, 4, TFT_ORANGE);
+    _UI->tft.drawRoundRect(163, 256, 154, 64, 4, TFT_ORANGE);
+    _UI->tft.drawRoundRect(325, 256, 155, 64, 4, TFT_ORANGE);
 }
 
 void Info_W::update(uint32_t deltaTime)
