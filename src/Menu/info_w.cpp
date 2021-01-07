@@ -48,7 +48,7 @@ Info_W::Info_W(lcdUI* UI):
     _UI->tft.drawRoundRect(0, 256, 155, 64, 4, TFT_ORANGE);
     _UI->tft.drawBmpSPIFFS("/spiffs/move_48.bmp", 216, 264);
     _UI->tft.drawRoundRect(163, 256, 154, 64, 4, TFT_ORANGE);
-    _UI->tft.drawBmpSPIFFS("/spiffs/settings_48.bmp", 379, 264);
+    _UI->tft.drawBmpSPIFFS("/spiffs/settings_48.bmp", 378, 264);
     _UI->tft.drawRoundRect(325, 256, 155, 64, 4, TFT_ORANGE);
 }
 

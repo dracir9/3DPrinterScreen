@@ -498,10 +498,10 @@ void GcodePreview_Scr::drawInfo(tftLCD *tft)
         uint8_t hours = printTime/3600 % 24;
         uint16_t days = printTime/86400;
         txt = "";
-        if (days > 0) txt += String(days) + " d, ";
-        if (hours > 0) txt += String(hours) + " h, ";
-        if (minutes > 0) txt += String(minutes) + " min, ";
-        txt += String(seconds) + " s";
+        if (days > 0) txt += String(days) + "d ";
+        if (hours > 0) txt += String(hours) + "h ";
+        if (minutes > 0) txt += String(minutes) + "min ";
+        txt += String(seconds) + "s";
         tft->drawString(txt, 335, 111);
         displayed++;
     }
