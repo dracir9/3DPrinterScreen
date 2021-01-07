@@ -216,14 +216,13 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
     }
     
     // Folder path names
-    char tmp[17];
     uint8_t k;
     uint8_t idx = path.length()-1;
     tft->setTextFont(2);
     tft->setTextPadding(0);
     tft->setTextDatum(CC_DATUM);
     
-    for (uint8_t i = 5; i > 0; i--) // For each of the last 3 folders
+    for (uint8_t i = 5; i > 0; i--) // For each of the last 5 folders
     {
         if (i <= fileDepth)
         {
@@ -238,25 +237,17 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
 
             std::string folderName = path.substr(idx+2, len);
 
-            uint8_t lines = tft->textWidth(folderName.c_str())/84;
+            uint8_t lines = tft->textWidth(folderName.c_str())/80;
             
             for (k = 0; k < 4; k++)
             {
-                uint8_t charN = 15;
-                strncpy(tmp, &folderName[cnt], 16);
-                tmp[16] = '\0';
-                
-                while (tft->textWidth(tmp) > 84)
-                {
-                    tmp[charN--] = '\0';
-                }
-                
-                char *p = strchr(tmp, '/');
-                if (p) *p = '\0';
+                uint8_t charN = 28;
+                while (tft->textWidth(folderName.substr(cnt, charN).c_str()) > 80)
+                    charN--;
 
-                tft->drawString(tmp, 7 + 86*i, 25 - 8*lines + 16*k);
+                tft->drawString(folderName.substr(cnt, charN).c_str(), 7 + 86*i, 25 - 8*lines + 16*k);
 
-                cnt += charN + 1;
+                cnt += charN;
                 if (cnt > len) break; // All characters read
             }
         }
