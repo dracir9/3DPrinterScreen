@@ -69,7 +69,7 @@ void FileBrowser_Scr::updatePath(const std::string &newPath, const bool relative
         size_t dot = newPath.find("/..");
         if (dot == -1)
         {
-            path += "/" + std::string(newPath);
+            path += "/" + newPath;
         } 
         else
         {
@@ -81,7 +81,7 @@ void FileBrowser_Scr::updatePath(const std::string &newPath, const bool relative
                 return;
             }
 
-            for (uint8_t i = 0; i < (newPath[dot]-'0'); i++)
+            for (uint8_t i = newPath[dot]-'0'; i > 0; i--)
             {
                 if (path.compare("/sdcard") == 0) break;
                 path.erase(slash);
@@ -105,9 +105,10 @@ void FileBrowser_Scr::handleTouch(const touchEvent event, const Vec2h pos)
         if (pos.y < 50)
         {
             if (pos.x < 50) updatePath("/sdcard", false);       // Return Home
-            for (uint8_t i = 0, k = fileDepth > 4? 4 : fileDepth; i < fileDepth && i < 4; i++, k--)
+            uint8_t k = 1;
+            for (uint8_t i = fileDepth > 5? 5 : fileDepth; i > 0; i--)
             {
-                if (pos.x >= 50 + 70*i && pos.x < 120 + 70*i)
+                if (pos.x >= 86*i-36 && pos.x < 50 + 86*i)
                 {
                     switch (k)
                     {
@@ -126,8 +127,13 @@ void FileBrowser_Scr::handleTouch(const touchEvent event, const Vec2h pos)
                     case 4:
                         updatePath("/..3", true);
                         break;
+
+                    case 5:
+                        updatePath("/..4", true);
+                        break;
                     }
                 }
+                k++;
             }
         }
         else if (pos.y < 250)
@@ -208,20 +214,6 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
         tft->drawBmpSPIFFS("/spiffs/arrowR_48.bmp", 397, 268);
         tft->drawRoundRect(362, 256, 118, 64, 4, TFT_ORANGE);
     }
-
-    // Folder path
-    for (uint8_t i = 0; i < 4; i++)
-    {
-        if (i < fileDepth)
-        {
-            tft->fillRect(51 + 70*i, 1, 68, 48, TFT_BLACK);
-            tft->drawRoundRect(50 + 70*i, 0, 70, 50, 4, TFT_ORANGE);
-        }
-        else
-        {
-            tft->fillRect(50 + 70*i, 0, 70, 50, TFT_BLACK);
-        }
-    }
     
     // Folder path names
     char tmp[17];
@@ -231,37 +223,46 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
     tft->setTextPadding(0);
     tft->setTextDatum(CC_DATUM);
     
-    for (uint8_t i = fileDepth > 4? 4 : fileDepth; i > 0; i--) // For each of the last 3 folders
+    for (uint8_t i = 5; i > 0; i--) // For each of the last 3 folders
     {
-        uint8_t cnt = 0, len = 0;
-        for (uint8_t j = idx; j > 0; j--)
+        if (i <= fileDepth)
         {
-            if (path[idx--] == '/') break;
-            len++;
-        }
-
-        std::string folderName = path.substr(idx+2, len);
-
-        uint8_t lines = tft->textWidth(folderName.c_str())/68;
-        
-        for (k = 0; k < 4; k++)
-        {
-            uint8_t charN = 15;
-            strncpy(tmp, &folderName[cnt], 16);
-            tmp[16] = '\0';
-            
-            while (tft->textWidth(tmp) > 68)
+            tft->fillRect(86*i - 35, 1, 84, 48, TFT_BLACK);
+            tft->drawRoundRect(86*i - 36, 0, 86, 50, 4, TFT_ORANGE);
+            uint8_t cnt = 0, len = 0;
+            for (uint8_t j = idx; j > 0; j--)
             {
-                tmp[charN--] = '\0';
+                if (path[idx--] == '/') break;
+                len++;
             }
+
+            std::string folderName = path.substr(idx+2, len);
+
+            uint8_t lines = tft->textWidth(folderName.c_str())/84;
             
-            char *p = strchr(tmp, '/');
-            if (p) *p = '\0';
+            for (k = 0; k < 4; k++)
+            {
+                uint8_t charN = 15;
+                strncpy(tmp, &folderName[cnt], 16);
+                tmp[16] = '\0';
+                
+                while (tft->textWidth(tmp) > 84)
+                {
+                    tmp[charN--] = '\0';
+                }
+                
+                char *p = strchr(tmp, '/');
+                if (p) *p = '\0';
 
-            tft->drawString(tmp, 15 + 70*i, 25 - 8*lines + 16*k);
+                tft->drawString(tmp, 7 + 86*i, 25 - 8*lines + 16*k);
 
-            cnt += charN + 1;
-            if (cnt > len) break; // All characters read
+                cnt += charN + 1;
+                if (cnt > len) break; // All characters read
+            }
+        }
+        else
+        {
+            tft->fillRect(86*i - 36, 0, 86, 50, TFT_BLACK);
         }
     }
     
