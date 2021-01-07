@@ -5,12 +5,21 @@ FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI):
     Screen(UI)
 {
     _UI->tft.fillScreen(TFT_BLACK);
-    _UI->tft.drawRect(0, 0, 480, 70, TFT_RED);
+    //_UI->tft.drawRect(0, 0, 480, 70, TFT_RED);
     
-    _UI->tft.setTextDatum(CC_DATUM);
+    /* _UI->tft.setTextDatum(CC_DATUM);
     _UI->tft.setTextFont(4);
     _UI->tft.drawString("SD card", 240, 35);
-    _UI->tft.setTextFont(2);
+    _UI->tft.setTextFont(2); */
+
+    // SD Home
+    _UI->tft.drawRoundRect(0, 0, 50, 50, 4, TFT_ORANGE);
+    _UI->tft.drawBmpSPIFFS("/spiffs/home_24.bmp", 13, 13);
+
+    _UI->tft.drawBmpSPIFFS("/spiffs/return_64.bmp", 45, 264);
+    _UI->tft.drawRoundRect(0, 256, 155, 64, 4, TFT_ORANGE);
+    _UI->tft.drawRoundRect(163, 256, 154, 64, 4, TFT_ORANGE);
+    _UI->tft.drawRoundRect(325, 256, 155, 64, 4, TFT_ORANGE);
 }
 
 void FileBrowser_Scr::update(const uint32_t deltaTime)
@@ -94,7 +103,7 @@ void FileBrowser_Scr::handleTouch(const touchEvent event, const Vec2h pos)
 {
     if (event == press)
     {
-        if (pos.y >= 70 && pos.y < 120)
+        if (pos.y < 50)
         {
             if (pos.x < 50) updatePath("/sdcard", false);       // Return Home
             for (uint8_t i = 0, k = fileDepth > 4? 4 : fileDepth; i < fileDepth && i < 4; i++, k--)
@@ -127,14 +136,21 @@ void FileBrowser_Scr::handleTouch(const touchEvent event, const Vec2h pos)
             if (pos.x >= 330 && pos.x < 380 && filePage > 0) filePage--;
             else if (pos.x >= 430 && filePage < numFilePages-1) filePage++;
         }
-        else if (pos.y >= 120)
+        else if (pos.y < 250)
         {
-            uint8_t idx = (pos.y - 120) / 50;
+            uint8_t idx = (pos.y - 50) / 50;
             if (pos.x >= 240) idx += 4;
             ESP_LOGV("Touch", "IDX: %d", idx);
             if ((isDir & (1 << idx)) > 0) updatePath(dirList[idx], true);
             else if (isGcode(dirList[idx]))
                 sendFile(dirList[idx]);
+        }
+        else
+        {
+            if (pos.x < 160)
+            {
+                _UI->setScreen(lcdUI::Info);
+            }
         }
     }
 }
@@ -177,37 +193,33 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
     // Draw controls
     // Page +
     if (pageLoaded == 0)
-        tft->fillRect(330, 70, 50, 50, TFT_BLACK);
+        tft->fillRect(330, 0, 50, 50, TFT_BLACK);
     else
     {
-        tft->drawBmpSPIFFS("/spiffs/arrowL_32.bmp", 335, 82);
-        tft->drawRect(330, 70, 42, 50, TFT_CYAN);
+        tft->drawBmpSPIFFS("/spiffs/arrowL_32.bmp", 335, 12);
+        tft->drawRoundRect(330, 0, 42, 50, 4, TFT_CYAN);
     }
 
     // Page -
     if (pageLoaded == numFilePages-1)
-        tft->fillRect(430, 70, 50, 50, TFT_BLACK);
+        tft->fillRect(430, 0, 50, 50, TFT_BLACK);
     else
     {
-        tft->drawBmpSPIFFS("/spiffs/arrowR_32.bmp", 443, 82);
-        tft->drawRect(438, 70, 42, 50, TFT_CYAN);
+        tft->drawBmpSPIFFS("/spiffs/arrowR_32.bmp", 443, 12);
+        tft->drawRoundRect(438, 0, 42, 50, 4, TFT_CYAN);
     }
-
-    // SD Home
-    tft->drawRect(0, 70, 50, 50, TFT_ORANGE);
-    tft->drawBmpSPIFFS("/spiffs/home_24.bmp", 13, 83);
 
     // Folder path
     for (uint8_t i = 0; i < 4; i++)
     {
         if (i < fileDepth)
         {
-            tft->drawRect(50 + 70*i, 70, 70, 50, TFT_ORANGE);
-            tft->fillRect(51 + 70*i, 71, 68, 48, TFT_BLACK);
+            tft->fillRect(51 + 70*i, 1, 68, 48, TFT_BLACK);
+            tft->drawRoundRect(50 + 70*i, 0, 70, 50, 4, TFT_ORANGE);
         }
         else
         {
-            tft->fillRect(50 + 70*i, 70, 70, 50, TFT_BLACK);
+            tft->fillRect(50 + 70*i, 0, 70, 50, TFT_BLACK);
         }
     }
     
@@ -216,7 +228,7 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
     uint8_t k;
     uint8_t idx = path.length()-1;
     tft->setTextFont(2);
-    tft->setTextPadding(68);
+    tft->setTextPadding(0);
     tft->setTextDatum(CC_DATUM);
     
     for (uint8_t i = fileDepth > 4? 4 : fileDepth; i > 0; i--) // For each of the last 3 folders
@@ -246,7 +258,7 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
             char *p = strchr(tmp, '/');
             if (p) *p = '\0';
 
-            tft->drawString(tmp, 15 + 70*i, 95 - 8*lines + 16*k);
+            tft->drawString(tmp, 15 + 70*i, 25 - 8*lines + 16*k);
 
             cnt += charN + 1;
             if (cnt > len) break; // All characters read
@@ -254,9 +266,9 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
     }
     
     tft->setTextPadding(48);
-    tft->drawString("Page", 405, 87);
+    tft->drawString("Page", 405, 17);
     sprintf(tmp, "%d of %d", pageLoaded+1, numFilePages);
-    tft->drawString(tmp, 405, 103);
+    tft->drawString(tmp, 405, 33);
 
     // Draw file table
     tft->setTextDatum(CL_DATUM);
@@ -267,21 +279,21 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
         {
             if (dirList[k].length() == 0)
             {
-                tft->fillRect(240*i, 120 + 50*j, 240, 50, TFT_BLACK);   // Clear unused slots
+                tft->fillRect(241*i, 51 + 50*j, 239, 48, TFT_BLACK);   // Clear unused slots
                 k++;
                 continue;
             }
-            tft->drawRect(240*i, 120 + 50*j, 240, 50, TFT_OLIVE);       // Draw grid
+            tft->drawRoundRect(241*i, 51 + 50*j, 239, 48, 4, TFT_OLIVE);       // Draw grid
             tft->setTextPadding(202);                                   // Set pading to clear old text
      
-            tft->drawString(String(dirList[k].substr(0, 25).c_str()), 10 + 240*i, 145 + 50*j);          // Write file name
+            tft->drawString(String(dirList[k].substr(0, 25).c_str()), 10 + 240*i, 75 + 50*j);          // Write file name
 
             if ((isDir & 1<<k) > 0)
-                tft->drawBmpSPIFFS("/spiffs/folder_24.bmp", 212 + 240*i, 133 + 50*j);   // Draw folder icon
+                tft->drawBmpSPIFFS("/spiffs/folder_24.bmp", 212 + 240*i, 63 + 50*j);   // Draw folder icon
             else if (isGcode(dirList[k]))
-                tft->drawBmpSPIFFS("/spiffs/gcode_24.bmp", 212 + 240*i, 133 + 50*j);    // Draw gcode icon
+                tft->drawBmpSPIFFS("/spiffs/gcode_24.bmp", 212 + 240*i, 63 + 50*j);    // Draw gcode icon
             else
-                tft->drawBmpSPIFFS("/spiffs/file_24.bmp", 212 + 240*i, 133 + 50*j);     // Draw file icon
+                tft->drawBmpSPIFFS("/spiffs/file_24.bmp", 212 + 240*i, 63 + 50*j);     // Draw file icon
             k++;
         }
     }
