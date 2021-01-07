@@ -5,10 +5,10 @@ GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI):
     Screen(UI)
 {
     _UI->tft.fillScreen(TFT_BLACK);
-    _UI->tft.drawRect(0, 0, 320, 320, TFT_GREEN);
-    _UI->tft.drawRect(320, 0, 160, 50, TFT_BLUE);
-    _UI->tft.fillRect(320, 220, 160, 50, 0x0AE0);
-    _UI->tft.drawRect(320, 270, 160, 50, TFT_ORANGE);
+    _UI->tft.drawRoundRect(0, 0, 320, 320, 4, TFT_GREEN);
+    _UI->tft.drawRoundRect(320, 0, 160, 50, 4, TFT_BLUE);
+    _UI->tft.fillRoundRect(320, 220, 160, 50, 4, 0x0AE0);
+    _UI->tft.drawRoundRect(320, 270, 160, 50, 4, TFT_ORANGE);
     _UI->tft.setTextFont(2);
     _UI->tft.setTextSize(1);
     _UI->tft.setTextDatum(CC_DATUM);
@@ -16,8 +16,8 @@ GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI):
     _UI->tft.drawString("Info", 400, 25);
     _UI->tft.setTextColor(TFT_WHITE, 0x0AE0);
     _UI->tft.drawString("Start!", 400, 245);
-    _UI->tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    _UI->tft.drawString("Return", 400, 295);
+    _UI->tft.setTextColor(TFT_WHITE);
+    _UI->tft.drawBmpSPIFFS("/spiffs/return_48.bmp", 376, 277);
 }
 
 GcodePreview_Scr::~GcodePreview_Scr()
