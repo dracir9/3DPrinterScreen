@@ -47,7 +47,7 @@ void setup(void)
         esp_restart();
     }
 
-    UI.setScreen(UI.FileBrowser);
+    UI.setScreen(UI.Info);
 
     prevHeap = ESP.getFreeHeap();
     ESP_LOGD(__FILE__, "Free end setup: %d", prevHeap);

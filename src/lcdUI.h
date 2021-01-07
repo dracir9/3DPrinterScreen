@@ -25,7 +25,7 @@ public:
     enum menu : uint8_t
     {
         black=0,
-        info,
+        Info,
         main,
         settings,
         FileBrowser,
