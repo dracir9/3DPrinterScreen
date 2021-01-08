@@ -218,6 +218,7 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
     // Folder path names
     uint8_t k;
     uint8_t idx = path.length()-1;
+    tft->setTextColor(TFT_WHITE, TFT_BLACK);
     tft->setTextFont(2);
     tft->setTextPadding(0);
     tft->setTextDatum(CC_DATUM);
@@ -263,6 +264,7 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
 
     // Draw file table
     tft->setTextDatum(CL_DATUM);
+    tft->setTextPadding(202);                                   // Set pading to clear old text
     k = 0;
     for (uint8_t i = 0; i < 2; i++)
     {
@@ -275,9 +277,8 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
                 continue;
             }
             tft->drawRoundRect(241*i, 51 + 50*j, 239, 48, 4, TFT_OLIVE);       // Draw grid
-            tft->setTextPadding(202);                                   // Set pading to clear old text
      
-            tft->drawString(String(dirList[k].substr(0, 25).c_str()), 10 + 240*i, 75 + 50*j);          // Write file name
+            tft->drawString(dirList[k].substr(0, 25).c_str(), 10 + 240*i, 75 + 50*j);  // Write file name
 
             if ((isDir & 1<<k) > 0)
                 tft->drawBmpSPIFFS("/spiffs/folder_24.bmp", 212 + 240*i, 63 + 50*j);   // Draw folder icon
