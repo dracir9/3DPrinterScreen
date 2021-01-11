@@ -8,7 +8,7 @@
 class FileBrowser_Scr final: public Screen
 {
 public:
-    FileBrowser_Scr(lcdUI* UI);
+    FileBrowser_Scr(lcdUI* UI, tftLCD* tft);
 
     void update(const uint32_t deltaTime) override;
 

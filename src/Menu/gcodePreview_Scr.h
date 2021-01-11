@@ -9,7 +9,7 @@
 class GcodePreview_Scr final : public Screen
 {
 public:
-    GcodePreview_Scr(lcdUI* UI);
+    GcodePreview_Scr(lcdUI* UI, tftLCD* tft);
     ~GcodePreview_Scr();
 
     void update(const uint32_t deltaTime) override;

@@ -1,24 +1,24 @@
 
 #include "fileBrowser_Scr.h"
 
-FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI):
+FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI, tftLCD* tft):
     Screen(UI)
 {
-    _UI->tft.fillScreen(TFT_BLACK);
-    /* _UI->tft.drawRect(0, 0, 480, 70, TFT_RED);
+    tft->fillScreen(TFT_BLACK);
+    /* tft->drawRect(0, 0, 480, 70, TFT_RED);
     
-    _UI->tft.setTextDatum(CC_DATUM);
-    _UI->tft.setTextFont(4);
-    _UI->tft.drawString("SD card", 240, 35);
-    _UI->tft.setTextFont(2); */
+    tft->setTextDatum(CC_DATUM);
+    tft->setTextFont(4);
+    tft->drawString("SD card", 240, 35);
+    tft->setTextFont(2); */
 
     // SD Home
-    _UI->tft.drawRoundRect(0, 0, 50, 50, 4, TFT_ORANGE);
-    _UI->tft.drawBmpSPIFFS("/spiffs/home_24.bmp", 13, 13);
+    tft->drawRoundRect(0, 0, 50, 50, 4, TFT_ORANGE);
+    tft->drawBmpSPIFFS("/spiffs/home_24.bmp", 13, 13);
 
-    _UI->tft.drawBmpSPIFFS("/spiffs/return_48.bmp", 53, 272);
-    _UI->tft.drawRoundRect(0, 256, 155, 64, 4, TFT_ORANGE);
-    _UI->tft.drawRoundRect(288, 256, 66, 64, 4, TFT_CYAN);
+    tft->drawBmpSPIFFS("/spiffs/return_48.bmp", 53, 272);
+    tft->drawRoundRect(0, 256, 155, 64, 4, TFT_ORANGE);
+    tft->drawRoundRect(288, 256, 66, 64, 4, TFT_CYAN);
 }
 
 void FileBrowser_Scr::update(const uint32_t deltaTime)

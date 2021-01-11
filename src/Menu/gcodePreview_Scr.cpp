@@ -1,22 +1,22 @@
 
 #include "gcodePreview_Scr.h"
 
-GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI):
+GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI, tftLCD* tft):
     Screen(UI)
 {
-    _UI->tft.fillScreen(TFT_BLACK);
-    _UI->tft.drawRoundRect(0, 0, 320, 320, 4, TFT_GREEN);
-    _UI->tft.drawRoundRect(320, 0, 160, 50, 4, TFT_BLUE);
-    _UI->tft.fillRoundRect(320, 220, 160, 50, 4, 0x0AE0);
-    _UI->tft.drawRoundRect(320, 270, 160, 50, 4, TFT_ORANGE);
-    _UI->tft.setTextFont(2);
-    _UI->tft.setTextSize(1);
-    _UI->tft.setTextDatum(CC_DATUM);
-    _UI->tft.setTextPadding(0);
-    _UI->tft.drawString("Info", 400, 25);
-    _UI->tft.setTextColor(TFT_WHITE);
-    _UI->tft.drawString("Start!", 400, 245);
-    _UI->tft.drawBmpSPIFFS("/spiffs/return_48.bmp", 376, 277);
+    tft->fillScreen(TFT_BLACK);
+    tft->drawRoundRect(0, 0, 320, 320, 4, TFT_GREEN);
+    tft->drawRoundRect(320, 0, 160, 50, 4, TFT_BLUE);
+    tft->fillRoundRect(320, 220, 160, 50, 4, 0x0AE0);
+    tft->drawRoundRect(320, 270, 160, 50, 4, TFT_ORANGE);
+    tft->setTextFont(2);
+    tft->setTextSize(1);
+    tft->setTextDatum(CC_DATUM);
+    tft->setTextPadding(0);
+    tft->drawString("Info", 400, 25);
+    tft->setTextColor(TFT_WHITE);
+    tft->drawString("Start!", 400, 245);
+    tft->drawBmpSPIFFS("/spiffs/return_48.bmp", 376, 277);
 }
 
 GcodePreview_Scr::~GcodePreview_Scr()

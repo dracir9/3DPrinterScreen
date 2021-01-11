@@ -9,10 +9,9 @@ void renderUITask(void* arg)
     TickType_t xLastWakeTime;
     const TickType_t xFrameTime = UI? UI->frameTime : 200;
 
-    while ( UI )
+    while (UI && UI->updateDisplay())
     {
         xLastWakeTime = xTaskGetTickCount();
-        UI->updateDisplay();
         vTaskDelayUntil(&xLastWakeTime, xFrameTime);
     }
     vTaskDelete(NULL);
@@ -24,9 +23,8 @@ void handleTouchTask(void* arg)
     fflush(stdout);
     lcdUI* UI = (lcdUI*)arg;
 
-    while ( UI )
+    while (UI && UI->processTouch())
     {
-        UI->processTouch();
         vTaskDelay(pdMS_TO_TICKS(50));
     }
     vTaskDelete(NULL);
@@ -159,22 +157,22 @@ bool lcdUI::updateObjects()
     switch (newMenuID)
     {
         case menu::black:
-            base = new Black_W(this);
+            base = new Black_W(this, &tft);
             break;
         case menu::Info:
-            base = new Info_W(this);
+            base = new Info_W(this, &tft);
             break;
         case menu::main:
             break;
         case menu::FileBrowser:
-            base = new FileBrowser_Scr(this);
+            base = new FileBrowser_Scr(this, &tft);
             break;
         case menu::settings:
             break;
         case menu::control:
             break;
         case menu::GcodePreview:
-            base = new GcodePreview_Scr(this);
+            base = new GcodePreview_Scr(this, &tft);
             break;
         default:
             base = nullptr;

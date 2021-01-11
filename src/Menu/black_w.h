@@ -7,7 +7,7 @@
 class Black_W final: public Screen
 {
 public:
-    Black_W(lcdUI* UI);
+    Black_W(lcdUI* UI, tftLCD* tft);
 
     void update(uint32_t deltaTime) override;
     void render(tftLCD *tft) override;

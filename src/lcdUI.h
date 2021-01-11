@@ -52,12 +52,11 @@ public:
     friend void renderUITask(void* arg);
     friend void handleTouchTask(void* arg);
     friend void loop();
-    
-    tftLCD tft;
 
     std::string selectedFile;
 
 private:
+    tftLCD tft;
     Screen* base = nullptr;
     TouchScreen ts = TouchScreen(TOUCH_PIN_XP, TOUCH_PIN_YP, TOUCH_PIN_XM, TOUCH_PIN_YM, 300);
 

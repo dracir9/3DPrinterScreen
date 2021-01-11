@@ -1,55 +1,55 @@
 
 #include "info_w.h"
 
-Info_W::Info_W(lcdUI* UI):
+Info_W::Info_W(lcdUI* UI, tftLCD* tft):
     Screen(UI)
 {
-    _UI->tft.fillScreen(TFT_BLACK);
-    _UI->tft.setTextFont(2);
-    _UI->tft.setTextSize(1);
-    _UI->tft.setTextPadding(0);
+    tft->fillScreen(TFT_BLACK);
+    tft->setTextFont(2);
+    tft->setTextSize(1);
+    tft->setTextPadding(0);
 
-    _UI->tft.fillRect(0, 0, 480, 32, TFT_RED);
-    _UI->tft.setTextDatum(CC_DATUM);
-    _UI->tft.setTextColor(TFT_WHITE);
-    _UI->tft.drawString("Hello world!", 240, 16);
+    tft->fillRect(0, 0, 480, 32, TFT_RED);
+    tft->setTextDatum(CC_DATUM);
+    tft->setTextColor(TFT_WHITE);
+    tft->drawString("Hello world!", 240, 16);
     
-    _UI->tft.setTextColor(TFT_BLACK);
+    tft->setTextColor(TFT_BLACK);
     for (uint8_t i = 0; i < tools; i++)
     {
-        _UI->tft.fillRoundRect(74 + 138*i, 40, 130, 25, 4, TFT_WHITE);
-        _UI->tft.fillRoundRect(74 + 138*i, 73, 130, 25, 4, TFT_DARKCYAN);
-        _UI->tft.fillRoundRect(74 + 138*i, 106, 130, 25, 4, TFT_DARKCYAN);
+        tft->fillRoundRect(74 + 138*i, 40, 130, 25, 4, TFT_WHITE);
+        tft->fillRoundRect(74 + 138*i, 73, 130, 25, 4, TFT_DARKCYAN);
+        tft->fillRoundRect(74 + 138*i, 106, 130, 25, 4, TFT_DARKCYAN);
         if(i==0)
         {
-            _UI->tft.drawString("HB", 138, 52);
+            tft->drawString("HB", 138, 52);
         }
         else
         {
-            _UI->tft.drawString("E" + String(i), 138+138*i, 52);
+            tft->drawString("E" + String(i), 138+138*i, 52);
         }
     }
-    _UI->tft.fillRoundRect(0, 73, 66, 25, 4, TFT_NAVY);
-    _UI->tft.setTextColor(TFT_WHITE);
-    _UI->tft.drawString("Current", 33, 85);
-    _UI->tft.fillRoundRect(0, 106, 66, 25, 4, TFT_NAVY);
-    _UI->tft.drawString("Target", 33, 118);
-    _UI->tft.drawRoundRect(0, 40, 480, 92, 4, TFT_GREEN);
+    tft->fillRoundRect(0, 73, 66, 25, 4, TFT_NAVY);
+    tft->setTextColor(TFT_WHITE);
+    tft->drawString("Current", 33, 85);
+    tft->fillRoundRect(0, 106, 66, 25, 4, TFT_NAVY);
+    tft->drawString("Target", 33, 118);
+    tft->drawRoundRect(0, 40, 480, 92, 4, TFT_GREEN);
 
-    _UI->tft.drawRoundRect(0, 140, 480, 25, 4, TFT_GREEN);
+    tft->drawRoundRect(0, 140, 480, 25, 4, TFT_GREEN);
 
-    _UI->tft.drawString("Time:", 40, 202);
-    _UI->tft.drawString("--D --:--:--", 40, 218);
-    _UI->tft.drawString("Remaining:", 440, 202);
-    _UI->tft.drawString("--D --:--:--", 440, 218);
-    _UI->tft.drawRoundRect(0, 173, 480, 75, 4, TFT_GREEN);
+    tft->drawString("Time:", 40, 202);
+    tft->drawString("--D --:--:--", 40, 218);
+    tft->drawString("Remaining:", 440, 202);
+    tft->drawString("--D --:--:--", 440, 218);
+    tft->drawRoundRect(0, 173, 480, 75, 4, TFT_GREEN);
 
-    _UI->tft.drawBmpSPIFFS("/spiffs/SDcard_64.bmp", 45, 264);
-    _UI->tft.drawRoundRect(0, 256, 155, 64, 4, TFT_ORANGE);
-    _UI->tft.drawBmpSPIFFS("/spiffs/move_48.bmp", 216, 264);
-    _UI->tft.drawRoundRect(163, 256, 154, 64, 4, TFT_ORANGE);
-    _UI->tft.drawBmpSPIFFS("/spiffs/settings_48.bmp", 378, 264);
-    _UI->tft.drawRoundRect(325, 256, 155, 64, 4, TFT_ORANGE);
+    tft->drawBmpSPIFFS("/spiffs/SDcard_64.bmp", 45, 264);
+    tft->drawRoundRect(0, 256, 155, 64, 4, TFT_ORANGE);
+    tft->drawBmpSPIFFS("/spiffs/move_48.bmp", 216, 264);
+    tft->drawRoundRect(163, 256, 154, 64, 4, TFT_ORANGE);
+    tft->drawBmpSPIFFS("/spiffs/settings_48.bmp", 378, 264);
+    tft->drawRoundRect(325, 256, 155, 64, 4, TFT_ORANGE);
 }
 
 void Info_W::update(uint32_t deltaTime)
