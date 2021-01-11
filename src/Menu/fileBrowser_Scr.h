@@ -8,18 +8,18 @@
 class FileBrowser_Scr final: public Screen
 {
 public:
-    FileBrowser_Scr(lcdUI* UI, tftLCD* tft);
+    FileBrowser_Scr(lcdUI* UI, tftLCD& tft);
 
     void update(const uint32_t deltaTime) override;
 
-    void render(tftLCD *tft) override;
+    void render(tftLCD& tft) override;
 
     void handleTouch(const Screen::touchEvent event, const Vec2h pos) override;
 
 private:
     void printDirectory(File dir, const int numTabs);
     void loadPage();
-    void renderPage(tftLCD *tft);
+    void renderPage(tftLCD& tft);
     bool isPageLoaded();
     void setPageLoaded();
     void updatePath(const std::string &newPath, const bool relativePath);

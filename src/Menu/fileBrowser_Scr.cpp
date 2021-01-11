@@ -1,24 +1,24 @@
 
 #include "fileBrowser_Scr.h"
 
-FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI, tftLCD* tft):
+FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI, tftLCD& tft):
     Screen(UI)
 {
-    tft->fillScreen(TFT_BLACK);
-    /* tft->drawRect(0, 0, 480, 70, TFT_RED);
+    tft.fillScreen(TFT_BLACK);
+    /* tft.drawRect(0, 0, 480, 70, TFT_RED);
     
-    tft->setTextDatum(CC_DATUM);
-    tft->setTextFont(4);
-    tft->drawString("SD card", 240, 35);
-    tft->setTextFont(2); */
+    tft.setTextDatum(CC_DATUM);
+    tft.setTextFont(4);
+    tft.drawString("SD card", 240, 35);
+    tft.setTextFont(2); */
 
     // SD Home
-    tft->drawRoundRect(0, 0, 50, 50, 4, TFT_ORANGE);
-    tft->drawBmpSPIFFS("/spiffs/home_24.bmp", 13, 13);
+    tft.drawRoundRect(0, 0, 50, 50, 4, TFT_ORANGE);
+    tft.drawBmpSPIFFS("/spiffs/home_24.bmp", 13, 13);
 
-    tft->drawBmpSPIFFS("/spiffs/return_48.bmp", 53, 272);
-    tft->drawRoundRect(0, 256, 155, 64, 4, TFT_ORANGE);
-    tft->drawRoundRect(288, 256, 66, 64, 4, TFT_CYAN);
+    tft.drawBmpSPIFFS("/spiffs/return_48.bmp", 53, 272);
+    tft.drawRoundRect(0, 256, 155, 64, 4, TFT_ORANGE);
+    tft.drawRoundRect(288, 256, 66, 64, 4, TFT_CYAN);
 }
 
 void FileBrowser_Scr::update(const uint32_t deltaTime)
@@ -38,7 +38,7 @@ void FileBrowser_Scr::update(const uint32_t deltaTime)
     }
 }
 
-void FileBrowser_Scr::render(tftLCD *tft)
+void FileBrowser_Scr::render(tftLCD& tft)
 {
     if (_UI->checkSD())
     {
@@ -46,8 +46,8 @@ void FileBrowser_Scr::render(tftLCD *tft)
     }
     else
     {
-        tft->setTextDatum(CC_DATUM);
-        tft->drawString("SD not found :(", 240, 195);
+        tft.setTextDatum(CC_DATUM);
+        tft.drawString("SD not found :(", 240, 195);
     }
 }
 
@@ -188,7 +188,7 @@ void FileBrowser_Scr::printDirectory(File dir, int numTabs)
     }
 }
 
-void FileBrowser_Scr::renderPage(tftLCD *tft)
+void FileBrowser_Scr::renderPage(tftLCD& tft)
 {
     if (pageRendered) return;
 
@@ -196,39 +196,39 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
     // Page +
     if (pageLoaded == 0)
     {
-        tft->fillRect(163, 256, 117, 64, TFT_BLACK);
+        tft.fillRect(163, 256, 117, 64, TFT_BLACK);
     }
     else
     {
-        tft->drawBmpSPIFFS("/spiffs/arrowL_48.bmp", 197, 268);
-        tft->drawRoundRect(163, 256, 117, 64, 4, TFT_ORANGE);
+        tft.drawBmpSPIFFS("/spiffs/arrowL_48.bmp", 197, 268);
+        tft.drawRoundRect(163, 256, 117, 64, 4, TFT_ORANGE);
     }
 
     // Page -
     if (pageLoaded == numFilePages-1)
     {
-        tft->fillRect(362, 256, 118, 64, TFT_BLACK);
+        tft.fillRect(362, 256, 118, 64, TFT_BLACK);
     }
     else
     {
-        tft->drawBmpSPIFFS("/spiffs/arrowR_48.bmp", 397, 268);
-        tft->drawRoundRect(362, 256, 118, 64, 4, TFT_ORANGE);
+        tft.drawBmpSPIFFS("/spiffs/arrowR_48.bmp", 397, 268);
+        tft.drawRoundRect(362, 256, 118, 64, 4, TFT_ORANGE);
     }
     
     // Folder path names
     uint8_t k;
     uint8_t idx = path.length()-1;
-    tft->setTextColor(TFT_WHITE, TFT_BLACK);
-    tft->setTextFont(2);
-    tft->setTextPadding(0);
-    tft->setTextDatum(CC_DATUM);
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.setTextFont(2);
+    tft.setTextPadding(0);
+    tft.setTextDatum(CC_DATUM);
     
     for (uint8_t i = 5; i > 0; i--) // For each of the last 5 folders
     {
         if (i <= fileDepth)
         {
-            tft->fillRect(86*i - 35, 1, 84, 48, TFT_BLACK);
-            tft->drawRoundRect(86*i - 36, 0, 86, 50, 4, TFT_ORANGE);
+            tft.fillRect(86*i - 35, 1, 84, 48, TFT_BLACK);
+            tft.drawRoundRect(86*i - 36, 0, 86, 50, 4, TFT_ORANGE);
             uint8_t cnt = 0, len = 0;
             for (uint8_t j = idx; j > 0; j--)
             {
@@ -238,15 +238,15 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
 
             std::string folderName = path.substr(idx+2, len);
 
-            uint8_t lines = tft->textWidth(folderName.c_str())/80;
+            uint8_t lines = tft.textWidth(folderName.c_str())/80;
             
             for (k = 0; k < 4; k++)
             {
                 uint8_t charN = 28;
-                while (tft->textWidth(folderName.substr(cnt, charN).c_str()) > 80)
+                while (tft.textWidth(folderName.substr(cnt, charN).c_str()) > 80)
                     charN--;
 
-                tft->drawString(folderName.substr(cnt, charN).c_str(), 7 + 86*i, 25 - 8*lines + 16*k);
+                tft.drawString(folderName.substr(cnt, charN).c_str(), 7 + 86*i, 25 - 8*lines + 16*k);
 
                 cnt += charN;
                 if (cnt > len) break; // All characters read
@@ -254,17 +254,17 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
         }
         else
         {
-            tft->fillRect(86*i - 36, 0, 86, 50, TFT_BLACK);
+            tft.fillRect(86*i - 36, 0, 86, 50, TFT_BLACK);
         }
     }
     
-    tft->setTextPadding(48);
-    tft->drawString("Page", 321, 280);
-    tft->drawString(String(pageLoaded+1) + " of " + String(numFilePages), 321, 296);
+    tft.setTextPadding(48);
+    tft.drawString("Page", 321, 280);
+    tft.drawString(String(pageLoaded+1) + " of " + String(numFilePages), 321, 296);
 
     // Draw file table
-    tft->setTextDatum(CL_DATUM);
-    tft->setTextPadding(202);                                   // Set pading to clear old text
+    tft.setTextDatum(CL_DATUM);
+    tft.setTextPadding(202);                                   // Set pading to clear old text
     k = 0;
     for (uint8_t i = 0; i < 2; i++)
     {
@@ -272,20 +272,20 @@ void FileBrowser_Scr::renderPage(tftLCD *tft)
         {
             if (dirList[k].length() == 0)
             {
-                tft->fillRect(241*i, 51 + 50*j, 239, 48, TFT_BLACK);   // Clear unused slots
+                tft.fillRect(241*i, 51 + 50*j, 239, 48, TFT_BLACK);   // Clear unused slots
                 k++;
                 continue;
             }
-            tft->drawRoundRect(241*i, 51 + 50*j, 239, 48, 4, TFT_OLIVE);       // Draw grid
+            tft.drawRoundRect(241*i, 51 + 50*j, 239, 48, 4, TFT_OLIVE);       // Draw grid
      
-            tft->drawString(dirList[k].substr(0, 25).c_str(), 10 + 240*i, 75 + 50*j);  // Write file name
+            tft.drawString(dirList[k].substr(0, 25).c_str(), 10 + 240*i, 75 + 50*j);  // Write file name
 
             if ((isDir & 1<<k) > 0)
-                tft->drawBmpSPIFFS("/spiffs/folder_24.bmp", 212 + 240*i, 63 + 50*j);   // Draw folder icon
+                tft.drawBmpSPIFFS("/spiffs/folder_24.bmp", 212 + 240*i, 63 + 50*j);   // Draw folder icon
             else if (isGcode(dirList[k]))
-                tft->drawBmpSPIFFS("/spiffs/gcode_24.bmp", 212 + 240*i, 63 + 50*j);    // Draw gcode icon
+                tft.drawBmpSPIFFS("/spiffs/gcode_24.bmp", 212 + 240*i, 63 + 50*j);    // Draw gcode icon
             else
-                tft->drawBmpSPIFFS("/spiffs/file_24.bmp", 212 + 240*i, 63 + 50*j);     // Draw file icon
+                tft.drawBmpSPIFFS("/spiffs/file_24.bmp", 212 + 240*i, 63 + 50*j);     // Draw file icon
             k++;
         }
     }

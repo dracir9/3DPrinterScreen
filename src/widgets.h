@@ -26,7 +26,7 @@ public:
     Screen(lcdUI* UI);
     virtual ~Screen();
 
-    virtual void render(tftLCD *tft) = 0;
+    virtual void render(tftLCD& tft) = 0;
     virtual void update(const uint32_t deltaTime) = 0;
     virtual void handleTouch(const touchEvent event, const Vec2h pos);
 };

@@ -1,22 +1,22 @@
 
 #include "gcodePreview_Scr.h"
 
-GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI, tftLCD* tft):
+GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI, tftLCD& tft):
     Screen(UI)
 {
-    tft->fillScreen(TFT_BLACK);
-    tft->drawRoundRect(0, 0, 320, 320, 4, TFT_GREEN);
-    tft->drawRoundRect(320, 0, 160, 50, 4, TFT_BLUE);
-    tft->fillRoundRect(320, 220, 160, 50, 4, 0x0AE0);
-    tft->drawRoundRect(320, 270, 160, 50, 4, TFT_ORANGE);
-    tft->setTextFont(2);
-    tft->setTextSize(1);
-    tft->setTextDatum(CC_DATUM);
-    tft->setTextPadding(0);
-    tft->drawString("Info", 400, 25);
-    tft->setTextColor(TFT_WHITE);
-    tft->drawString("Start!", 400, 245);
-    tft->drawBmpSPIFFS("/spiffs/return_48.bmp", 376, 277);
+    tft.fillScreen(TFT_BLACK);
+    tft.drawRoundRect(0, 0, 320, 320, 4, TFT_GREEN);
+    tft.drawRoundRect(320, 0, 160, 50, 4, TFT_BLUE);
+    tft.fillRoundRect(320, 220, 160, 50, 4, 0x0AE0);
+    tft.drawRoundRect(320, 270, 160, 50, 4, TFT_ORANGE);
+    tft.setTextFont(2);
+    tft.setTextSize(1);
+    tft.setTextDatum(CC_DATUM);
+    tft.setTextPadding(0);
+    tft.drawString("Info", 400, 25);
+    tft.setTextColor(TFT_WHITE);
+    tft.drawString("Start!", 400, 245);
+    tft.drawBmpSPIFFS("/spiffs/return_48.bmp", 376, 277);
 }
 
 GcodePreview_Scr::~GcodePreview_Scr()
@@ -225,7 +225,7 @@ bool GcodePreview_Scr::initRender()
     return false;
 }
 
-void GcodePreview_Scr::renderGCode(tftLCD *tft)
+void GcodePreview_Scr::renderGCode(tftLCD& tft)
 {
     switch (readState)
     {
@@ -371,7 +371,7 @@ void GcodePreview_Scr::parseComment(const char* line)
     }
 }
 
-void GcodePreview_Scr::drawLineZbuf(tftLCD *tft, Vec3 u, Vec3 v, const uint32_t color)
+void GcodePreview_Scr::drawLineZbuf(tftLCD& tft, Vec3 u, Vec3 v, const uint32_t color)
 {
     // Other
     int32_t dx = abs(v.x - u.x),
@@ -421,7 +421,7 @@ void GcodePreview_Scr::drawLineZbuf(tftLCD *tft, Vec3 u, Vec3 v, const uint32_t 
     }
 }
 
-void GcodePreview_Scr::drawPixelZbuf(tftLCD *tft, Vec3 p, const uint32_t color)
+void GcodePreview_Scr::drawPixelZbuf(tftLCD& tft, Vec3 p, const uint32_t color)
 {
     uint32_t i = 0;
     if (p.y >= 160)                                  // Using half screen Zbuffer for reduced memory usage
@@ -443,7 +443,7 @@ void GcodePreview_Scr::drawPixelZbuf(tftLCD *tft, Vec3 p, const uint32_t color)
     if (z < Zbuffer[i])
     {
         Zbuffer[i] = z;
-        tft->drawPixel(p.x, p.y, color);
+        tft.drawPixel(p.x, p.y, color);
     }
 }
 
@@ -452,7 +452,7 @@ void GcodePreview_Scr::update(const uint32_t deltaTime)
     
 }
 
-void GcodePreview_Scr::render(tftLCD *tft)
+void GcodePreview_Scr::render(tftLCD& tft)
 {
     renderGCode(tft);
     drawInfo(tft);
@@ -471,27 +471,27 @@ void GcodePreview_Scr::handleTouch(const touchEvent event, const Vec2h pos)
     }
 }
 
-void GcodePreview_Scr::drawInfo(tftLCD *tft)
+void GcodePreview_Scr::drawInfo(tftLCD& tft)
 {
     if (displayed >= 2) return;
     // Text settings
-    tft->setTextDatum(TL_DATUM);
-    tft->setTextFont(2);
-    tft->setTextSize(1);
-    tft->setTextPadding(0);
+    tft.setTextDatum(TL_DATUM);
+    tft.setTextFont(2);
+    tft.setTextSize(1);
+    tft.setTextPadding(0);
     String txt;
 
     if (filament > 0.0f)
     {
-        tft->drawString("Filament cost: " , 328, 55);
+        tft.drawString("Filament cost: " , 328, 55);
         txt = String(filament, 3) + " m";
-        tft->drawString(txt, 335, 71);
+        tft.drawString(txt, 335, 71);
         displayed++;
     }
 
     if (printTime > 0)
     {
-        tft->drawString("Estimated time: " , 328, 95);
+        tft.drawString("Estimated time: " , 328, 95);
         uint8_t seconds = printTime % 60;
         uint8_t minutes = printTime/60 % 60;
         uint8_t hours = printTime/3600 % 24;
@@ -501,7 +501,7 @@ void GcodePreview_Scr::drawInfo(tftLCD *tft)
         if (hours > 0) txt += String(hours) + "h ";
         if (minutes > 0) txt += String(minutes) + "min ";
         txt += String(seconds) + "s";
-        tft->drawString(txt, 335, 111);
+        tft.drawString(txt, 335, 111);
         displayed++;
     }
 }

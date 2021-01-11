@@ -95,7 +95,7 @@ bool lcdUI::updateDisplay()
     vTaskDelay(2); // Allow some time for other tasks
 
     xSemaphoreTake(SPIMutex, portMAX_DELAY);
-    base->render(&tft);         // Render frame
+    base->render(tft);         // Render frame
     xSemaphoreGive(SPIMutex);
     
     updateTime = esp_timer_get_time()-lastRender;
@@ -157,22 +157,22 @@ bool lcdUI::updateObjects()
     switch (newMenuID)
     {
         case menu::black:
-            base = new Black_W(this, &tft);
+            base = new Black_W(this, tft);
             break;
         case menu::Info:
-            base = new Info_W(this, &tft);
+            base = new Info_W(this, tft);
             break;
         case menu::main:
             break;
         case menu::FileBrowser:
-            base = new FileBrowser_Scr(this, &tft);
+            base = new FileBrowser_Scr(this, tft);
             break;
         case menu::settings:
             break;
         case menu::control:
             break;
         case menu::GcodePreview:
-            base = new GcodePreview_Scr(this, &tft);
+            base = new GcodePreview_Scr(this, tft);
             break;
         default:
             base = nullptr;

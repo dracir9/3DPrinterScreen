@@ -9,12 +9,12 @@
 class GcodePreview_Scr final : public Screen
 {
 public:
-    GcodePreview_Scr(lcdUI* UI, tftLCD* tft);
+    GcodePreview_Scr(lcdUI* UI, tftLCD& tft);
     ~GcodePreview_Scr();
 
     void update(const uint32_t deltaTime) override;
 
-    void render(tftLCD *tft) override;
+    void render(tftLCD& tft) override;
 
     void handleTouch(const touchEvent event, const Vec2h pos) override;
 
@@ -22,11 +22,11 @@ private:
     bool readLine();
     bool processLine();
     bool initRender();
-    void renderGCode(tftLCD *tft);
+    void renderGCode(tftLCD& tft);
     void parseComment(const char* line);
-    void drawLineZbuf(tftLCD *tft, Vec3 u, Vec3 v, const uint32_t color);
-    void drawPixelZbuf(tftLCD *tft, Vec3 p, const uint32_t color);
-    void drawInfo(tftLCD *tft);
+    void drawLineZbuf(tftLCD& tft, Vec3 u, Vec3 v, const uint32_t color);
+    void drawPixelZbuf(tftLCD& tft, Vec3 p, const uint32_t color);
+    void drawInfo(tftLCD& tft);
 
     // SD file variables
     FILE* GcodeFile = nullptr;
