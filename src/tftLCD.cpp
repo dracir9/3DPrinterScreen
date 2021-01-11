@@ -2,6 +2,7 @@
 #include "tftLCD.h"
 #include <pgmspace.h>
 
+#ifdef LOAD_GFXFF
 inline GFXglyph * pgm_read_glyph_ptr(const GFXfont *gfxFont, uint8_t c)
 {
     #ifdef __AVR__
@@ -25,6 +26,7 @@ inline uint8_t * pgm_read_bitmap_ptr(const GFXfont *gfxFont)
         return gfxFont->bitmap;
     #endif //__AVR__
 }
+#endif
 
 /*####################################################
     tft Sprite class
@@ -90,47 +92,9 @@ void tftSprite::printCenter(const char *str)
 /**************************************************************************/
 void tftLCD::drawCharBg(Vec2h pos, uint8_t c, uint16_t color, uint16_t bg, uint8_t size, Vec2h *start, Vec2h dim)
 {
+    #ifdef LOAD_GFXFF
     int16_t minx = 0, miny = 0, maxx = 5, maxy = 8;
-    if(!gfxFont) // 'Classic' built-in font
-    {
-        if((pos.x >= _width)            || // Clip right
-           (pos.y >= _height)           || // Clip bottom
-           ((pos.x + 6 * size - 1) < 0) || // Clip left
-           ((pos.y + 8 * size - 1) < 0))   // Clip top
-            return;
-
-        if(!_cp437 && (c >= 176)) c++; // Handle 'classic' charset behavior
-
-        startWrite();
-        for(int8_t i=0; i<5; i++ )
-        { // Char bitmap = 5 columns
-            uint8_t line = pgm_read_byte(&font[c * 5 + i]);
-            for(int8_t j=0; j<8; j++, line >>= 1)
-            {
-                if(line & 1)
-                {
-                    if(size == 1)
-                        drawPixel(pos.x+i, pos.y+j, color);
-                    else
-                        fillRect(pos.x+i*size, pos.y+j*size, size, size, color);
-                }
-                else if(bg != color)
-                {
-                    if(size == 1)
-                        drawPixel(pos.x+i, pos.y+j, bg);
-                    else
-                        fillRect(pos.x+i*size, pos.y+j*size, size, size, bg);
-                }
-            }
-        }
-        if(bg != color)
-        { // If opaque, draw vertical line for last column
-            if(size == 1) drawFastVLine(pos.x+5, pos.y, 8, bg);
-            else          fillRect(pos.x+5*size, pos.y, size, 8*size, bg);
-        }
-        endWrite();
-    }
-    else
+    if(gfxFont) // 'Classic' built-in font
     { // Custom font
         c -= (uint8_t)pgm_read_byte(&gfxFont->first);
         GFXglyph *glyph  = pgm_read_glyph_ptr(gfxFont, c);
@@ -249,6 +213,46 @@ void tftLCD::drawCharBg(Vec2h pos, uint8_t c, uint16_t color, uint16_t bg, uint8
         endWrite();
         (*start).x = pos.x+xo+maxx;
     } // End classic vs custom font
+    else
+    #endif
+    {
+        if((pos.x >= _width)            || // Clip right
+           (pos.y >= _height)           || // Clip bottom
+           ((pos.x + 6 * size - 1) < 0) || // Clip left
+           ((pos.y + 8 * size - 1) < 0))   // Clip top
+            return;
+
+        if(!_cp437 && (c >= 176)) c++; // Handle 'classic' charset behavior
+
+        startWrite();
+        for(int8_t i=0; i<5; i++ )
+        { // Char bitmap = 5 columns
+            uint8_t line = pgm_read_byte(&font[c * 5 + i]);
+            for(int8_t j=0; j<8; j++, line >>= 1)
+            {
+                if(line & 1)
+                {
+                    if(size == 1)
+                        drawPixel(pos.x+i, pos.y+j, color);
+                    else
+                        fillRect(pos.x+i*size, pos.y+j*size, size, size, color);
+                }
+                else if(bg != color)
+                {
+                    if(size == 1)
+                        drawPixel(pos.x+i, pos.y+j, bg);
+                    else
+                        fillRect(pos.x+i*size, pos.y+j*size, size, size, bg);
+                }
+            }
+        }
+        if(bg != color)
+        { // If opaque, draw vertical line for last column
+            if(size == 1) drawFastVLine(pos.x+5, pos.y, 8, bg);
+            else          fillRect(pos.x+5*size, pos.y, size, 8*size, bg);
+        }
+        endWrite();
+    }   
 }
 
 /**************************************************************************/
@@ -262,21 +266,8 @@ void tftLCD::drawCharBg(Vec2h pos, uint8_t c, uint16_t color, uint16_t bg, uint8
 /**************************************************************************/
 size_t tftLCD::writeBg(uint8_t c, Vec2h *pos, Vec2h dim)
 {
-    if(!gfxFont) 
-    { // 'Classic' built-in font
-        if(c == '\n') {                        // Newline?
-            cursor_x  = 0;                     // Reset x to zero,
-            cursor_y += textsize * 8;        // advance y one line
-        } else if(c != '\r') {                 // Ignore carriage returns
-            if(textwrapX && ((cursor_x + textsize * 6) > _width)) { // Off right?
-                cursor_x  = 0;                 // Reset x to zero,
-                cursor_y += textsize * 8;    // advance y one line
-            }
-            drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize);
-            cursor_x += textsize * 6;          // Advance x one char
-        }
-    }
-    else // Custom font
+    #ifdef LOAD_GFXFF
+    if(gfxFont)
     {
         if(c == '\n')
         {
@@ -304,6 +295,21 @@ size_t tftLCD::writeBg(uint8_t c, Vec2h *pos, Vec2h dim)
                 }
                 cursor_x += (uint8_t)pgm_read_byte(&glyph->xAdvance) * (int16_t)textsize;
             }
+        }
+    }
+    else // Custom font
+    #endif
+    { // 'Classic' built-in font
+        if(c == '\n') {                        // Newline?
+            cursor_x  = 0;                     // Reset x to zero,
+            cursor_y += textsize * 8;        // advance y one line
+        } else if(c != '\r') {                 // Ignore carriage returns
+            if(textwrapX && ((cursor_x + textsize * 6) > _width)) { // Off right?
+                cursor_x  = 0;                 // Reset x to zero,
+                cursor_y += textsize * 8;    // advance y one line
+            }
+            drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize);
+            cursor_x += textsize * 6;          // Advance x one char
         }
     }
     return 1;
@@ -428,6 +434,7 @@ void tftLCD::printBg(const String &str, Vec2h pos, Vector2<uint16_t> dim)
 #if defined(LOAD_GFXFF) || defined(LOAD_GLCD)
 void tftLCD::charBounds(char c, int16_t *x, int16_t *y, int16_t *minx, int16_t *miny, int16_t *maxx, int16_t *maxy)
 {
+    #ifdef LOAD_GFXFF
     if(gfxFont)
     {
         if(c == '\n')
@@ -467,6 +474,7 @@ void tftLCD::charBounds(char c, int16_t *x, int16_t *y, int16_t *minx, int16_t *
 
     }
     else
+    #endif
     { // Default font
 
         if(c == '\n')
@@ -647,14 +655,14 @@ uint32_t SPIFFS_read32(FILE *f) {
 
 void tftLCD::drawBmpSPIFFS(const char *filename, int16_t x, int16_t y)
 {
-    if ((x >= width()) || (y >= height())) return;
+    if ((x >= _width) || (y >= _height)) return;
 
     // Open requested file on SPIFFS
     FILE *bmpFS = fopen(filename, "r");
 
     if (!bmpFS)
     {
-        Serial.print("File not found");
+        ESP_LOGE(__FILE__, "File \"%s\" not found!", filename);
         return;
     }
 
@@ -690,7 +698,7 @@ void tftLCD::drawBmpSPIFFS(const char *filename, int16_t x, int16_t y)
             setSwapBytes(oldSwapBytes);
         }
         else
-            Serial.println("BMP format not recognized.");
+            ESP_LOGE(__FILE__, "BMP format not recognized.");
     }
     fclose(bmpFS);
 }
