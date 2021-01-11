@@ -96,6 +96,7 @@ bool lcdUI::updateDisplay()
 
     xSemaphoreTake(SPIMutex, portMAX_DELAY);
     base->render(tft);         // Render frame
+    screenServer(tft);
     xSemaphoreGive(SPIMutex);
     
     updateTime = esp_timer_get_time()-lastRender;
