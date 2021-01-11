@@ -96,7 +96,7 @@ bool lcdUI::updateDisplay()
 
     xSemaphoreTake(SPIMutex, portMAX_DELAY);
     base->render(tft);         // Render frame
-    screenServer(tft);
+    PRINT_SCR(tft);
     xSemaphoreGive(SPIMutex);
     
     updateTime = esp_timer_get_time()-lastRender;
@@ -207,14 +207,3 @@ bool lcdUI::checkSD() const
 {
     return hasSD;
 }
-
-/**************************************************************************/
-/************************************************************************
-//    @brief  Draw the info screen
-//    @param  Should initialize the screen?
-*/
-/**************************************************************************/
-/* void lcdUI::drawInfo(bool init)
-{
-     
-} */

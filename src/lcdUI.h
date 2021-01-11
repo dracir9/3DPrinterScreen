@@ -11,7 +11,6 @@
 #include "Menu/black_w.h"
 #include "Menu/fileBrowser_Scr.h"
 #include "Menu/gcodePreview_Scr.h"
-#include "Ulitity/screenServer.h"
 
 //**************************************************************************
 //*  lcdUI class
