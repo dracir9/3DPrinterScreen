@@ -6,13 +6,13 @@ void renderUITask(void* arg)
     ESP_LOGD(__FILE__, "Starting render task");
     fflush(stdout);
     lcdUI* UI = (lcdUI*)arg;
-    TickType_t xLastWakeTime;
+    TickType_t xLastWakeTime = xTaskGetTickCount();;
     const TickType_t xFrameTime = UI? UI->frameTime : 200;
 
     while (UI && UI->updateDisplay())
     {
-        xLastWakeTime = xTaskGetTickCount();
         vTaskDelayUntil(&xLastWakeTime, xFrameTime);
+        xLastWakeTime = xTaskGetTickCount();
     }
     vTaskDelete(NULL);
 }

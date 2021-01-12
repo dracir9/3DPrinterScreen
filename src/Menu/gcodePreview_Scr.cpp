@@ -244,7 +244,7 @@ void GcodePreview_Scr::renderGCode(tftLCD& tft)
     {
         eTime = esp_timer_get_time();
         // Start reading
-        while (esp_timer_get_time() - eTime < 33333 && readLine() && readState == 1)
+        while (esp_timer_get_time() - eTime < 35000 && readLine() && readState == 1)
         {
             if (processLine() && draw && nextE > currentE && !(currentPos == nextPos))
             {
