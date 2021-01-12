@@ -2,10 +2,8 @@
 #ifndef UTILITY_H
 #define UTILITY_H
 
-#if CORE_DEBUG_LEVEL >= ARDUHAL_LOG_LEVEL_DEBUG
-#include <Arduino.h>
-#include <TFT_eSPI.h>
-
+#ifdef TIMER_U
+    #include <Arduino.h>
     class Timer
     {
     public:
@@ -28,7 +26,13 @@
 
     #define TIC Timer::tic();
     #define TOC Timer::toc();
+#else
+    #define TIC
+    #define TOC
+#endif
 
+#ifdef SCREEN_SERVER_U
+    #include <TFT_eSPI.h>
     // Based on Bodmer's example sketch
 
     // Reads a screen image off the TFT and send it to a processing client sketch
@@ -99,13 +103,10 @@
          * @param tft TFT_eSPI instance to print
          */
         static void sendParameters(String filename, TFT_eSPI& tft);
-
     };
 
     #define PRINT_SCR(tft) ScreenServer::screenServer(tft);
 #else
-    #define TIC
-    #define TOC
     #define PRINT_SCR(tft)
 #endif
 

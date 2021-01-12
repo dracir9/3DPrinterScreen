@@ -401,10 +401,6 @@ void tftLCD::printBg(const String &str, Vec2h pos, Vector2<uint16_t> dim)
         y += cursor_y;
         //charBounds(str[i], &x, &y, &minx, &miny, &maxx, &maxy);
 
-        #ifdef DEBUG_LINES  // Debugging
-        drawRect(x, y, size.x, size.y, TFT_CYAN); 
-        #endif
-
         if (x < pos.x + dim.x && x+size.x > pos.x && y < pos.y + dim.y && y+size.y > pos.y) // Check for character and rectangle overlap
         {
             if (pos.x+dim.x < x+size.x || i == str.length()-1) end.x = pos.x+dim.x-start.x;

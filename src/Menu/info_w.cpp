@@ -67,10 +67,12 @@ void Info_W::render(tftLCD& tft)
 
     // Draw update
     tft.setTextColor(TFT_WHITE, TFT_DARKCYAN);
-    for (uint8_t i = 0; i < tools; i++)
+    tft.drawString(String(random(50, 70)) + "`C", 139, 85);
+    tft.drawString(String(random(50, 70)) + "`C", 139, 118);
+    for (uint8_t i = 1; i < tools; i++)
     {
-        tft.drawString(String(random(250)) + "`C", 139+138*i, 85);
-        tft.drawString(String(random(70)) + "`C", 139+138*i, 118);
+        tft.drawString(String(random(180, 250)) + "`C", 139+138*i, 85);
+        tft.drawString(String(random(180, 250)) + "`C", 139+138*i, 118);
     }
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     //tft.fillRoundRect(1, 101, tft.width()-2, 23, 4, TFT_BLACK);

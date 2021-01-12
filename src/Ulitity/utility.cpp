@@ -1,7 +1,7 @@
 
 #include "utility.h"
 
-#if CORE_DEBUG_LEVEL >= ARDUHAL_LOG_LEVEL_DEBUG
+#ifdef TIMER_U
     int64_t Timer::startTime;
 
     void Timer::tic()
@@ -15,7 +15,9 @@
         ESP_LOGD("Utility", "\nElapsed time: %lu\n", (unsigned long)eTime);
         return eTime;
     }
+#endif
 
+#ifdef SCREEN_SERVER_U
     bool ScreenServer::screenServer(TFT_eSPI& tft)
     {
         // With no filename the screenshot will be saved with a default name e.g. tft_screen_#.xxx
