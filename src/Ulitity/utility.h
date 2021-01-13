@@ -32,6 +32,9 @@
 #endif
 
 #ifdef SCREEN_SERVER_U
+#if CORE_DEBUG_LEVEL > 3
+    #warning "Debug messages may interfere in the image transfer. Please define CORE_DEBUG_LEVEL to be <= 3"
+#endif
     #include <TFT_eSPI.h>
     // Based on Bodmer's example sketch
 

@@ -4,6 +4,7 @@
 GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI, tftLCD& tft):
     Screen(UI)
 {
+    displayed.set();
     tft.fillScreen(TFT_BLACK);
     tft.drawRoundRect(0, 0, 320, 320, 4, TFT_GREEN);
     tft.drawRoundRect(320, 0, 160, 50, 4, TFT_BLUE);
@@ -360,10 +361,12 @@ void GcodePreview_Scr::parseComment(const char* line)
     else if ((p = strstr(line, "Filament")))
     {
         filament = strtof(&p[15], nullptr);
+        displayed[0] = false;
     }
     else if ((p = strstr(line, "TIME:")))
     {
         printTime = atoi(&p[5]);
+        displayed[1] = false;
     }
     else
     {
@@ -473,7 +476,7 @@ void GcodePreview_Scr::handleTouch(const touchEvent event, const Vec2h pos)
 
 void GcodePreview_Scr::drawInfo(tftLCD& tft)
 {
-    if (displayed >= 2) return;
+    if (displayed.all()) return;
     // Text settings
     tft.setTextDatum(TL_DATUM);
     tft.setTextFont(2);
@@ -481,15 +484,15 @@ void GcodePreview_Scr::drawInfo(tftLCD& tft)
     tft.setTextPadding(0);
     String txt;
 
-    if (filament > 0.0f)
+    if (!displayed[0])
     {
         tft.drawString("Filament cost: " , 328, 55);
         txt = String(filament, 3) + " m";
         tft.drawString(txt, 335, 71);
-        displayed++;
+        displayed[0] = true;
     }
 
-    if (printTime > 0)
+    if (!displayed[1])
     {
         tft.drawString("Estimated time: " , 328, 95);
         uint8_t seconds = printTime % 60;
@@ -502,6 +505,6 @@ void GcodePreview_Scr::drawInfo(tftLCD& tft)
         if (minutes > 0) txt += String(minutes) + "min ";
         txt += String(seconds) + "s";
         tft.drawString(txt, 335, 111);
-        displayed++;
+        displayed[1] = true;
     }
 }

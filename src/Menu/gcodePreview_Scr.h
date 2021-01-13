@@ -3,6 +3,7 @@
 #define GCODEPREVIEW_SCR_H
 
 #include "lcdUI.h"
+#include <bitset>
 #include "parser.h"
 #include "Ulitity/utility.h"
 
@@ -43,7 +44,7 @@ private:
     uint8_t readState = 0;
     uint32_t lines = 0;
     int64_t eTime = 0;
-    uint8_t displayed = 0;
+    std::bitset<2> displayed;
     int32_t printTime = 0;
     float filament = 0.0f;
 

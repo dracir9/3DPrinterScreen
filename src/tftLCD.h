@@ -23,7 +23,7 @@ private:
     tftLCD* operator&() {return this;}
 public:
     tftLCD(const tftLCD&) = delete;
-    void operator=(const tftLCD&) = delete;
+    tftLCD& operator=(const tftLCD&) = delete;
     tftLCD() = default;
     void drawCharBg(Vec2h pos, uint8_t c, uint16_t color, uint16_t bg, uint8_t size, Vec2h *start, Vec2h dim);
     size_t writeBg(uint8_t c, Vec2h *pos, Vec2h dim);
