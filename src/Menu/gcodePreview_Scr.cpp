@@ -50,7 +50,7 @@ bool GcodePreview_Scr::readLine()
             }
             else if (ferror(GcodeFile))
             {
-                ESP_LOGE("GcodePreview_Scr", "Error reading file \"%s\"", _UI->selectedFile.c_str());              
+                ESP_LOGE("GcodePreview_Scr", "Error reading file \"%s\"", _UI->getFile().c_str());              
             }
             bufPos = 0;
         }
@@ -77,7 +77,7 @@ bool GcodePreview_Scr::readLine()
             gCodeLine[i] = readBuffer[bufPos]; // Fill line buffer
     }
 
-    ESP_LOGE("GcodePreview_Scr", "Very long line in file \"%s\". ABORT!", _UI->selectedFile.c_str());
+    ESP_LOGE("GcodePreview_Scr", "Very long line in file \"%s\". ABORT!", _UI->getFile().c_str());
     return false;
 }
 
@@ -212,10 +212,10 @@ bool GcodePreview_Scr::initRender()
     memset(Zbuffer, UINT16_MAX, 320*160*sizeof(uint16_t));
 
     // Open G-Code
-    GcodeFile = fopen(_UI->selectedFile.c_str(), "r");
+    GcodeFile = fopen(_UI->getFile().c_str(), "r");
     if (GcodeFile == NULL)
     {
-        ESP_LOGE("GcodePreview_Scr", "Failed to open file \"%s\"", _UI->selectedFile.c_str());
+        ESP_LOGE("GcodePreview_Scr", "Failed to open file \"%s\"", _UI->getFile().c_str());
         goto init_fail;
     }
 
@@ -303,6 +303,7 @@ void GcodePreview_Scr::renderGCode(tftLCD& tft)
         Zbuffer = nullptr;
 
     default:
+        ESP_LOGE(__FILE__, "Unexpected state reached!");
         readState = 255;
         break;
     }
@@ -468,7 +469,7 @@ void GcodePreview_Scr::handleTouch(const touchEvent event, const Vec2h pos)
         if(pos.y > 270)
         {
             readState = 255;
-            _UI->selectedFile.clear();
+            _UI->clearFile();
             _UI->setScreen(lcdUI::FileBrowser);
         }
     }

@@ -30,7 +30,7 @@ void handleTouchTask(void* arg)
     vTaskDelete(NULL);
 }
 
-bool lcdUI::begin(uint8_t fps)
+bool lcdUI::begin(const uint8_t fps)
 {
     if (booted) return false;
 
@@ -142,7 +142,7 @@ bool lcdUI::processTouch()
     return true;
 }
 
-void lcdUI::setScreen(menu idx)
+void lcdUI::setScreen(const menu idx)
 {
     newMenuID = idx;
 }
@@ -206,4 +206,13 @@ bool lcdUI::initSD()
 bool lcdUI::checkSD() const
 {
     return hasSD;
+}
+
+bool lcdUI::setFile(const std::string& file)
+{
+    if (access(file.c_str(), F_OK) == 0)
+        selectedFile = file;
+    else
+        return false;
+    return true;
 }

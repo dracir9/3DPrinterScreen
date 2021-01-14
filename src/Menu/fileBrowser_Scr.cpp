@@ -102,7 +102,7 @@ void FileBrowser_Scr::handleTouch(const touchEvent event, const Vec2h pos)
 {
     if (event == press)
     {
-        if (pos.y < 50)
+        if (pos.y < 50) // Navigation bar
         {
             if (pos.x < 50) updatePath("/sdcard", false);       // Return Home
             uint8_t k = 1;
@@ -136,7 +136,7 @@ void FileBrowser_Scr::handleTouch(const touchEvent event, const Vec2h pos)
                 k++;
             }
         }
-        else if (pos.y < 250)
+        else if (pos.y < 250) // Folder content
         {
             uint8_t idx = (pos.y - 50) / 50;
             if (pos.x >= 240) idx += 4;
@@ -145,7 +145,7 @@ void FileBrowser_Scr::handleTouch(const touchEvent event, const Vec2h pos)
             else if (isGcode(dirList[idx]))
                 sendFile(dirList[idx]);
         }
-        else
+        else // Menu buttons
         {
             if (pos.x < 160)
             {
@@ -380,6 +380,6 @@ bool FileBrowser_Scr::isGcode(const std::string &file)
 
 void FileBrowser_Scr::sendFile(const std::string &file)
 {
-    _UI->selectedFile = path + "/" + file;
-    _UI->setScreen(lcdUI::GcodePreview);
+    if (_UI->setFile(path + "/" + file))
+        _UI->setScreen(lcdUI::GcodePreview);
 }
