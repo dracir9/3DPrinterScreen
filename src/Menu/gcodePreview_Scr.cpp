@@ -14,7 +14,7 @@ GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI, tftLCD& tft):
     tft.setTextSize(1);
     tft.setTextDatum(CC_DATUM);
     tft.setTextPadding(0);
-    tft.drawString("Info", 400, 25);
+    tft.drawStringWr(_UI->getFile().substr(_UI->getFile().rfind('/')+1).c_str(), 400, 25, 150, 48);
     tft.setTextColor(TFT_WHITE);
     tft.drawString("Start!", 400, 245);
     tft.drawBmpSPIFFS("/spiffs/return_48.bmp", 376, 277);

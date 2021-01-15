@@ -253,25 +253,25 @@ void FileBrowser_Scr::renderPage(tftLCD& tft)
     uint8_t k = 0;
     for (uint8_t i = 0; i < 2; i++)
     {
-        for (uint8_t j = 0; j < 4; j++)
+        for (uint8_t j = 0; j < 4; j++, k++)
         {
             if (dirList[k].length() == 0)
             {
                 tft.fillRect(241*i, 51 + 50*j, 239, 48, TFT_BLACK);   // Clear unused slots
-                k++;
                 continue;
             }
-            tft.drawRoundRect(241*i, 51 + 50*j, 239, 48, 4, TFT_OLIVE);       // Draw grid
+            tft.fillRect(10 + 240*i, 52 + 50*j, 200, 46, TFT_BLACK);
      
-            tft.drawString(dirList[k].substr(0, 25).c_str(), 10 + 240*i, 75 + 50*j);  // Write file name
+            tft.drawStringWr(dirList[k].c_str(), 10 + 240*i, 75 + 50*j, 200, 48);       // Write file name
 
             if ((isDir & 1<<k) > 0)
-                tft.drawBmpSPIFFS("/spiffs/folder_24.bmp", 212 + 240*i, 63 + 50*j);   // Draw folder icon
+                tft.drawBmpSPIFFS("/spiffs/folder_24.bmp", 212 + 240*i, 63 + 50*j);     // Draw folder icon
             else if (isGcode(dirList[k]))
-                tft.drawBmpSPIFFS("/spiffs/gcode_24.bmp", 212 + 240*i, 63 + 50*j);    // Draw gcode icon
+                tft.drawBmpSPIFFS("/spiffs/gcode_24.bmp", 212 + 240*i, 63 + 50*j);      // Draw gcode icon
             else
-                tft.drawBmpSPIFFS("/spiffs/file_24.bmp", 212 + 240*i, 63 + 50*j);     // Draw file icon
-            k++;
+                tft.drawBmpSPIFFS("/spiffs/file_24.bmp", 212 + 240*i, 63 + 50*j);       // Draw file icon
+            
+            tft.drawRoundRect(241*i, 51 + 50*j, 239, 48, 4, TFT_OLIVE);       // Draw grid
         }
     }
     pageRendered = true;
