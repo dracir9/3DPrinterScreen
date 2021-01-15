@@ -629,6 +629,31 @@ void tftLCD::printCenter(const char *str)
     printCenter(String(str));
 }
 
+void tftLCD::drawStringWr(const char *str, int32_t x, int32_t y, uint16_t w, uint16_t h)
+{
+    const uint16_t cheight = fontHeight();
+    const int16_t lines = min(textWidth(str)/w, h/cheight-1);
+    
+    uint16_t len = strlen(str);
+    uint16_t cnt = 0;
+    const uint16_t maxChar = w/3;
+    char buffer[maxChar+1];
+    for (int16_t i = 0; i <= lines; i++)
+    {
+        uint8_t charN = maxChar;
+        strncpy(buffer, &str[cnt], maxChar);
+        buffer[maxChar] = '\0';
+
+        while (textWidth(buffer) > w)
+            buffer[--charN] = '\0';
+            
+        drawString(buffer, x, y - cheight/2*lines + i*cheight);
+
+        cnt += charN;
+        if (cnt > len) break; // All characters read
+    }
+}
+
 // These read 16- and 32-bit types from the SD card file.
 // BMP data is stored little-endian, Arduino is little-endian too.
 // May need to reverse subscript order if porting elsewhere.

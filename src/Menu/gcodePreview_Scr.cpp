@@ -50,7 +50,8 @@ bool GcodePreview_Scr::readLine()
             }
             else if (ferror(GcodeFile))
             {
-                ESP_LOGE("GcodePreview_Scr", "Error reading file \"%s\"", _UI->getFile().c_str());              
+                ESP_LOGE("GcodePreview_Scr", "Error reading file \"%s\"", _UI->getFile().c_str());
+                return false;
             }
             bufPos = 0;
         }

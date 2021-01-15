@@ -216,41 +216,26 @@ void FileBrowser_Scr::renderPage(tftLCD& tft)
     }
     
     // Folder path names
-    uint8_t k;
-    uint8_t idx = path.length()-1;
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.setTextFont(2);
     tft.setTextPadding(0);
     tft.setTextDatum(CC_DATUM);
-    
+
+    uint8_t idx = path.length()-1;
     for (uint8_t i = 5; i > 0; i--) // For each of the last 5 folders
     {
         if (i <= fileDepth)
         {
             tft.fillRect(86*i - 35, 1, 84, 48, TFT_BLACK);
             tft.drawRoundRect(86*i - 36, 0, 86, 50, 4, TFT_ORANGE);
-            uint8_t cnt = 0, len = 0;
-            for (uint8_t j = idx; j > 0; j--)
+            uint8_t len = 0;
+            for (; idx > 0; idx--, len++)
             {
-                if (path[idx--] == '/') break;
-                len++;
+                if (path[idx] == '/') break;
             }
 
-            std::string folderName = path.substr(idx+2, len);
-
-            uint8_t lines = tft.textWidth(folderName.c_str())/80;
-            
-            for (k = 0; k < 4; k++)
-            {
-                uint8_t charN = 28;
-                while (tft.textWidth(folderName.substr(cnt, charN).c_str()) > 80)
-                    charN--;
-
-                tft.drawString(folderName.substr(cnt, charN).c_str(), 7 + 86*i, 25 - 8*lines + 16*k);
-
-                cnt += charN;
-                if (cnt > len) break; // All characters read
-            }
+            std::string folderName = path.substr(idx-- +1, len);
+            tft.drawStringWr(folderName.c_str(), 7 + 86*i, 25, 80, 48);
         }
         else
         {
@@ -265,7 +250,7 @@ void FileBrowser_Scr::renderPage(tftLCD& tft)
     // Draw file table
     tft.setTextDatum(CL_DATUM);
     tft.setTextPadding(202);                                   // Set pading to clear old text
-    k = 0;
+    uint8_t k = 0;
     for (uint8_t i = 0; i < 2; i++)
     {
         for (uint8_t j = 0; j < 4; j++)
