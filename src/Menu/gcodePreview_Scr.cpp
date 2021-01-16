@@ -5,6 +5,7 @@ GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI, tftLCD& tft):
     Screen(UI)
 {
     displayed.set();
+    maxWorkTime = _UI->getFrameTime()*1000 + 2000;
     tft.fillScreen(TFT_BLACK);
     tft.drawRoundRect(0, 0, 320, 320, 4, TFT_GREEN);
     tft.drawRoundRect(320, 0, 160, 50, 4, TFT_BLUE);
@@ -14,7 +15,7 @@ GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI, tftLCD& tft):
     tft.setTextSize(1);
     tft.setTextDatum(CC_DATUM);
     tft.setTextPadding(0);
-    tft.drawStringWr(_UI->getFile().substr(_UI->getFile().rfind('/')+1).c_str(), 400, 25, 150, 48);
+    tft.drawStringWr(_UI->getFile().substr(_UI->getFile().rfind('/')+1).c_str(), 400, 25, 150, 48); // Display filename
     tft.setTextColor(TFT_WHITE);
     tft.drawString("Start!", 400, 245);
     tft.drawBmpSPIFFS("/spiffs/return_48.bmp", 376, 277);
@@ -246,7 +247,7 @@ void GcodePreview_Scr::renderGCode(tftLCD& tft)
     {
         eTime = esp_timer_get_time();
         // Start reading
-        while (esp_timer_get_time() - eTime < 35000 && readLine() && readState == 1)
+        while (esp_timer_get_time() - eTime < maxWorkTime && readLine() && readState == 1)
         {
             if (processLine() && draw && nextE > currentE && !(currentPos == nextPos))
             {
