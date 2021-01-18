@@ -11,9 +11,23 @@
 
 ## Current features
  - [x] SD card browser
+ - [x] Gcode preview
+ 
+## Screenshots
+#### Main screen
+![info](/images/screenshots/screenshot_2021_1_18_3_1_7.png)
+#### SD card browser
+![browser](/images/screenshots/screenshot_2021_1_15_23_4_5.png)
+![browser](/images/screenshots/screenshot_2021_1_15_23_4_56.png)
+![browser](/images/screenshots/screenshot_2021_1_15_23_4_27.png)
+![browser](/images/screenshots/screenshot_2021_1_15_23_4_46.png)
+#### Gcode preview
+![preview](/images/screenshots/screenshot_2021_1_18_18_55_15.png) Based on [this design](https://www.thingiverse.com/thing:2508515)
+![preview](/images/screenshots/screenshot_2021_1_15_23_5_20.png) Based on [this design](https://www.thingiverse.com/thing:2914080)
+![preview](/images/screenshots/screenshot_2021_1_15_23_6_17.png) Based on [this design](https://www.thingiverse.com/thing:826836)
+![preview](/images/screenshots/screenshot_2021_1_15_23_7_13.png) Based on [this design](https://www.thingiverse.com/thing:1657791)
  
 ## Planned features
- - [ ] Full control through gcodes
  - [ ] Movement, temperature, settings, file selection, etc. menus
  - [ ] SD card printing
  - [ ] WiFi printing
