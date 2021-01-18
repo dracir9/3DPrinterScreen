@@ -37,55 +37,7 @@ GcodePreview_Scr::~GcodePreview_Scr()
 
 bool GcodePreview_Scr::readLine()
 {
-    uint16_t len = 0;
-    char lastCh = '\0';
     bool commentMode = false;
-    commentLine[0] = '\0';
-    do
-    {
-        if (bufPos >= readLen) // Reached end of read buffer
-        {
-            readLen = fread(readBuffer, 1, bufferLen-1, GcodeFile);
-            if (readLen <= 0)
-            {
-                return false;
-            }
-            else if (ferror(GcodeFile))
-            {
-                ESP_LOGE("GcodePreview_Scr", "Error reading file \"%s\"", _UI->getFile().c_str());
-                return false;
-            }
-            readBuffer[readLen] = '\0';
-            bufPos = 0;
-        }
-
-        const char* mark = &readBuffer[bufPos];
-        len = strcspn(mark, ";\r\n");
-        lastCh = mark[len];
-        bufPos += len+1;
-        // if (gLen >= maxLineLen) ...
-        if (commentMode)
-        {
-            strncpy(commentLine, mark, len);
-            commentLine[len] = '\0';
-        }
-        else
-        {
-            strncpy(gCodeLine, mark, len);
-            gCodeLine[len] = '\0';
-        }
-
-        if (lastCh == ';')
-        {
-            commentMode = true;
-            continue;
-        }
-
-    } while (len == 0 || lastCh == '\0');
-    return true;
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*     bool commentMode = false;
     *commentLine = '\0';
     uint8_t j = 0;
     for (int16_t i = 0; i < maxLineLen; i++, bufPos++)
@@ -125,7 +77,7 @@ bool GcodePreview_Scr::readLine()
             commentLine[j++] = readBuffer[bufPos];
         else
             gCodeLine[i] = readBuffer[bufPos]; // Fill line buffer
-    } */
+    }
 
     ESP_LOGE("GcodePreview_Scr", "Very long line in file \"%s\". ABORT!", _UI->getFile().c_str());
     return false;
