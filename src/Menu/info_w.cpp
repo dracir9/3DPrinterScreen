@@ -12,23 +12,22 @@ Info_W::Info_W(lcdUI* UI, tftLCD& tft):
     
     tft.setTextColor(TFT_BLACK);
     uint8_t e = 1;
-    uint8_t f = 1;
     for (uint8_t i = 0; i < items; i++)
     {
-        tft.fillRoundRect(72 + cellAdv*i, 0, cellW, 50, 4, TFT_WHITE);
         tft.fillRoundRect(72 + cellAdv*i, 58, cellW, 25, 4, TFT_DARKCYAN);
         tft.fillRoundRect(72 + cellAdv*i, 91, cellW, 25, 4, TFT_DARKCYAN);
         if (i < heatbed)
         {
-            tft.drawString(String("HB") + (heatbed > 1? String(i+1): ""), 72+cellW/2+cellAdv*i, 25);
+            tft.drawBmpSPIFFS("/spiffs/heatbed_32.bmp", 72+(cellW-32)/2+cellAdv*i, 13);
         }
         else if (i < tools+heatbed)
         {
-            tft.drawString(String("E") + (tools > 1? String(e++): ""), 72+cellW/2+cellAdv*i, 25);
+            tft.drawBmpSPIFFS("/spiffs/extruder_32.bmp", 72+(cellW-32)/2+cellAdv*i, 13);
+            if (tools > 1) tft.drawString(String(e++), 72+cellW/2+cellAdv*i, 22);
         }
         else
         {
-            tft.drawString(String("FAN") + (fans > 1? String(f++): ""), 72+cellW/2+cellAdv*i, 25);
+            tft.drawBmpSPIFFS("/spiffs/fan_32.bmp", 72+(cellW-32)/2+cellAdv*i, 13);
         }
     }
     tft.fillRoundRect(0, 58, 64, 25, 4, TFT_NAVY);
