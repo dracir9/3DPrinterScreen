@@ -48,6 +48,7 @@ private:
     std::bitset<2> displayed;
     int32_t printTime = 0;
     float filament = 0.0f;
+    TFT_eSprite* img;
 
     // Machine state (in um)
     bool draw = false;

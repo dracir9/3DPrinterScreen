@@ -2,7 +2,7 @@
 #include "gcodePreview_Scr.h"
 
 GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI, tftLCD& tft):
-    Screen(UI)
+    Screen(UI), img(&tft.img)
 {
     displayed.set();
     maxWorkTime = _UI->getFrameTime()*1000 + 2000;
@@ -18,6 +18,7 @@ GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI, tftLCD& tft):
     tft.drawStringWr(_UI->getFile().substr(_UI->getFile().rfind('/')+1).c_str(), 400, 25, 150, 48); // Display filename
     tft.setTextColor(TFT_WHITE);
     tft.drawString("Start!", 400, 245);
+    tft.drawString("Loading...", 160, 160);
     tft.drawBmpSPIFFS("/spiffs/return_48.bmp", 376, 277);
 }
 
@@ -221,6 +222,16 @@ bool GcodePreview_Scr::initRender()
         goto init_fail;
     }
 
+    // Create sprite
+    img->setColorDepth(16);
+    if (img->createSprite(320, 320) == NULL)
+    {
+        ESP_LOGE("GcodePreview_Scr", "Failed to create sprite");
+        goto init_fail;
+    }
+    img->fillSprite(TFT_BLACK);
+    img->drawRoundRect(0, 0, 320, 320, 4, TFT_GREEN);
+
     return true;
 
     init_fail:
@@ -292,6 +303,7 @@ void GcodePreview_Scr::renderGCode(tftLCD& tft)
     case 2:
         TOC
         ESP_LOGD(__FILE__, "Total Lines: %d", lines);
+        img->pushSprite(0, 0);
         // Close file
         fclose(GcodeFile);
         free(readBuffer);
@@ -303,6 +315,10 @@ void GcodePreview_Scr::renderGCode(tftLCD& tft)
         gCodeLine = nullptr;
         commentLine = nullptr;
         Zbuffer = nullptr;
+        img->deleteSprite();
+
+        readState = 255;
+        break;
 
     default:
         ESP_LOGE(__FILE__, "Unexpected state reached!");
@@ -449,7 +465,7 @@ void GcodePreview_Scr::drawPixelZbuf(tftLCD& tft, Vec3 p, const uint32_t color)
     if (z < Zbuffer[i])
     {
         Zbuffer[i] = z;
-        tft.drawPixel(p.x, p.y, color);
+        img->drawPixel(p.x, p.y, color);
     }
 }
 

@@ -23,7 +23,7 @@ void handleTouchTask(void* arg)
     fflush(stdout);
     lcdUI* UI = (lcdUI*)arg;
 
-    while (UI && UI->processTouch())
+    while (UI /*&& UI->processTouch()*/)
     {
         vTaskDelay(pdMS_TO_TICKS(50));
     }
@@ -38,8 +38,8 @@ bool lcdUI::begin(const uint8_t fps)
 
     tft.begin();
     tft.setRotation(1);
-
-    ts.enableRestore();
+    uint16_t calibrationData[5] = CALIBRATION;
+    tft.setTouch(calibrationData);
 
     SPIMutex = xSemaphoreCreateMutex();
     if (SPIMutex == NULL)
@@ -98,6 +98,11 @@ bool lcdUI::updateDisplay()
     base->render(tft);         // Render frame
     PRINT_SCR(tft);
     xSemaphoreGive(SPIMutex);
+
+    if (menuID != menu::GcodePreview)
+    {
+        processTouch();
+    }
     
     updateTime = esp_timer_get_time()-lastRender;
 
@@ -111,23 +116,22 @@ bool lcdUI::updateDisplay()
 
 bool lcdUI::processTouch()
 {
-    xSemaphoreTake(SPIMutex, portMAX_DELAY);
-    TSPoint p = ts.getPoint(tft.height(), tft.width());
-    xSemaphoreGive(SPIMutex);
-
+    Vector2<uint16_t> p;
     bool pressed = false;
     Screen::touchEvent event;
-    if (p.z > MIN_PRESSURE && p.z < MAX_PRESSURE)
+
+    xSemaphoreTake(SPIMutex, portMAX_DELAY);
+    if (tft.getTouch(&p.x, &p.y, MIN_PRESSURE))
     {
         pressed = true;
-        Tpos.x = p.y;
-        Tpos.y = tft.height() - p.x;
+        Tpos = p;
     }
+    xSemaphoreGive(SPIMutex);
     
     if (!prevPressed && pressed) event = Screen::press;
     else if (prevPressed && pressed) event = Screen::hold;
     else if (prevPressed && !pressed) event = Screen::relase;
-    else return true;   // Idle touch. "prevPressed" and "pressed" are already equal, is safe to return
+    else return true;   // No touch. "prevPressed" and "pressed" are already equal, is safe to return
 
     prevPressed = pressed;
 
@@ -195,7 +199,7 @@ uint32_t lcdUI::getUpdateTime() const
 
 bool lcdUI::initSD()
 {
-    if (!hasSD && SD.begin(5, SPI, 40000000U, "/sdcard"))
+    if (!hasSD && SD_MMC.begin("/sdcard"))
     {
         ESP_LOGD(__FILE__, "SD Card initialized.");
         hasSD = true;

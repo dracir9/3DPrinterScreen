@@ -3,9 +3,8 @@
 #define LCD_UI_H
 
 #include <Arduino.h>
-#include <TouchScreen.h>
+#include <SD_MMC.h>
 #include "tftLCD.h"
-#include "SD.h"
 #include "widgets.h"
 #include "Menu/info_w.h"
 #include "Menu/black_w.h"
@@ -59,15 +58,14 @@ public:
 private:
     tftLCD tft;
     Screen* base = nullptr;
-    TouchScreen ts = TouchScreen(TOUCH_PIN_XP, TOUCH_PIN_YP, TOUCH_PIN_XM, TOUCH_PIN_YM, 300);
 
     bool booted = false;
     bool hasSD = false;
     bool prevPressed;
 
     uint8_t frameTime = 33;         // Minimum frame time
-    xTaskHandle renderTask;
-    xTaskHandle touchTask;
+    xTaskHandle renderTask = nullptr;
+    xTaskHandle touchTask = nullptr;
     SemaphoreHandle_t SPIMutex;
 
     menu menuID = menu::black;
