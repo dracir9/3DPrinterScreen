@@ -206,13 +206,13 @@ bool GcodePreview_Scr::initRender()
     }
 
     // ZBuffer maps to only half of the screen to save RAM.
-    Zbuffer = (uint16_t*) calloc(320*160, sizeof(uint16_t));
+    Zbuffer = (float*) ps_calloc(320*320, sizeof(float));
     if (Zbuffer == NULL)
     {
         ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for Z buffer");
         goto init_fail;
     }
-    memset(Zbuffer, UINT16_MAX, 320*160*sizeof(uint16_t));
+    memset(Zbuffer, 0x7F, 320*320*sizeof(float));
 
     // Open G-Code
     GcodeFile = fopen(_UI->getFile().c_str(), "r");
@@ -433,29 +433,16 @@ void GcodePreview_Scr::drawLineZbuf(tftLCD& tft, Vec3f u, Vec3f v, const uint32_
     }
 }
 
-void GcodePreview_Scr::drawPixelZbuf(tftLCD& tft, Vec3 p, const uint32_t color)
+void GcodePreview_Scr::drawPixelZbuf(tftLCD& tft, Vec3f p, const uint32_t color)
 {
-    uint32_t i = 0;
-    if (p.y >= 160)                                  // Using half screen Zbuffer for reduced memory usage
-    {
-        i = p.x + (p.y-160)*320;
-    }
-    else
-    {
-        i = p.x + p.y*320;
-        if (i < minidx)                             // Clear Zbuffer for upper part of the screen
-        {
-            memset(Zbuffer + i, UINT16_MAX, (minidx-i)*sizeof(uint16_t));
-            minidx = i;
-        }
-    }
+    int32_t x = p.x,
+            y = p.y;
+    uint32_t i = x + y*320.0f;
 
-    int32_t z = 65535LL*(p.z - zCmin)/(zCmax-zCmin);
-    assert(z >= 0 && z < 65536);
-    if (z < Zbuffer[i])
+    if (p.z < Zbuffer[i])
     {
-        Zbuffer[i] = z;
-        img->drawPixel(p.x, p.y, color);
+        Zbuffer[i] = p.z;
+        img->drawPixel(x, y, color);
     }
 }
 

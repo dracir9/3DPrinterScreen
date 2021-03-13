@@ -26,7 +26,7 @@ private:
     void renderGCode(tftLCD& tft);
     void parseComment(const char* line);
     void drawLineZbuf(tftLCD& tft, Vec3f u, Vec3f v, const uint32_t color);
-    void drawPixelZbuf(tftLCD& tft, Vec3 p, const uint32_t color);
+    void drawPixelZbuf(tftLCD& tft, Vec3f p, const uint32_t color);
     void drawInfo(tftLCD& tft);
 
     // SD file variables
@@ -36,7 +36,7 @@ private:
     char* readBuffer = nullptr;
     char* gCodeLine = nullptr;
     char* commentLine = nullptr;
-    uint16_t* Zbuffer = nullptr;
+    float* Zbuffer = nullptr;
     uint16_t bufPos = 0;
     uint16_t readLen = 0;
 
