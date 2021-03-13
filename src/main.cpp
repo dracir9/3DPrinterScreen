@@ -32,7 +32,7 @@ int32_t prevHeap;
 //###########################################################
 void setup(void)
 {
-    Serial.begin(921600);
+    Serial.begin(115200);
     printf("Free Heap at start: %d of %d\n", ESP.getFreeHeap(), ESP.getHeapSize());
 
     if (!SPIFFS.begin(true))

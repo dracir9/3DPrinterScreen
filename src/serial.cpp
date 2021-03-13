@@ -227,35 +227,4 @@
 
 #include "serial.h"
 
-void skipSpace()
-{
-    while (Serial.peek()==' ') Serial.read();
-}
 
-bool isStopChar(char c)
-{
-    String stopChar =" :\r\n";
-    for(char i = 0; i<stopChar.length(); i++)
-    {
-        if(c == stopChar[i]) return true;
-    }
-    return false;
-}
-
-void readPrinter()
-{
-    String comand;
-    skipSpace();
-    uint8_t cnt=0;
-    char c = Serial.read();
-    while(!isStopChar(c) && Serial.available() && cnt<255)
-    {
-        comand += c;
-        c = Serial.read();
-        cnt++;
-    }
-    if(cnt)
-    {
-        printf("->%s<-\n", comand.c_str());
-    }
-}
