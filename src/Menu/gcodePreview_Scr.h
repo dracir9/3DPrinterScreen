@@ -25,7 +25,7 @@ private:
     bool initRender();
     void renderGCode(tftLCD& tft);
     void parseComment(const char* line);
-    void drawLineZbuf(tftLCD& tft, Vec3 u, Vec3 v, const uint32_t color);
+    void drawLineZbuf(tftLCD& tft, Vec3f u, Vec3f v, const uint32_t color);
     void drawPixelZbuf(tftLCD& tft, Vec3 p, const uint32_t color);
     void drawInfo(tftLCD& tft);
 
@@ -54,18 +54,18 @@ private:
     bool draw = false;
     bool absPos = true;
     bool absEPos = true;
-    Vec3 currentPos;
-    Vec3 nextPos;
-    Vec3 offset;
-    Vec3 minPos;
-    Vec3 maxPos;
+    Vec3f currentPos;
+    Vec3f nextPos;
+    Vec3f offset;
+    Vec3f minPos;
+    Vec3f maxPos;
     float currentE = 0.0f;
     float nextE = 0.0f;
     float offsetE = 0.0f;
 
     // Camera settings
     static constexpr int32_t near = 200;
-    Vec3 camPos;
+    Vec3f camPos;
     const Vec3f light = Vec3f(1.0f, 0.0f, 0.0f);
     int32_t zCmin = 0;
     int32_t zCmax = 0;

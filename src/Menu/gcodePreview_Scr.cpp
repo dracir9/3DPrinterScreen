@@ -103,18 +103,18 @@ bool GcodePreview_Scr::processLine()
         {
         case 0: case 1:
             if (parser.seen('X')){
-                if(absPos) nextPos.x = offset.x + parser.value_float()*1000;
-                else nextPos.x = currentPos.x + parser.value_float()*1000;
+                if(absPos) nextPos.x = offset.x + parser.value_float();
+                else nextPos.x = currentPos.x + parser.value_float();
                 //printf("Found X-> %f\n", parser.value_float());
             }
             if (parser.seen('Y')){
-                if(absPos) nextPos.y = offset.y + parser.value_float()*1000;
-                else nextPos.y = currentPos.y + parser.value_float()*1000;
+                if(absPos) nextPos.y = offset.y + parser.value_float();
+                else nextPos.y = currentPos.y + parser.value_float();
                 //printf("Found Y-> %f\n", parser.value_float());
             }
             if (parser.seen('Z')){
-                if(absPos) nextPos.z = offset.z + parser.value_float()*1000;
-                else nextPos.z = currentPos.z + parser.value_float()*1000;
+                if(absPos) nextPos.z = offset.z + parser.value_float();
+                else nextPos.z = currentPos.z + parser.value_float();
                 //printf("Found Z-> %f\n", parser.value_float());
             }
             if (parser.seen('E')){
@@ -125,7 +125,7 @@ bool GcodePreview_Scr::processLine()
             break;
 
         case 28:
-            nextPos = Vec3();
+            nextPos = Vec3f();
             nextE = 0.0f;
             break;
 
@@ -263,14 +263,16 @@ void GcodePreview_Scr::renderGCode(tftLCD& tft)
             if (processLine() && draw && nextE > currentE && !(currentPos == nextPos))
             {
                 // Transform points to camera coordinates
-                Vec3 p1(currentPos.x - camPos.x, camPos.z - currentPos.z, currentPos.y - camPos.y);
-                Vec3 p2(nextPos.x - camPos.x, camPos.z - nextPos.z, nextPos.y - camPos.y);
+                Vec3f p1(currentPos.x - camPos.x, camPos.z - currentPos.z, currentPos.y - camPos.y);
+                Vec3f p2(nextPos.x - camPos.x, camPos.z - nextPos.z, nextPos.y - camPos.y);
 
                 if(p1.z > 0 && p2.z > 0)
                 {
                     // Apply perspective transformation
-                    Vec3 d1(p1.x*near / p1.z, p1.y*near / p1.z, p1.z);
-                    Vec3 d2(p2.x*near / p2.z, p2.y*near / p2.z, p2.z);
+                    float invZ1 = 1.0f/p1.z;
+                    float invZ2 = 1.0f/p2.z;
+                    Vec3f d1(p1.x*near*invZ1, p1.y*near*invZ1, p1.z);
+                    Vec3f d2(p2.x*near*invZ2, p2.y*near*invZ2, p2.z);
 
                     if (!(d1 == d2))
                     {
@@ -278,7 +280,7 @@ void GcodePreview_Scr::renderGCode(tftLCD& tft)
                         dir.Normalize();
                         uint32_t color = (uint32_t)(23 * abs(dir*light) + 8) << 11;
                     
-                        static const Vec3 scrOff(160, 160, 0);
+                        static const Vec3f scrOff(160.0f, 160.0f, 0.0f);
                         drawLineZbuf(tft, scrOff + d1, scrOff + d2, color);
                         lines++;
                     }
@@ -333,27 +335,27 @@ void GcodePreview_Scr::parseComment(const char* line)
     char *p;
     if ((p = strstr(line, "MINX:")))
     {
-        minPos.x = strtof(&p[5], nullptr)*1000;
+        minPos.x = strtof(&p[5], nullptr);
     }
     else if ((p = strstr(line, "MAXX:")))
     {
-        maxPos.x = strtof(&p[5], nullptr)*1000;
+        maxPos.x = strtof(&p[5], nullptr);
     }
     else if ((p = strstr(line, "MINY:")))
     {
-        minPos.y = strtof(&p[5], nullptr)*1000;
+        minPos.y = strtof(&p[5], nullptr);
     }
     else if ((p = strstr(line, "MAXY:")))
     {
-        maxPos.y = strtof(&p[5], nullptr)*1000;
+        maxPos.y = strtof(&p[5], nullptr);
     }
     else if ((p = strstr(line, "MINZ:")))
     {
-        minPos.z = strtof(&p[5], nullptr)*1000;
+        minPos.z = strtof(&p[5], nullptr);
     }
     else if ((p = strstr(line, "MAXZ:")))
     {
-        maxPos.z = strtof(&p[5], nullptr)*1000;
+        maxPos.z = strtof(&p[5], nullptr);
     }
     else if (strstr(line, "Generated"))
     {
@@ -361,8 +363,8 @@ void GcodePreview_Scr::parseComment(const char* line)
         int32_t z = (maxPos.z + minPos.z) / 2;
         int32_t y1 = (160 * minPos.y - (maxPos.x - minPos.x)*near/2) / 160;
         int32_t y2 = (160 * minPos.y - (maxPos.z - minPos.z)*near/2) / 160;
-        camPos = Vec3(x, min(y1, y2), z);
-        ESP_LOGD("GcodePreview_Scr", "camPos(%d, %d, %d)", camPos.x, camPos.y, camPos.z);
+        camPos = Vec3f(x, min(y1, y2), z);
+        ESP_LOGD("GcodePreview_Scr", "camPos(%f, %f, %f)", camPos.x, camPos.y, camPos.z);
         zCmin = minPos.y - camPos.y;
         zCmax = maxPos.y - camPos.y;
     }
@@ -393,53 +395,41 @@ void GcodePreview_Scr::parseComment(const char* line)
     }
 }
 
-void GcodePreview_Scr::drawLineZbuf(tftLCD& tft, Vec3 u, Vec3 v, const uint32_t color)
+void GcodePreview_Scr::drawLineZbuf(tftLCD& tft, Vec3f u, Vec3f v, const uint32_t color)
 {
     // Other
-    int32_t dx = abs(v.x - u.x),
+    float dx = abs(v.x - u.x),
             dy = abs(v.y - u.y);
 
-    int32_t* i;     // Major iterator
-    int32_t* j;     // Minor iterator
-    int32_t end;    // End point
-    int32_t step = 1;
+    float* i;     // Major iterator
+    float* j;     // Minor iterator
+
 
     if (dx >= dy) {
         if (u.x > v.x) swap_coord(u, v);
         i = &u.x;
         j = &u.y;
-        end = v.x;
-        if (u.y > v.y) step = -1;
     }
-    else{
+    else {
         if (u.y > v.y) swap_coord(u, v);
         swap_coord(dx, dy);
         i = &u.y;
         j = &u.x;
-        end = v.y;
-        if (u.x > v.x) step = -1;
     }
-    if (dx == 0) dx = 1;
+    if (dx == 0.0f) dx = 1.0f;
 
-    int32_t err = dx >> 1,
-            errZ = err,
-            stepZ = (u.z > v.z)? -1 : 1,
-            dz = abs((v.z-u.z)%dx),
-            incZ = (v.z-u.z)/dx;
+    int32_t end = dx;
+    dx = 1.0f/dx;
+    float dz = (v.z - u.z)*dx;
+    dy = (v.y - u.y)*dx;
 
-    for (; *i <= end; (*i)++) {
+    //printf("U(%f, %f, %f)  V(%f, %f, %f)\n", u.x, u.y, u.z, v.x, v.y, v.z);
+    for (; end >= 0; end--) {
+        //printf("(%f, %f, %f)\n", u.x, u.y, u.z);
         drawPixelZbuf(tft, u, color);
-        u.z += incZ;
-        err -= dy;
-        errZ -= dz;
-        if (err < 0) {
-            err += dx;
-            *j += step;
-        }
-        if (errZ < 0){
-            errZ += dx;
-            u.z += stepZ;
-        }
+        *i += 1.0f;
+        *j += dy;
+        u.z += dz;
     }
 }
 
