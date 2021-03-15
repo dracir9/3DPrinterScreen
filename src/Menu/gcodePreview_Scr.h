@@ -39,6 +39,7 @@ private:
     float* Zbuffer = nullptr;
     uint16_t bufPos = 0;
     uint16_t readLen = 0;
+    uint32_t filesize = 0;
 
     // Status and info
     uint8_t readState = 0;

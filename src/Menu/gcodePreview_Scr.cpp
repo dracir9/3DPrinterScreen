@@ -18,7 +18,7 @@ GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI, tftLCD& tft):
     tft.drawStringWr(_UI->getFile().substr(_UI->getFile().rfind('/')+1).c_str(), 400, 25, 150, 48); // Display filename
     tft.setTextColor(TFT_WHITE);
     tft.drawString("Start!", 400, 245);
-    tft.drawString("Loading...", 160, 160);
+    tft.drawString("Loading...", 160, 152);
     tft.drawBmpSPIFFS("/spiffs/return_48.bmp", 376, 277);
 }
 
@@ -57,27 +57,29 @@ bool GcodePreview_Scr::readLine()
             }
             bufPos = 0;
         }
-        if (readBuffer[bufPos] <= 0 || readBuffer[bufPos] == '\r' || readBuffer[bufPos] == '\n') // End of line encountered
+
+        char inChar = readBuffer[bufPos];
+        if (inChar <= 0 || inChar == '\r' || inChar == '\n') // End of line encountered
         {
             gCodeLine[i] = '\0';    // Ensure null-terminated string
             commentLine[j] = '\0';
-            if (i == 0) // If empty line keep reading
+            if (i == 0 && j == 0) // If empty line keep reading
             {
                 i = -1;
                 continue;
             }
             return true;
         }
-        else if (readBuffer[bufPos] == ';')
+        else if (inChar == ';')
         {
             commentMode = true;
             gCodeLine[i] = '\0';
         }
 
         if (commentMode)
-            commentLine[j++] = readBuffer[bufPos];
+            commentLine[j++] = inChar;
         else
-            gCodeLine[i] = readBuffer[bufPos]; // Fill line buffer
+            gCodeLine[i] = inChar; // Fill line buffer
     }
 
     ESP_LOGE("GcodePreview_Scr", "Very long line in file \"%s\". ABORT!", _UI->getFile().c_str());
@@ -214,14 +216,6 @@ bool GcodePreview_Scr::initRender()
     }
     memset(Zbuffer, 0x7F, 320*320*sizeof(float));
 
-    // Open G-Code
-    GcodeFile = fopen(_UI->getFile().c_str(), "r");
-    if (GcodeFile == NULL)
-    {
-        ESP_LOGE("GcodePreview_Scr", "Failed to open file \"%s\"", _UI->getFile().c_str());
-        goto init_fail;
-    }
-
     // Create sprite
     img->setColorDepth(16);
     if (img->createSprite(320, 320) == NULL)
@@ -231,6 +225,17 @@ bool GcodePreview_Scr::initRender()
     }
     img->fillSprite(TFT_BLACK);
     img->drawRoundRect(0, 0, 320, 320, 4, TFT_GREEN);
+
+    // Open G-Code
+    GcodeFile = fopen(_UI->getFile().c_str(), "r");
+    if (GcodeFile == NULL)
+    {
+        ESP_LOGE("GcodePreview_Scr", "Failed to open file \"%s\"", _UI->getFile().c_str());
+        goto init_fail;
+    }
+    fseek(GcodeFile, 0, SEEK_END);
+    filesize = ftell(GcodeFile);
+    rewind(GcodeFile);
 
     return true;
 
@@ -266,38 +271,32 @@ void GcodePreview_Scr::renderGCode(tftLCD& tft)
                 Vec3f p1(currentPos.x - camPos.x, camPos.z - currentPos.z, currentPos.y - camPos.y);
                 Vec3f p2(nextPos.x - camPos.x, camPos.z - nextPos.z, nextPos.y - camPos.y);
 
-                if(p1.z > 0 && p2.z > 0)
-                {
-                    // Apply perspective transformation
-                    float invZ1 = 1.0f/p1.z;
-                    float invZ2 = 1.0f/p2.z;
-                    Vec3f d1(p1.x*near*invZ1, p1.y*near*invZ1, p1.z);
-                    Vec3f d2(p2.x*near*invZ2, p2.y*near*invZ2, p2.z);
+                // Apply perspective transformation
+                float invZ1 = 1.0f/p1.z;
+                float invZ2 = 1.0f/p2.z;
+                Vec3f d1(p1.x*near*invZ1, p1.y*near*invZ1, p1.z);
+                Vec3f d2(p2.x*near*invZ2, p2.y*near*invZ2, p2.z);
 
-                    if (!(d1 == d2))
-                    {
-                        Vec3f dir = p2-p1;
-                        dir.Normalize();
-                        uint32_t color = (uint32_t)(23 * abs(dir*light) + 8) << 11;
-                    
-                        static const Vec3f scrOff(160.0f, 160.0f, 0.0f);
-                        drawLineZbuf(tft, scrOff + d1, scrOff + d2, color);
-                        lines++;
-                    }
-                }
-                else
+                if (!(d1 == d2))
                 {
-                    if (p1.z <= 0)
-                        ESP_LOGE("GcodePreview_Scr", "p1.Z(%d) <= 0!", p1.z);
-
-                    if (p2.z <= 0)
-                        ESP_LOGE("GcodePreview_Scr", "p2.Z(%d) <= 0!", p2.z);
+                    Vec3f dir = p2-p1;
+                    dir.Normalize();
+                    uint32_t color = (uint32_t)(23 * abs(dir*light) + 8) << 11;
+                
+                    static const Vec3f scrOff(160.0f, 160.0f, 0.0f);
+                    drawLineZbuf(tft, scrOff + d1, scrOff + d2, color);
+                    lines++;
                 }
             }
 
             currentPos = nextPos;
             currentE = nextE;
         }
+
+        tft.setTextPadding(0);
+        tft.setTextDatum(CC_DATUM);
+        tft.setTextColor(TFT_WHITE, TFT_BLACK);
+        tft.drawString(String(ftell(GcodeFile)*100/filesize) + String("%"), 160, 168);
 
         if (feof(GcodeFile)) readState = 2;
         break;
@@ -478,6 +477,7 @@ void GcodePreview_Scr::drawInfo(tftLCD& tft)
     tft.setTextFont(2);
     tft.setTextSize(1);
     tft.setTextPadding(0);
+    tft.setTextColor(TFT_WHITE);
     String txt;
 
     if (!displayed[0])
