@@ -447,7 +447,10 @@ void GcodePreview_Scr::drawPixelZbuf(tftLCD& tft, Vec3f p, const uint32_t color)
 
 void GcodePreview_Scr::update(const uint32_t deltaTime)
 {
-    
+    if (!_UI->checkSD())
+    {
+        _UI->setScreen(lcdUI::Info);
+    }
 }
 
 void GcodePreview_Scr::render(tftLCD& tft)

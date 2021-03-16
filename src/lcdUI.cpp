@@ -1,11 +1,25 @@
 
 #include "lcdUI.h"
 
-void renderUITask(void* arg)
+void IRAM_ATTR lcdUI::touchISRhandle(void* arg)
+{
+    lcdUI* UI = static_cast<lcdUI*>(arg);
+}
+
+void IRAM_ATTR lcdUI::cardISRhandle(void* arg)
+{
+    BaseType_t xHigherPriorityTaskWoken = false;
+
+    lcdUI* UI = static_cast<lcdUI*>(arg);
+    xSemaphoreGiveFromISR(UI->cardFlag, &xHigherPriorityTaskWoken);
+
+    portYIELD_FROM_ISR();
+}
+
+void lcdUI::renderUITask(void* arg)
 {
     ESP_LOGD(__FILE__, "Starting render task");
-    fflush(stdout);
-    lcdUI* UI = (lcdUI*)arg;
+    lcdUI* UI = static_cast<lcdUI*>(arg);
     TickType_t xLastWakeTime = xTaskGetTickCount();;
     const TickType_t xFrameTime = UI? UI->frameTime : 200;
 
@@ -14,20 +28,52 @@ void renderUITask(void* arg)
         vTaskDelayUntil(&xLastWakeTime, xFrameTime);
         xLastWakeTime = xTaskGetTickCount();
     }
-    vTaskDelete(NULL);
+    vTaskDelete(nullptr);
 }
 
-void handleTouchTask(void* arg)
+void lcdUI::handleTouchTask(void* arg)
 {
     ESP_LOGD(__FILE__, "Starting touch task");
-    fflush(stdout);
-    lcdUI* UI = (lcdUI*)arg;
+    lcdUI* UI = static_cast<lcdUI*>(arg);
 
     while (UI && UI->processTouch())
     {
         vTaskDelay(pdMS_TO_TICKS(50));
     }
-    vTaskDelete(NULL);
+    vTaskDelete(nullptr);
+}
+
+void lcdUI::cardDetectTask(void* arg)
+{
+    ESP_LOGD(__FILE__, "Starting card detect task");
+    lcdUI* UI = static_cast<lcdUI*>(arg);
+    bool connected = false;
+    while (UI)
+    {
+        bool prevRead;
+        do
+        {
+            prevRead = digitalRead(CD_PIN);
+            vTaskDelay(pdMS_TO_TICKS(500));
+        }
+        while (digitalRead(CD_PIN) != prevRead);
+        
+        if (prevRead && connected)
+        {
+            ESP_LOGD(__FILE__, "Card disconnected");
+            UI->endSD();
+            connected = false;
+        }
+        else if (!prevRead && !connected)
+        {
+            ESP_LOGD(__FILE__, "Card connected");
+            UI->initSD();
+            connected = true;
+        }
+        xSemaphoreTake(UI->cardFlag, portMAX_DELAY);
+    }
+    
+    vTaskDelete(nullptr);
 }
 
 bool lcdUI::begin(const uint8_t fps)
@@ -41,26 +87,55 @@ bool lcdUI::begin(const uint8_t fps)
     uint16_t calibrationData[5] = CALIBRATION;
     tft.setTouch(calibrationData);
 
+    pinMode(CD_PIN, INPUT_PULLUP);
+
+    // Crete semaphores
     SPIMutex = xSemaphoreCreateMutex();
-    if (SPIMutex == NULL)
+    if (SPIMutex == nullptr)
     {
         ESP_LOGE(__FILE__, "Failed to create SPI Mutex");
         return false;
     }
+    touchFlag = xSemaphoreCreateBinary();
+    if (touchFlag == nullptr)
+    {
+        ESP_LOGE(__FILE__, "Failed to create touch semaphore");
+        return false;
+    }
+    cardFlag = xSemaphoreCreateBinary();
+    if (cardFlag == nullptr)
+    {
+        ESP_LOGE(__FILE__, "Failed to create card detect semaphore");
+        return false;
+    }
+
+    // Create tasks
     xTaskCreate(renderUITask, "Render task", 4096, this, 3, &renderTask);
-    if (renderTask == NULL)
+    if (renderTask == nullptr)
     {
         ESP_LOGE(__FILE__, "Failed to create render task");
         return false;
     }
     delay(100); // Allow some time for the task to start
     xTaskCreate(handleTouchTask, "touch task", 4096, this, 2, &touchTask);
-    if (touchTask == NULL)
+    if (touchTask == nullptr)
     {
         ESP_LOGE(__FILE__, "Failed to create touch task");
         return false;
     }
     delay(100);
+    xTaskCreate(cardDetectTask, "touch task", 2048, this, 2, &cardTask);
+    if (cardTask == nullptr)
+    {
+        ESP_LOGE(__FILE__, "Failed to create card detect task");
+        return false;
+    }
+    delay(100);
+
+    // Configure interrupts
+    gpio_set_intr_type((gpio_num_t)CD_PIN, GPIO_INTR_ANYEDGE);
+    gpio_install_isr_service(ESP_INTR_FLAG_LEVEL1);
+    gpio_isr_handler_add((gpio_num_t) CD_PIN, cardISRhandle, this);
 
     booted = true;
     return true;
@@ -101,11 +176,6 @@ bool lcdUI::updateDisplay()
     
     updateTime = esp_timer_get_time()-lastRender;
 
-    if (esp_timer_get_time() > nextCheck)
-    {
-        initSD();
-        nextCheck += 5000000LL;
-    }
     return true;
 }
 
@@ -202,6 +272,14 @@ bool lcdUI::initSD()
         hasSD = true;
     }
     return hasSD;
+}
+
+void lcdUI::endSD()
+{
+    if (hasSD)
+        SD_MMC.end();
+    
+    hasSD = false;
 }
 
 bool lcdUI::checkSD() const

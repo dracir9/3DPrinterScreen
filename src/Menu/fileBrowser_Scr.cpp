@@ -25,30 +25,17 @@ void FileBrowser_Scr::update(const uint32_t deltaTime)
 {
     if (_UI->checkSD())
     {
-        /* if (!init)
-        {
-            printDirectory(SD.open("/"), 0);
-            printf("SPIFFS:\n");
-            printDirectory(SPIFFS.open("/"), 0);
-
-            init = true;
-        } */
-
         loadPage();
+    }
+    else
+    {
+        _UI->setScreen(lcdUI::Info);
     }
 }
 
 void FileBrowser_Scr::render(tftLCD& tft)
 {
-    if (_UI->checkSD())
-    {
-        renderPage(tft);
-    }
-    else
-    {
-        tft.setTextDatum(CC_DATUM);
-        tft.drawString("SD not found :(", 240, 195);
-    }
+    renderPage(tft);
 }
 
 bool FileBrowser_Scr::isPageLoaded()

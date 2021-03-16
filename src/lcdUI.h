@@ -45,17 +45,22 @@ public:
     void setScreen(const menu idx);
     uint32_t getUpdateTime() const;
     bool initSD();
+    void endSD();
     bool checkSD() const;
     uint8_t getFrameTime() const { return frameTime; }
     bool setFile(const std::string& file);
     const std::string& getFile() const { return selectedFile; }
     void clearFile() { selectedFile.clear(); }
 
-    friend void renderUITask(void* arg);
-    friend void handleTouchTask(void* arg);
     friend void loop();
 
 private:
+    static void renderUITask(void* arg);
+    static void handleTouchTask(void* arg);
+    static void cardDetectTask(void* arg);
+    static void touchISRhandle(void* arg);
+    static void cardISRhandle(void* arg);
+
     tftLCD tft;
     Screen* base = nullptr;
 
@@ -66,12 +71,14 @@ private:
     uint8_t frameTime = 33;         // Minimum frame time
     xTaskHandle renderTask = nullptr;
     xTaskHandle touchTask = nullptr;
+    xTaskHandle cardTask = nullptr;
     SemaphoreHandle_t SPIMutex;
+    SemaphoreHandle_t touchFlag;
+    SemaphoreHandle_t cardFlag;
 
     menu menuID = menu::black;
     menu newMenuID;
     int64_t lastRender = 0;
-    int64_t nextCheck = 0;
     unsigned long updateTime = 0;
     Vec2h Tpos;
     std::string selectedFile;
