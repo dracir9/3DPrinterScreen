@@ -50,14 +50,7 @@ void lcdUI::cardDetectTask(void* arg)
     bool connected = false;
     while (UI)
     {
-        bool prevRead;
-        do
-        {
-            prevRead = digitalRead(CD_PIN);
-            vTaskDelay(pdMS_TO_TICKS(500));
-        }
-        while (digitalRead(CD_PIN) != prevRead);
-        
+        bool prevRead = digitalRead(CD_PIN);
         if (prevRead && connected)
         {
             ESP_LOGD(__FILE__, "Card disconnected");
@@ -67,8 +60,7 @@ void lcdUI::cardDetectTask(void* arg)
         else if (!prevRead && !connected)
         {
             ESP_LOGD(__FILE__, "Card connected");
-            UI->initSD();
-            connected = true;
+            connected = UI->initSD();
         }
         xSemaphoreTake(UI->cardFlag, portMAX_DELAY);
     }

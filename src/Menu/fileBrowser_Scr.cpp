@@ -91,7 +91,7 @@ void FileBrowser_Scr::handleTouch(const touchEvent event, const Vec2h pos)
     {
         if (pos.y < 50) // Navigation bar
         {
-            if (pos.x < 50) updatePath("/sdcard", false);       // Return Home
+            if (pos.x < 50) updatePath("/sdcard", false);       // Return to root
             uint8_t k = 1;
             for (uint8_t i = fileDepth > 5? 5 : fileDepth; i > 0; i--)
             {
@@ -289,7 +289,9 @@ void FileBrowser_Scr::loadPage()
 
             if (numFilePages % 8 == 0) hiddenFiles[numFilePages / 8] = hidden;
         }
-        numFilePages /= 8;                                  // Translate to screen pages
+
+        if (numFilePages != 0)
+            numFilePages = (numFilePages - 1) / 8;          // Translate to screen pages
         numFilePages++;
         ESP_LOGD("fileBrowser", "File Pages: %d", numFilePages);
 
