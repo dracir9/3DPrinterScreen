@@ -23,7 +23,7 @@ void handleTouchTask(void* arg)
     fflush(stdout);
     lcdUI* UI = (lcdUI*)arg;
 
-    while (UI /*&& UI->processTouch()*/)
+    while (UI && UI->processTouch())
     {
         vTaskDelay(pdMS_TO_TICKS(50));
     }
@@ -98,11 +98,6 @@ bool lcdUI::updateDisplay()
     base->render(tft);         // Render frame
     PRINT_SCR(tft);
     xSemaphoreGive(SPIMutex);
-
-    if (menuID != menu::GcodePreview)
-    {
-        processTouch();
-    }
     
     updateTime = esp_timer_get_time()-lastRender;
 
@@ -136,9 +131,11 @@ bool lcdUI::processTouch()
     prevPressed = pressed;
 
     #ifdef DEBUG_TOUCH
+    xSemaphoreTake(SPIMutex, portMAX_DELAY);
     if (event == Screen::press) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_YELLOW);
     else if (event == Screen::hold) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_MAGENTA);
     else if (event == Screen::relase) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_CYAN);
+    xSemaphoreGive(SPIMutex);
     #endif
 
     if (!base) return false;
