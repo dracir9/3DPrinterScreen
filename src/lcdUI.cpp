@@ -3,7 +3,13 @@
 
 void IRAM_ATTR lcdUI::touchISRhandle(void* arg)
 {
+    BaseType_t xHigherPriorityTaskWoken = false;
+
     lcdUI* UI = static_cast<lcdUI*>(arg);
+    if (UI)
+        xSemaphoreGiveFromISR(UI->touchFlag, &xHigherPriorityTaskWoken);
+
+    portYIELD_FROM_ISR();
 }
 
 void IRAM_ATTR lcdUI::cardISRhandle(void* arg)
@@ -11,7 +17,8 @@ void IRAM_ATTR lcdUI::cardISRhandle(void* arg)
     BaseType_t xHigherPriorityTaskWoken = false;
 
     lcdUI* UI = static_cast<lcdUI*>(arg);
-    xSemaphoreGiveFromISR(UI->cardFlag, &xHigherPriorityTaskWoken);
+    if (UI)
+        xSemaphoreGiveFromISR(UI->cardFlag, &xHigherPriorityTaskWoken);
 
     portYIELD_FROM_ISR();
 }
@@ -80,6 +87,7 @@ bool lcdUI::begin(const uint8_t fps)
     tft.setTouch(calibrationData);
 
     pinMode(CD_PIN, INPUT_PULLUP);
+    pinMode(T_IRQ_PIN, INPUT_PULLUP);
 
     // Crete semaphores
     SPIMutex = xSemaphoreCreateMutex();
@@ -116,7 +124,7 @@ bool lcdUI::begin(const uint8_t fps)
         return false;
     }
     delay(100);
-    xTaskCreate(cardDetectTask, "touch task", 2048, this, 2, &cardTask);
+    xTaskCreate(cardDetectTask, "touch task", 1500, this, 1, &cardTask);
     if (cardTask == nullptr)
     {
         ESP_LOGE(__FILE__, "Failed to create card detect task");
@@ -126,8 +134,12 @@ bool lcdUI::begin(const uint8_t fps)
 
     // Configure interrupts
     gpio_set_intr_type((gpio_num_t)CD_PIN, GPIO_INTR_ANYEDGE);
+    gpio_set_intr_type((gpio_num_t)T_IRQ_PIN, GPIO_INTR_NEGEDGE);
+
     gpio_install_isr_service(ESP_INTR_FLAG_LEVEL1);
+
     gpio_isr_handler_add((gpio_num_t) CD_PIN, cardISRhandle, this);
+    gpio_isr_handler_add((gpio_num_t) T_IRQ_PIN, touchISRhandle, this);
 
     booted = true;
     return true;
@@ -173,6 +185,7 @@ bool lcdUI::updateDisplay()
 
 bool lcdUI::processTouch()
 {
+    gpio_set_intr_type((gpio_num_t)T_IRQ_PIN, GPIO_INTR_DISABLE);
     Vector2<uint16_t> p;
     bool pressed = false;
     Screen::touchEvent event;
@@ -184,11 +197,17 @@ bool lcdUI::processTouch()
         Tpos = p;
     }
     xSemaphoreGive(SPIMutex);
+
+    gpio_set_intr_type((gpio_num_t)T_IRQ_PIN, GPIO_INTR_NEGEDGE);
     
     if (!prevPressed && pressed) event = Screen::press;
     else if (prevPressed && pressed) event = Screen::hold;
-    else if (prevPressed && !pressed) event = Screen::relase;
-    else return true;   // No touch. "prevPressed" and "pressed" are already equal, is safe to return
+    else if (prevPressed && !pressed) event = Screen::release;
+    else
+    {
+        xSemaphoreTake(touchFlag, portMAX_DELAY);
+        return true;   // No touch. "prevPressed" and "pressed" are already equal, is safe to return
+    }
 
     prevPressed = pressed;
 
@@ -196,12 +215,14 @@ bool lcdUI::processTouch()
     xSemaphoreTake(SPIMutex, portMAX_DELAY);
     if (event == Screen::press) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_YELLOW);
     else if (event == Screen::hold) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_MAGENTA);
-    else if (event == Screen::relase) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_CYAN);
+    else if (event == Screen::release) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_CYAN);
     xSemaphoreGive(SPIMutex);
     #endif
 
     if (!base) return false;
     base->handleTouch(event, Tpos);
+    if (event == Screen::release)
+        xSemaphoreTake(touchFlag, portMAX_DELAY);
     return true;
 }
 

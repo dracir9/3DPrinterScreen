@@ -70,6 +70,8 @@ void loop(void)
         if (uxTaskGetStackHighWaterMark(UI.touchTask) < 512)
             ESP_LOGD(__FILE__, "Min stack touch: %d", uxTaskGetStackHighWaterMark(UI.touchTask));
 
+        ESP_LOGV(__FILE__, "Min stack card task: %d", uxTaskGetStackHighWaterMark(UI.cardTask));
+
         flag = false;
     }
     else if (!flag && millis() % 5000 > 500)

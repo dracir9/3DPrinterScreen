@@ -19,7 +19,7 @@ public:
     enum touchEvent : uint8_t
     {
         press=0,
-        relase,
+        release,
         hold
     };
     
