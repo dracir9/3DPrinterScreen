@@ -124,7 +124,7 @@ bool lcdUI::begin(const uint8_t fps)
         return false;
     }
     delay(100);
-    xTaskCreate(cardDetectTask, "touch task", 1500, this, 1, &cardTask);
+    xTaskCreate(cardDetectTask, "touch task", 2048, this, 1, &cardTask);
     if (cardTask == nullptr)
     {
         ESP_LOGE(__FILE__, "Failed to create card detect task");

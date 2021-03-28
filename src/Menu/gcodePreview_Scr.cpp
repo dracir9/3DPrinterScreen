@@ -59,7 +59,7 @@ bool GcodePreview_Scr::readLine()
         }
 
         char inChar = readBuffer[bufPos];
-        if (inChar <= 0 || inChar == '\r' || inChar == '\n') // End of line encountered
+        if (inChar < 32) // End of line encountered
         {
             gCodeLine[i] = '\0';    // Ensure null-terminated string
             commentLine[j] = '\0';
