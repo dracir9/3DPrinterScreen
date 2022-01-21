@@ -123,3 +123,7 @@ vc-fileutils.settings
 #CLion
 cmake-build-*
 BetsyScreen.code-workspace
+
+# ESP-IDF default build directory name
+build
+sdkconfig.old
