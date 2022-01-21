@@ -4,10 +4,20 @@
 **_Early development_**
 
 ## Hardware Prerequisites
-- ESP32 UNO-like board
-- TFT shield compatible with [TFT_eSPI](https://github.com/Bodmer/TFT_eSPI) library
-- In order for some shields to work add wires to the bottom of the board as follows:
- ![wiring](/images/wiring.jpg)
+- [ESP Wrover Kit v4.1](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/hw-reference/esp32/get-started-wrover-kit.html)
+- TFT compatible with [TFT_eSPI](https://github.com/Bodmer/TFT_eSPI) library and SPI communication
+- XPT2046 touch controller
+- Pinout:
+  * TFT_DC          -> 0
+  * TFT_CS          -> 5
+  * TFT_RST         -> 22
+  * TFT_MISO        -> 19
+  * TFT_MOSI        -> 23
+  * TFT_SCLK        -> 18
+  * TFT_BackLight   -> 25
+  * Touch_IRQ       -> 27
+  * Touch_CS        -> 26
+  * SD Card_CD      -> 21
 
 ## Current features
  - [x] SD card browser
