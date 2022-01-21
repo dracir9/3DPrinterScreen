@@ -33,6 +33,8 @@ private:
     FILE* GcodeFile = nullptr;
     static constexpr uint32_t maxLineLen = 96;
     static constexpr uint32_t bufferLen = 2048;
+    static constexpr uint32_t fileBufLen = 8192;
+    static char fileBuffer[fileBufLen];
     char* readBuffer = nullptr;
     char* gCodeLine = nullptr;
     char* commentLine = nullptr;

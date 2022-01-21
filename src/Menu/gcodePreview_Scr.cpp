@@ -1,6 +1,8 @@
 
 #include "gcodePreview_Scr.h"
 
+char GcodePreview_Scr::fileBuffer[];
+
 GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI, tftLCD& tft):
     Screen(UI), img(&tft.img)
 {
@@ -143,13 +145,13 @@ bool GcodePreview_Scr::processLine()
 
         case 92:
             if (parser.seen('X')){
-                offset.x = currentPos.x - parser.value_float()*1000;
+                offset.x = currentPos.x - parser.value_float();
             }
             if (parser.seen('Y')){
-                offset.y = currentPos.y - parser.value_float()*1000;
+                offset.y = currentPos.y - parser.value_float();
             }
             if (parser.seen('Z')){
-                offset.z = currentPos.z - parser.value_float()*1000;
+                offset.z = currentPos.z - parser.value_float();
             }
             if (parser.seen('E')){
                 offsetE = currentE - parser.value_float();
@@ -233,6 +235,9 @@ bool GcodePreview_Scr::initRender()
         ESP_LOGE("GcodePreview_Scr", "Failed to open file \"%s\"", _UI->getFile().c_str());
         goto init_fail;
     }
+
+    setvbuf(GcodeFile, fileBuffer, _IOFBF, fileBufLen);
+
     fseek(GcodeFile, 0, SEEK_END);
     filesize = ftell(GcodeFile);
     rewind(GcodeFile);
