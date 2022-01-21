@@ -120,12 +120,6 @@ vc-fileutils.settings
 .vscode/*.db
 .code-workspace
 
-#cmake
-CMakeLists.txt
-Marlin/CMakeLists.txt
-CMakeListsPrivate.txt
-
 #CLion
 cmake-build-*
-BetsyScreen.code-workspace
 BetsyScreen.code-workspace
