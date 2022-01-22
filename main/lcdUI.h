@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <SD_MMC.h>
 #include "tftLCD.h"
+#include "TchScr_Drv.h"
 #include "widgets.h"
 #include "Menu/info_w.h"
 #include "Menu/black_w.h"
@@ -41,7 +42,7 @@ public:
  */
     bool begin(const uint8_t fps = 30);
     bool updateDisplay();
-    bool processTouch();
+    void processTouch();
     void setScreen(const menu idx);
     uint32_t getUpdateTime() const;
     bool initSD();
@@ -63,6 +64,15 @@ private:
 
     tftLCD tft;
     Screen* base = nullptr;
+    TchScr_Drv touchScreen;
+    TchCalib calib = {
+        .dx = 480,
+        .rx_min = 80,
+        .rx_max = 820,
+        .dy = 320,
+        .ry_min = 100,
+        .ry_max = 730
+    };
 
     bool booted = false;
     bool hasSD = false;

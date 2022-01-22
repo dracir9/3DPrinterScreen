@@ -63,7 +63,7 @@ extern "C" void app_main(void)
     printf("Free Heap at start: %d of %d\n", esp_get_free_heap_size(), ESP.getHeapSize());
 
     // INITIALIZE SPIFFS STORAGE
-    ESP_LOGI(TAG, "Initializing SPIFFS");
+    ESP_LOGI(__FILE__, "Initializing SPIFFS");
 
     esp_vfs_spiffs_conf_t conf = {
       .base_path = "/spiffs",
@@ -76,11 +76,11 @@ extern "C" void app_main(void)
 
     if (ret != ESP_OK) {
         if (ret == ESP_FAIL) {
-            ESP_LOGE(TAG, "Failed to mount or format filesystem");
+            ESP_LOGE(__FILE__, "Failed to mount or format filesystem");
         } else if (ret == ESP_ERR_NOT_FOUND) {
-            ESP_LOGE(TAG, "Failed to find SPIFFS partition");
+            ESP_LOGE(__FILE__, "Failed to find SPIFFS partition");
         } else {
-            ESP_LOGE(TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
+            ESP_LOGE(__FILE__, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
         }
         return;
     }

@@ -271,7 +271,7 @@ void FileBrowser_Scr::loadPage()
     DIR * dir = opendir(path.c_str());
     if (!dir)
     {
-        ESP_LOGE("fileBrowser", "Error opening folder %s", path);
+        ESP_LOGE("fileBrowser", "Error opening folder %s", path.c_str());
         return;
     }
 

@@ -4,6 +4,7 @@
 
 #include "../lcdUI.h"
 #include <bitset>
+#include "../parser.h"
 #include "../utility.h"
 
 class GcodePreview_Scr final : public Screen

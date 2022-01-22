@@ -1,16 +1,7 @@
 
 #include "lcdUI.h"
-
-void IRAM_ATTR lcdUI::touchISRhandle(void* arg)
-{
-    BaseType_t xHigherPriorityTaskWoken = false;
-
-    lcdUI* UI = static_cast<lcdUI*>(arg);
-    if (UI)
-        xSemaphoreGiveFromISR(UI->touchFlag, &xHigherPriorityTaskWoken);
-
-    portYIELD_FROM_ISR();
-}
+#include "esp_err.h"
+#include "dbg_log.h"
 
 void IRAM_ATTR lcdUI::cardISRhandle(void* arg)
 {
@@ -43,10 +34,24 @@ void lcdUI::handleTouchTask(void* arg)
     ESP_LOGD(__FILE__, "Starting touch task");
     lcdUI* UI = static_cast<lcdUI*>(arg);
 
-    while (UI && UI->processTouch())
-    {
-        vTaskDelay(pdMS_TO_TICKS(50));
-    }
+    ESP_ERROR_CHECK_WITHOUT_ABORT (
+        UI->touchScreen.begin(I2C_MODE_MASTER, GPIO_NUM_32, GPIO_NUM_33, 0x22)
+    );
+
+    ESP_ERROR_CHECK_WITHOUT_ABORT (
+        UI->touchScreen.setCalibration(&UI->calib)
+    );
+
+    ESP_ERROR_CHECK_WITHOUT_ABORT (
+        UI->touchScreen.setThresholds(400, 10000)
+    );
+
+    ESP_ERROR_CHECK_WITHOUT_ABORT (
+        UI->touchScreen.setNotifications(true, false, true)
+    );
+
+    while (UI) UI->processTouch();
+
     vTaskDelete(nullptr);
 }
 
@@ -160,7 +165,8 @@ bool lcdUI::begin(const uint8_t fps)
     return true;
 }
 
-lcdUI::lcdUI()
+lcdUI::lcdUI() :
+    touchScreen(I2C_NUM_0)
 {
     menuID = menu::Info;
     setScreen(menu::black);
@@ -198,47 +204,34 @@ bool lcdUI::updateDisplay()
     return true;
 }
 
-bool lcdUI::processTouch()
+void lcdUI::processTouch()
 {
-    gpio_set_intr_type((gpio_num_t)T_IRQ_PIN, GPIO_INTR_DISABLE);
-    Vector2<uint16_t> p;
-    bool pressed = false;
-    Screen::touchEvent event;
+    TchEvent event;
+    Vec2h p;
+    uint32_t len = touchScreen.getEvent(&event, &p, portMAX_DELAY);
 
-    xSemaphoreTake(SPIMutex, portMAX_DELAY);
-    if (tft.getTouch(&p.x, &p.y, MIN_PRESSURE))
+    if (len == 1) // Button event
     {
-        pressed = true;
-        Tpos = p;
-    }
-    xSemaphoreGive(SPIMutex);
 
-    gpio_set_intr_type((gpio_num_t)T_IRQ_PIN, GPIO_INTR_NEGEDGE);
-    
-    if (!prevPressed && pressed) event = Screen::press;
-    else if (prevPressed && pressed) event = Screen::hold;
-    else if (prevPressed && !pressed) event = Screen::release;
+    }
+    else if (len == 4) // Touch event
+    {
+        #ifdef DEBUG_TOUCH
+        xSemaphoreTake(SPIMutex, portMAX_DELAY);
+        if (event == Screen::press) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_YELLOW);
+        else if (event == Screen::hold) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_MAGENTA);
+        else if (event == Screen::release) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_CYAN);
+        xSemaphoreGive(SPIMutex);
+        #endif
+
+        Screen::touchEvent legacyEvent = Screen::press;
+        if (!base) return;
+        base->handleTouch(legacyEvent, p);
+    }
     else
     {
-        xSemaphoreTake(touchFlag, portMAX_DELAY);
-        return true;   // No touch. "prevPressed" and "pressed" are already equal, is safe to return
+        DBG_LOGE("Fail: %d", len);
     }
-
-    prevPressed = pressed;
-
-    #ifdef DEBUG_TOUCH
-    xSemaphoreTake(SPIMutex, portMAX_DELAY);
-    if (event == Screen::press) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_YELLOW);
-    else if (event == Screen::hold) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_MAGENTA);
-    else if (event == Screen::release) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_CYAN);
-    xSemaphoreGive(SPIMutex);
-    #endif
-
-    if (!base) return false;
-    base->handleTouch(event, Tpos);
-    if (event == Screen::release)
-        xSemaphoreTake(touchFlag, portMAX_DELAY);
-    return true;
 }
 
 void lcdUI::setScreen(const menu idx)
