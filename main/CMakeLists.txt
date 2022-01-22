@@ -1,5 +1,5 @@
 idf_component_register(
-    SRCS "main.cpp"
+    SRCS "main.cpp" "lcdUI.cpp" "tftLCD.cpp" "widgets.cpp"
     INCLUDE_DIRS ""
 )
 
