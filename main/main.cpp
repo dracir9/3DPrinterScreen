@@ -23,14 +23,25 @@
  */
 
 #include <stdio.h>
+#include <Arduino.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
 #include "esp_spi_flash.h"
 
+gpio_config_t input_conf = {
+    .pin_bit_mask = GPIO_SEL_34 | GPIO_SEL_27,
+    .mode = GPIO_MODE_INPUT,
+    .pull_up_en = GPIO_PULLUP_DISABLE,
+    .pull_down_en = GPIO_PULLDOWN_DISABLE,
+    .intr_type = GPIO_INTR_DISABLE
+};
 
 extern "C" void app_main(void)
 {
+    gpio_config(&input_conf);
+    initArduino();
+
     printf("Hello world!\n");
 
     /* Print chip information */
