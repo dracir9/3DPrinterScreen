@@ -7,7 +7,6 @@ GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI, tftLCD& tft):
     Screen(UI), img(&tft.img)
 {
     displayed.set();
-    maxWorkTime = _UI->getFrameTime()*1000 + 2000;
     tft.fillScreen(TFT_BLACK);
     tft.drawRoundRect(0, 0, 320, 320, 4, TFT_GREEN);
     tft.drawRoundRect(320, 0, 160, 50, 4, TFT_BLUE);
@@ -452,7 +451,7 @@ void GcodePreview_Scr::drawPixelZbuf(tftLCD& tft, Vec3f p, const uint32_t color)
 
 void GcodePreview_Scr::update(const uint32_t deltaTime)
 {
-    if (!_UI->checkSD())
+    if (!_UI->isSDinit())
     {
         _UI->setScreen(lcdUI::Info);
     }

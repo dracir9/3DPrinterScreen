@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 21-01-2022
  * -----
- * Last Modified: 22-01-2022
+ * Last Modified: 31-01-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -38,25 +38,10 @@ gpio_config_t input_conf = {
     .intr_type = GPIO_INTR_DISABLE
 };
 
-lcdUI UI;
-
 extern "C" void app_main(void)
 {
     gpio_config(&input_conf);
     initArduino();
-
-    /* Print chip information */
-    esp_chip_info_t chip_info;
-    esp_chip_info(&chip_info);
-    printf("This is ESP32 chip with %d CPU cores, WiFi%s%s, ",
-            chip_info.cores,
-            (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "",
-            (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
-
-    printf("silicon revision %d, ", chip_info.revision);
-
-    printf("%dMB %s flash\n", spi_flash_get_chip_size() / (1024 * 1024),
-            (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
 
     printf("System ready!\n");
 
@@ -86,13 +71,13 @@ extern "C" void app_main(void)
     }
 
     // INITIALIZE UI
-    if (!UI.begin())
+    if (!lcdUI::instance()->begin())
     {
         ESP_LOGE(__FILE__, "Failed to initialize UI. Rebooting NOW!");
         esp_restart();
     }
 
-    UI.setScreen(UI.Info);
+    lcdUI::instance()->setScreen(lcdUI::Info);
 
     while (1)
     {

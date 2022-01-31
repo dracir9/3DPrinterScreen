@@ -47,7 +47,7 @@ private:
     uint8_t readState = 0;
     uint32_t lines = 0;
     int64_t eTime = 0;
-    int64_t maxWorkTime = 0;
+    int64_t maxWorkTime = 30000;
     std::bitset<2> displayed;
     int32_t printTime = 0;
     float filament = 0.0f;
