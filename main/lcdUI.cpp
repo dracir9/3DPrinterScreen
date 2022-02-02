@@ -164,7 +164,7 @@ void lcdUI::updateTask(void* arg)
             break;
         }
 
-        //xSemaphoreTake(UI->updateFlag, portMAX_DELAY);
+        xSemaphoreTake(UI->updateFlag, portMAX_DELAY);
         vTaskDelayUntil(&xLastWakeTime, xFrameTime);
         xLastWakeTime = xTaskGetTickCount();
     }
@@ -269,30 +269,23 @@ esp_err_t lcdUI::setFile(const std::string& file)
 void lcdUI::processTouch()
 {
     TchEvent event;
-    Vec2h p;
-    uint32_t len = touchScreen.getEvent(&event, &p, portMAX_DELAY);
+    touchScreen.getEvent(&event, portMAX_DELAY);
 
-    if (len == 1) // Button event
-    {
-
-    }
-    else if (len == 4) // Touch event
+    if (event.event == TrgSrc::IDLE) // Touch event
     {
         #ifdef DEBUG_TOUCH
-        xSemaphoreTake(SPIMutex, portMAX_DELAY);
         if (event == Screen::press) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_YELLOW);
         else if (event == Screen::hold) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_MAGENTA);
         else if (event == Screen::release) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_CYAN);
-        xSemaphoreGive(SPIMutex);
         #endif
 
         Screen::touchEvent legacyEvent = Screen::press;
         if (!base) return;
-        base->handleTouch(legacyEvent, p);
+        base->handleTouch(legacyEvent, event.point);
     }
-    else
+    else // Button event
     {
-        DBG_LOGE("Fail: %d", len);
+        
     }
 }
 
