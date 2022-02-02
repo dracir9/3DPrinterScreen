@@ -1,7 +1,59 @@
+/**
+ * @file   lcdUI.cpp
+ * @author Ricard Bitriá Ribes (https://github.com/dracir9)
+ * Created Date: 22-01-2022
+ * -----
+ * Last Modified: 02-02-2022
+ * Modified By: Ricard Bitriá Ribes
+ * -----
+ * @copyright (c) 2022 Ricard Bitriá Ribes
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "lcdUI.h"
-#include "esp_err.h"
 #include "dbg_log.h"
+#include <SD_MMC.h>
+#include "Menu/info_w.h"
+#include "Menu/black_w.h"
+#include "Menu/fileBrowser_Scr.h"
+#include "Menu/gcodePreview_Scr.h"
+
+bool lcdUI::init;
+lcdUI lcdUI::_instance;
+constexpr TchCalib lcdUI::calib;
+
+lcdUI::lcdUI() :
+    touchScreen(I2C_NUM_0)
+{
+    init = true;
+}
+
+lcdUI::~lcdUI()
+{
+    vTaskDelete(cardTaskH);
+    vTaskDelete(touchTaskH);
+    vTaskDelete(updateTaskH);
+    vSemaphoreDelete(cardFlag);
+    vSemaphoreDelete(updateFlag);
+    delete base;
+}
+
+lcdUI* lcdUI::instance()
+{
+    return init ? &_instance : nullptr;
+}
 
 void IRAM_ATTR lcdUI::cardISRhandle(void* arg)
 {
@@ -14,50 +66,9 @@ void IRAM_ATTR lcdUI::cardISRhandle(void* arg)
     portYIELD_FROM_ISR();
 }
 
-void lcdUI::renderUITask(void* arg)
-{
-    ESP_LOGD(__FILE__, "Starting render task");
-    lcdUI* UI = static_cast<lcdUI*>(arg);
-    TickType_t xLastWakeTime = xTaskGetTickCount();;
-    const TickType_t xFrameTime = UI? UI->frameTime : 200;
-
-    while (UI && UI->updateDisplay())
-    {
-        vTaskDelayUntil(&xLastWakeTime, xFrameTime);
-        xLastWakeTime = xTaskGetTickCount();
-    }
-    vTaskDelete(nullptr);
-}
-
-void lcdUI::handleTouchTask(void* arg)
-{
-    ESP_LOGD(__FILE__, "Starting touch task");
-    lcdUI* UI = static_cast<lcdUI*>(arg);
-
-    ESP_ERROR_CHECK_WITHOUT_ABORT (
-        UI->touchScreen.begin(I2C_MODE_MASTER, GPIO_NUM_32, GPIO_NUM_33, 0x22)
-    );
-
-    ESP_ERROR_CHECK_WITHOUT_ABORT (
-        UI->touchScreen.setCalibration(&UI->calib)
-    );
-
-    ESP_ERROR_CHECK_WITHOUT_ABORT (
-        UI->touchScreen.setThresholds(400, 10000)
-    );
-
-    ESP_ERROR_CHECK_WITHOUT_ABORT (
-        UI->touchScreen.setNotifications(true, false, true)
-    );
-
-    while (UI) UI->processTouch();
-
-    vTaskDelete(nullptr);
-}
-
 void lcdUI::cardDetectTask(void* arg)
 {
-    ESP_LOGD(__FILE__, "Starting card detect task");
+    DBG_LOGI("Starting card detect task");
 
     lcdUI* UI = static_cast<lcdUI*>(arg);
     gpio_config_t cardEmpty = {
@@ -84,7 +95,7 @@ void lcdUI::cardDetectTask(void* arg)
         {
             gpio_config(&cardEmpty);
 
-            ESP_LOGD(__FILE__, "Card disconnected");
+            DBG_LOGD("Card disconnected");
             UI->endSD();
             connected = false;
         }
@@ -93,7 +104,7 @@ void lcdUI::cardDetectTask(void* arg)
             gpio_config(&cardInserted);
             gpio_set_level(GPIO_NUM_27, HIGH);
 
-            ESP_LOGD(__FILE__, "Card connected");
+            DBG_LOGD("Card connected");
             connected = UI->initSD();
         }
         xSemaphoreTake(UI->cardFlag, portMAX_DELAY);
@@ -102,106 +113,157 @@ void lcdUI::cardDetectTask(void* arg)
     vTaskDelete(nullptr);
 }
 
-bool lcdUI::begin(const uint8_t fps)
+void lcdUI::touchTask(void* arg)
+{
+    DBG_LOGI("Starting touch task");
+    lcdUI* UI = static_cast<lcdUI*>(arg);
+
+    esp_err_t err;
+    err = UI->touchScreen.begin(I2C_MODE_MASTER, GPIO_NUM_32, GPIO_NUM_33, 0x22);
+    if (err != ESP_OK)
+    {
+        DBG_LOGE("Error initializing touch driver");
+    }
+
+    err = UI->touchScreen.setCalibration(&UI->calib);
+    if (err != ESP_OK)
+    {
+        DBG_LOGE("Error initializing touch driver");
+    }
+
+    err = UI->touchScreen.setThresholds(400, 10000);
+    if (err != ESP_OK)
+    {
+        DBG_LOGE("Error initializing touch driver");
+    }
+
+    err = UI->touchScreen.setNotifications(true, false, true);
+    if (err != ESP_OK)
+    {
+        DBG_LOGE("Error initializing touch driver");
+    }
+
+    while (UI) UI->processTouch();
+
+    vTaskDelete(nullptr);
+}
+
+void lcdUI::updateTask(void* arg)
+{
+    DBG_LOGI("Starting render task");
+    lcdUI* UI = static_cast<lcdUI*>(arg);
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xFrameTime = pdMS_TO_TICKS(100);
+
+    while (UI)
+    {
+        esp_err_t ret = UI->updateDisplay();
+        if (ret != ESP_OK)
+        {
+            DBG_LOGE("Update display failed");
+            break;
+        }
+
+        //xSemaphoreTake(UI->updateFlag, portMAX_DELAY);
+        vTaskDelayUntil(&xLastWakeTime, xFrameTime);
+        xLastWakeTime = xTaskGetTickCount();
+    }
+    vTaskDelete(nullptr);
+}
+
+esp_err_t lcdUI::begin()
 {
     if (booted) return false;
 
-    frameTime = max(configTICK_RATE_HZ/fps, 2);
-
     tft.begin();
     tft.setRotation(3);
+    tft.fillScreen(TFT_RED);
 
     // Crete semaphores
-    SPIMutex = xSemaphoreCreateMutex();
-    if (SPIMutex == nullptr)
-    {
-        ESP_LOGE(__FILE__, "Failed to create SPI Mutex");
-        return false;
-    }
-    touchFlag = xSemaphoreCreateBinary();
-    if (touchFlag == nullptr)
-    {
-        ESP_LOGE(__FILE__, "Failed to create touch semaphore");
-        return false;
-    }
     cardFlag = xSemaphoreCreateBinary();
     if (cardFlag == nullptr)
     {
-        ESP_LOGE(__FILE__, "Failed to create card detect semaphore");
+        DBG_LOGE("Failed to create card detect semaphore");
+        return false;
+    }
+
+    updateFlag = xSemaphoreCreateBinary();
+    if (updateFlag == nullptr)
+    {
+        DBG_LOGE("Failed to create update flag semaphore");
         return false;
     }
 
     // Create tasks
-    xTaskCreate(renderUITask, "Render task", 4096, this, 3, &renderTask);
-    if (renderTask == nullptr)
+    xTaskCreate(touchTask, "touch task", 4096, this, 1, &touchTaskH);
+    if (touchTaskH == nullptr)
     {
-        ESP_LOGE(__FILE__, "Failed to create render task");
+        DBG_LOGE("Failed to create touch task");
         return false;
     }
-    delay(100); // Allow some time for the task to start
-    xTaskCreate(handleTouchTask, "touch task", 4096, this, 2, &touchTask);
-    if (touchTask == nullptr)
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    xTaskCreate(cardDetectTask, "cardTask", 4096, this, 0, &cardTaskH);
+    if (cardTaskH == nullptr)
     {
-        ESP_LOGE(__FILE__, "Failed to create touch task");
+        DBG_LOGE("Failed to create card detect task");
         return false;
     }
-    delay(100);
-    xTaskCreate(cardDetectTask, "touch task", 2048, this, 1, &cardTask);
-    if (cardTask == nullptr)
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    xTaskCreate(updateTask, "Render task", 4096, this, 2, &updateTaskH);
+    if (updateTaskH == nullptr)
     {
-        ESP_LOGE(__FILE__, "Failed to create card detect task");
+        DBG_LOGE("Failed to create render task");
         return false;
     }
-    delay(100);
+    vTaskDelay(pdMS_TO_TICKS(100)); // Allow some time for the task to start
 
     // Configure interrupts
     gpio_set_intr_type(GPIO_NUM_34, GPIO_INTR_ANYEDGE);
-
     gpio_install_isr_service(ESP_INTR_FLAG_LEVEL1);
-
     gpio_isr_handler_add(GPIO_NUM_34, cardISRhandle, this);
 
     booted = true;
-    return true;
+    return ESP_OK;
 }
 
-lcdUI::lcdUI() :
-    touchScreen(I2C_NUM_0)
+void lcdUI::setScreen(const menu screen)
 {
-    menuID = menu::Info;
-    setScreen(menu::black);
+    newMenuID = screen;
+    xSemaphoreGive(updateFlag);
 }
 
-lcdUI::~lcdUI()
+bool lcdUI::initSD()
 {
-    vTaskDelete(renderTask);
-    vTaskDelete(touchTask);
-    delete base;
+    if (!SDinit && SD_MMC.begin("/sdcard"))
+    {
+        DBG_LOGD("SD Card initialized");
+        SDinit = true;
+    }
+    return SDinit;
 }
 
-/***************************************************************************
- * @brief      Update and render the LCD display
- * @return     True if successfully updated
- **************************************************************************/
-bool lcdUI::updateDisplay()
+void lcdUI::endSD()
 {
-    uint32_t deltaTime = esp_timer_get_time() - lastRender;
-    lastRender = esp_timer_get_time();
-
-    if (!updateObjects()) return false; // Update to the latest screen
-
-    base->update(deltaTime);    // Update logic
-
-    vTaskDelay(2); // Allow some time for other tasks
-
-    xSemaphoreTake(SPIMutex, portMAX_DELAY);
-    base->render(tft);         // Render frame
-    PRINT_SCR(tft);
-    xSemaphoreGive(SPIMutex);
+    if (SDinit)
+        SD_MMC.end();
     
-    updateTime = esp_timer_get_time()-lastRender;
+    SDinit = false;
+}
 
-    return true;
+bool lcdUI::isSDinit() const
+{
+    return SDinit;
+}
+
+esp_err_t lcdUI::setFile(const std::string& file)
+{
+    if (access(file.c_str(), F_OK) == 0)
+        selectedFile = file;
+    else
+        return ESP_ERR_NOT_FOUND;
+    return ESP_OK;
 }
 
 void lcdUI::processTouch()
@@ -234,20 +296,34 @@ void lcdUI::processTouch()
     }
 }
 
-void lcdUI::setScreen(const menu idx)
+esp_err_t lcdUI::updateDisplay()
 {
-    newMenuID = idx;
+    int64_t deltaTime = esp_timer_get_time() - lastRender;
+    lastRender = esp_timer_get_time();
+
+    esp_err_t ret = updateObjects(); // Update to the latest screen
+    if (ret != ESP_OK) return ret;
+
+    base->update(deltaTime);    // Update logic
+
+    vTaskDelay(2); // Allow some time for other tasks
+
+    base->render(tft);         // Render frame
+    
+    updateTime = esp_timer_get_time() - lastRender;
+
+    return ESP_OK;
 }
 
-bool lcdUI::updateObjects()
+esp_err_t lcdUI::updateObjects()
 {
-    if (menuID == newMenuID) return true;
-    ESP_LOGD(__FILE__, "Change screen to ID: %d\n", newMenuID);
+    menu localMenu = newMenuID; // Local copy so that it remains unchanged
+    if (menuID == localMenu) return ESP_OK;
+    DBG_LOGD("Change screen to ID: %d\n", localMenu);
 
     delete base;
 
-    xSemaphoreTake(SPIMutex, portMAX_DELAY);
-    switch (newMenuID)
+    switch (localMenu)
     {
         case menu::black:
             base = new Black_W(this, tft);
@@ -270,49 +346,10 @@ bool lcdUI::updateObjects()
         default:
             base = nullptr;
     }
-    xSemaphoreGive(SPIMutex);
 
-    if(base)
-    {
-        menuID = newMenuID;
-        return true;
-    }
-    return false;
-}
+    if (base == nullptr)
+        return ESP_ERR_NO_MEM;
 
-uint32_t lcdUI::getUpdateTime() const
-{
-    return updateTime;
-}
-
-bool lcdUI::initSD()
-{
-    if (!hasSD && SD_MMC.begin("/sdcard"))
-    {
-        ESP_LOGD(__FILE__, "SD Card initialized.");
-        hasSD = true;
-    }
-    return hasSD;
-}
-
-void lcdUI::endSD()
-{
-    if (hasSD)
-        SD_MMC.end();
-    
-    hasSD = false;
-}
-
-bool lcdUI::checkSD() const
-{
-    return hasSD;
-}
-
-bool lcdUI::setFile(const std::string& file)
-{
-    if (access(file.c_str(), F_OK) == 0)
-        selectedFile = file;
-    else
-        return false;
-    return true;
+    menuID = localMenu;
+    return ESP_OK;
 }

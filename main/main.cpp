@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 21-01-2022
  * -----
- * Last Modified: 31-01-2022
+ * Last Modified: 02-02-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -26,7 +26,7 @@
 #include <Arduino.h>
 #include "esp_system.h"
 #include "esp_spi_flash.h"
-#include "esp_log.h"
+#include "dbg_log.h"
 #include "esp_spiffs.h"
 #include "lcdUI.h"
 
@@ -43,12 +43,19 @@ extern "C" void app_main(void)
     gpio_config(&input_conf);
     initArduino();
 
+    esp_reset_reason_t reason = esp_reset_reason();
+    if (reason != ESP_RST_POWERON)
+    {
+        DBG_LOGE("System unexpected reboot!");
+        while (true) vTaskDelay(100);
+    }
+
     printf("System ready!\n");
 
     printf("Free Heap at start: %d of %d\n", esp_get_free_heap_size(), ESP.getHeapSize());
 
     // INITIALIZE SPIFFS STORAGE
-    ESP_LOGI(__FILE__, "Initializing SPIFFS");
+    DBG_LOGI("Initializing SPIFFS");
 
     esp_vfs_spiffs_conf_t conf = {
       .base_path = "/spiffs",
@@ -61,19 +68,20 @@ extern "C" void app_main(void)
 
     if (ret != ESP_OK) {
         if (ret == ESP_FAIL) {
-            ESP_LOGE(__FILE__, "Failed to mount or format filesystem");
+            DBG_LOGE("Failed to mount or format filesystem");
         } else if (ret == ESP_ERR_NOT_FOUND) {
-            ESP_LOGE(__FILE__, "Failed to find SPIFFS partition");
+            DBG_LOGE("Failed to find SPIFFS partition");
         } else {
-            ESP_LOGE(__FILE__, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
+            DBG_LOGE("Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
         }
         return;
     }
 
     // INITIALIZE UI
-    if (!lcdUI::instance()->begin())
+    ret = lcdUI::instance()->begin();
+    if (ret != ESP_OK)
     {
-        ESP_LOGE(__FILE__, "Failed to initialize UI. Rebooting NOW!");
+        DBG_LOGE("Failed to initialize UI. Rebooting NOW!");
         esp_restart();
     }
 
@@ -81,6 +89,6 @@ extern "C" void app_main(void)
 
     while (1)
     {
-
+        vTaskDelay(1000);
     }
 }

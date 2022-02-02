@@ -1,30 +1,41 @@
+/**
+ * @file   lcdUI.h
+ * @author Ricard Bitriá Ribes (https://github.com/dracir9)
+ * Created Date: 22-01-2022
+ * -----
+ * Last Modified: 01-02-2022
+ * Modified By: Ricard Bitriá Ribes
+ * -----
+ * @copyright (c) 2022 Ricard Bitriá Ribes
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #ifndef LCD_UI_H
 #define LCD_UI_H
 
-#include <Arduino.h>
-#include <SD_MMC.h>
 #include "tftLCD.h"
-#include "TchScr_Drv.h"
 #include "widgets.h"
-#include "Menu/info_w.h"
-#include "Menu/black_w.h"
-#include "Menu/fileBrowser_Scr.h"
-#include "Menu/gcodePreview_Scr.h"
+#include "TchScr_Drv.h"
 
-//**************************************************************************
-//*  lcdUI class
-//*  Screen and user input managing
-//**************************************************************************
 class lcdUI
 {
 public:
-    lcdUI();
-    ~lcdUI();
-
     enum menu : uint8_t
     {
-        black=0,
+        none,
+        black,
         Info,
         main,
         settings,
@@ -33,39 +44,11 @@ public:
         GcodePreview
     };
 
-    // Functions
-/**
- * Initialize render and touch screen tasks
- * 
- * @param       fps Maximum frames per second
- * @return      True if successfully initiated
- */
-    bool begin(const uint8_t fps = 30);
-    bool updateDisplay();
-    void processTouch();
-    void setScreen(const menu idx);
-    uint32_t getUpdateTime() const;
-    bool initSD();
-    void endSD();
-    bool checkSD() const;
-    uint8_t getFrameTime() const { return frameTime; }
-    bool setFile(const std::string& file);
-    const std::string& getFile() const { return selectedFile; }
-    void clearFile() { selectedFile.clear(); }
-
-    friend void loop();
-
 private:
-    static void renderUITask(void* arg);
-    static void handleTouchTask(void* arg);
-    static void cardDetectTask(void* arg);
-    static void touchISRhandle(void* arg);
-    static void cardISRhandle(void* arg);
-
-    tftLCD tft;
-    Screen* base = nullptr;
-    TchScr_Drv touchScreen;
-    TchCalib calib = {
+    static lcdUI _instance;
+    static bool init;
+    
+    static constexpr TchCalib calib = {
         .dx = 480,
         .rx_min = 80,
         .rx_max = 820,
@@ -74,26 +57,48 @@ private:
         .ry_max = 730
     };
 
+    tftLCD tft;
+    Screen* base = nullptr;
+    TchScr_Drv touchScreen;
+
     bool booted = false;
-    bool hasSD = false;
-    bool prevPressed;
+    bool SDinit = false;
 
-    uint8_t frameTime = 33;         // Minimum frame time
-    xTaskHandle renderTask = nullptr;
-    xTaskHandle touchTask = nullptr;
-    xTaskHandle cardTask = nullptr;
-    SemaphoreHandle_t SPIMutex;
-    SemaphoreHandle_t touchFlag;
+    xTaskHandle updateTaskH = nullptr;
+    xTaskHandle touchTaskH = nullptr;
+    xTaskHandle cardTaskH = nullptr;
     SemaphoreHandle_t cardFlag;
+    SemaphoreHandle_t updateFlag;
 
-    menu menuID = menu::black;
-    menu newMenuID;
+    menu menuID = menu::none;
+    menu newMenuID = menu::black;
     int64_t lastRender = 0;
-    unsigned long updateTime = 0;
-    Vec2h Tpos;
-    std::string selectedFile;
+    int64_t updateTime = 0;
 
-    bool updateObjects();
+    std::string selectedFile;
+    
+    lcdUI(/* args */);
+    ~lcdUI();
+
+    static void updateTask(void* arg);
+    static void touchTask(void* arg);
+    static void cardDetectTask(void* arg);
+    static void cardISRhandle(void* arg);
+
+    bool initSD();
+    void processTouch();
+    esp_err_t updateDisplay();
+    esp_err_t updateObjects();
+public:
+
+    static lcdUI* instance();
+    esp_err_t begin();
+    void setScreen(const menu screen);
+    void endSD();
+    bool isSDinit() const;
+    esp_err_t setFile(const std::string& file);
+    const std::string& getFile() const { return selectedFile; }
+    void clearFile() { selectedFile.clear(); }
 };
 
 #endif

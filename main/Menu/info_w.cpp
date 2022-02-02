@@ -106,7 +106,7 @@ void Info_W::handleTouch(const touchEvent event, const Vec2h pos)
         {
             if (pos.x < 160)
             {
-                if (_UI->checkSD()) _UI->setScreen(lcdUI::FileBrowser);
+                if (_UI->isSDinit()) _UI->setScreen(lcdUI::FileBrowser);
             }
             else if (pos.x < 320)
             {

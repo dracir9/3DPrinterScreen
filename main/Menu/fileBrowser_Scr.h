@@ -2,6 +2,7 @@
 #ifndef FILE_BROWSER_SCR_H
 #define FILE_BROWSER_SCR_H
 
+#include "stdio.h"
 #include "../lcdUI.h"
 #include "dirent.h"
 
@@ -17,7 +18,7 @@ public:
     void handleTouch(const Screen::touchEvent event, const Vec2h pos) override;
 
 private:
-    void printDirectory(File dir, const int numTabs);
+    void printDirectory(DIR *dir);
     void loadPage();
     void renderPage(tftLCD& tft);
     bool isPageLoaded();

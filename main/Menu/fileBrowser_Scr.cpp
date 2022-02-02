@@ -1,5 +1,6 @@
 
 #include "fileBrowser_Scr.h"
+#include "dbg_log.h"
 
 FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI, tftLCD& tft):
     Screen(UI)
@@ -23,7 +24,7 @@ FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI, tftLCD& tft):
 
 void FileBrowser_Scr::update(const uint32_t deltaTime)
 {
-    if (_UI->checkSD())
+    if (_UI->isSDinit())
     {
         loadPage();
     }
@@ -144,35 +145,19 @@ void FileBrowser_Scr::handleTouch(const touchEvent event, const Vec2h pos)
     }
 }
 
-void FileBrowser_Scr::printDirectory(File dir, int numTabs)
+void FileBrowser_Scr::printDirectory(DIR *dp)
 {
-    while (true)
+    struct dirent *ep;     
+
+    if (dp != NULL)
     {
-        File entry =  dir.openNextFile();
+        while ((ep = readdir (dp)))
+            DBG_LOGI("%s", ep->d_name);
 
-        if (!entry) break; // no more files
-
-        for (uint8_t i = 0; i < numTabs; i++)
-        {
-            Serial.print('\t');
-        }
-
-        // strrchar() gets the last occurence of '/' get only the name of the file
-        Serial.print(strrchr(entry.name(), '/'));
-
-        if (entry.isDirectory())
-        {
-            Serial.println("/");
-            printDirectory(entry, numTabs + 1);
-        }
-        else
-        {
-            // files have sizes, directories do not
-            Serial.print("\t\t");
-            Serial.println(entry.size(), DEC);
-        }
-        entry.close();
+        (void) closedir (dp);
     }
+    else
+        DBG_LOGE("Couldn't open the directory");
 }
 
 void FileBrowser_Scr::renderPage(tftLCD& tft)
