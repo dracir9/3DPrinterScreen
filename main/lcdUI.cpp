@@ -346,3 +346,8 @@ esp_err_t lcdUI::updateObjects()
     menuID = localMenu;
     return ESP_OK;
 }
+
+void lcdUI::requestUpdate()
+{
+    xSemaphoreGive(updateFlag);
+}

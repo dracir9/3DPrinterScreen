@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 01-02-2022
+ * Last Modified: 02-02-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -99,6 +99,7 @@ public:
     esp_err_t setFile(const std::string& file);
     const std::string& getFile() const { return selectedFile; }
     void clearFile() { selectedFile.clear(); }
+    void requestUpdate();
 };
 
 #endif
