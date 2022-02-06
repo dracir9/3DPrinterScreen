@@ -10,14 +10,14 @@
 class GcodePreview_Scr final : public Screen
 {
 public:
-    GcodePreview_Scr(lcdUI* UI, tftLCD& tft);
+    GcodePreview_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts);
     ~GcodePreview_Scr();
 
-    void update(const uint32_t deltaTime) override;
+    void update(const uint32_t deltaTime, TchScr_Drv& ts) override;
 
     void render(tftLCD& tft) override;
 
-    void handleTouch(const touchEvent event, const Vec2h pos) override;
+    void handleTouch(const TchEvent& event) override;
 
 private:
     bool readLine();

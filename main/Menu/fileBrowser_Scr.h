@@ -9,13 +9,13 @@
 class FileBrowser_Scr final: public Screen
 {
 public:
-    FileBrowser_Scr(lcdUI* UI, tftLCD& tft);
+    FileBrowser_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts);
 
-    void update(const uint32_t deltaTime) override;
+    void update(const uint32_t deltaTime, TchScr_Drv& ts) override;
 
     void render(tftLCD& tft) override;
 
-    void handleTouch(const Screen::touchEvent event, const Vec2h pos) override;
+    void handleTouch(const TchEvent& event) override;
 
 private:
     void printDirectory(DIR *dir);

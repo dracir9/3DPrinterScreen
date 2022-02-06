@@ -2,7 +2,7 @@
 #include "fileBrowser_Scr.h"
 #include "dbg_log.h"
 
-FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI, tftLCD& tft):
+FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     Screen(UI)
 {
     tft.fillScreen(TFT_BLACK);
@@ -22,7 +22,7 @@ FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI, tftLCD& tft):
     tft.drawRoundRect(288, 256, 66, 64, 4, TFT_CYAN);
 }
 
-void FileBrowser_Scr::update(const uint32_t deltaTime)
+void FileBrowser_Scr::update(const uint32_t deltaTime, TchScr_Drv& ts)
 {
     if (_UI->isSDinit())
     {
@@ -86,10 +86,26 @@ void FileBrowser_Scr::updatePath(const std::string &newPath, const bool relative
     filePage++;             // Trigger page load
 }
 
-void FileBrowser_Scr::handleTouch(const touchEvent event, const Vec2h pos)
+void FileBrowser_Scr::handleTouch(const TchEvent& event)
 {
-    if (event == press)
+    if (event.trigger == TrgSrc::PRESS) // Menu buttons
     {
+        if (event.id == 0)
+        {
+            _UI->setScreen(lcdUI::Info);
+        }
+        else if (event.id == 1 && filePage > 0)
+        {
+            filePage--;
+        }
+        else if (event.id == 2 && filePage < numFilePages-1)
+        {
+            filePage++;
+        }
+    }
+    else if (event.trigger == TrgSrc::RELEASE)
+    {
+        Vec2h pos = Vec2h();
         if (pos.y < 50) // Navigation bar
         {
             if (pos.x < 50) updatePath("/sdcard", false);       // Return to root
@@ -132,15 +148,6 @@ void FileBrowser_Scr::handleTouch(const touchEvent event, const Vec2h pos)
             if ((isDir & (1 << idx)) > 0) updatePath(dirList[idx], true);
             else if (isGcode(dirList[idx]))
                 sendFile(dirList[idx]);
-        }
-        else // Menu buttons
-        {
-            if (pos.x < 160)
-            {
-                _UI->setScreen(lcdUI::Info);
-            }
-            else if (pos.x < 280 && filePage > 0) filePage--;
-            else if (pos.x >= 362 && filePage < numFilePages-1) filePage++;
         }
     }
 }

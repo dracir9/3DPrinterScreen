@@ -3,7 +3,7 @@
 
 char GcodePreview_Scr::fileBuffer[];
 
-GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI, tftLCD& tft):
+GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     Screen(UI), img(&tft.img)
 {
     displayed.set();
@@ -449,7 +449,7 @@ void GcodePreview_Scr::drawPixelZbuf(tftLCD& tft, Vec3f p, const uint32_t color)
     }
 }
 
-void GcodePreview_Scr::update(const uint32_t deltaTime)
+void GcodePreview_Scr::update(const uint32_t deltaTime, TchScr_Drv& ts)
 {
     if (!_UI->isSDinit())
     {
@@ -463,16 +463,13 @@ void GcodePreview_Scr::render(tftLCD& tft)
     drawInfo(tft);
 }
 
-void GcodePreview_Scr::handleTouch(const touchEvent event, const Vec2h pos)
+void GcodePreview_Scr::handleTouch(const TchEvent& event)
 {
-    if (event == press && pos.x > 320)
+    if (event.trigger == TrgSrc::RELEASE && event.id == 0)
     {
-        if(pos.y > 270)
-        {
-            readState = 255;
-            _UI->clearFile();
-            _UI->setScreen(lcdUI::FileBrowser);
-        }
+        readState = 255;
+        _UI->clearFile();
+        _UI->setScreen(lcdUI::FileBrowser);
     }
 }
 

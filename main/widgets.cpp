@@ -1,21 +1,22 @@
 
 #include "widgets.h"
+#include "dbg_log.h"
 
 /********************************************************************************
     Screen 
 ********************************************************************************/
 Screen::Screen(lcdUI* UI)
 {
-    ESP_LOGV(__FILE__, "Created Screen\n");
+    DBG_LOGV("Create Screen\n");
     _UI = UI;
 }
 
 Screen::~Screen()
 {
-    ESP_LOGV(__FILE__, "Deleted Screen\n");
+    DBG_LOGV("Delete Screen\n");
 }
 
-void Screen::handleTouch(touchEvent event, Vec2h pos)
+void Screen::handleTouch(const TchEvent& event)
 {
     return;
 }

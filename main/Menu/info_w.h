@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 02-02-2022
+ * Last Modified: 06-02-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -30,11 +30,11 @@
 class Info_W final: public Screen
 {
 public:
-    Info_W(lcdUI* UI, tftLCD& tft);
+    Info_W(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts);
 
-    void update(uint32_t deltaTime) override;
+    void update(uint32_t deltaTime, TchScr_Drv& ts) override;
     void render(tftLCD& tft) override;
-    void handleTouch(const touchEvent event, const Vec2h pos) override;
+    void handleTouch(const TchEvent& event) override;
 
 private:
     const uint8_t heatbed = 1;//random(0,2);

@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 02-02-2022
+ * Last Modified: 06-02-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -137,7 +137,7 @@ void lcdUI::touchTask(void* arg)
         DBG_LOGE("Error initializing touch driver");
     }
 
-    err = UI->touchScreen.setNotifications(true, false, true);
+    err = UI->touchScreen.setNotifications(false, true, true);
     if (err != ESP_OK)
     {
         DBG_LOGE("Error initializing touch driver");
@@ -269,24 +269,17 @@ esp_err_t lcdUI::setFile(const std::string& file)
 void lcdUI::processTouch()
 {
     TchEvent event;
-    touchScreen.getEvent(&event, portMAX_DELAY);
+    if (touchScreen.getEvent(&event, portMAX_DELAY) != ESP_OK) return;
 
-    if (event.event == TrgSrc::IDLE) // Touch event
-    {
-        #ifdef DEBUG_TOUCH
-        if (event == Screen::press) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_YELLOW);
-        else if (event == Screen::hold) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_MAGENTA);
-        else if (event == Screen::release) tft.fillCircle(Tpos.x, Tpos.y, 2, TFT_CYAN);
-        #endif
+    //#ifdef DEBUG_TOUCH
+    if (event.trigger == TrgSrc::PRESS) tft.fillCircle(event.pos.x, event.pos.y, 2, TFT_YELLOW);
+    else if (event.trigger == TrgSrc::HOLD_STRT) tft.fillCircle(event.pos.x, event.pos.y, 2, TFT_MAGENTA);
+    else if (event.trigger == TrgSrc::HOLD_END) tft.fillCircle(event.pos.x, event.pos.y, 2, TFT_GREEN);
+    else if (event.trigger == TrgSrc::RELEASE) tft.fillCircle(event.pos.x, event.pos.y, 2, TFT_CYAN);
+    //#endif
 
-        Screen::touchEvent legacyEvent = Screen::press;
-        if (!base) return;
-        base->handleTouch(legacyEvent, event.point);
-    }
-    else // Button event
-    {
-        
-    }
+    if (!base) return;
+    base->handleTouch(event);
 }
 
 esp_err_t lcdUI::updateDisplay()
@@ -297,7 +290,7 @@ esp_err_t lcdUI::updateDisplay()
     esp_err_t ret = updateObjects(); // Update to the latest screen
     if (ret != ESP_OK) return ret;
 
-    base->update(deltaTime);    // Update logic
+    base->update(deltaTime, touchScreen);    // Update logic
 
     vTaskDelay(2); // Allow some time for other tasks
 
@@ -312,7 +305,12 @@ esp_err_t lcdUI::updateObjects()
 {
     menu localMenu = newMenuID; // Local copy so that it remains unchanged
     if (menuID == localMenu) return ESP_OK;
-    DBG_LOGD("Change screen to ID: %d\n", localMenu);
+    DBG_LOGI("Change screen to ID: %d", localMenu);
+
+    tft.fillScreen(TFT_BLACK);
+    Button clearBtn;
+    clearBtn.id = 31;
+    touchScreen.setButton(&clearBtn, portMAX_DELAY);
 
     delete base;
 
@@ -322,19 +320,19 @@ esp_err_t lcdUI::updateObjects()
             base = new Black_W(this, tft);
             break;
         case menu::Info:
-            base = new Info_W(this, tft);
+            base = new Info_W(this, tft, touchScreen);
             break;
         case menu::main:
             break;
         case menu::FileBrowser:
-            base = new FileBrowser_Scr(this, tft);
+            base = new FileBrowser_Scr(this, tft, touchScreen);
             break;
         case menu::settings:
             break;
         case menu::control:
             break;
         case menu::GcodePreview:
-            base = new GcodePreview_Scr(this, tft);
+            base = new GcodePreview_Scr(this, tft, touchScreen);
             break;
         default:
             base = nullptr;

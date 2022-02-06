@@ -4,6 +4,7 @@
 #define WIDGETS_H
 
 #include "tftLCD.h"
+#include "TchScr_Drv.h"
 
 class lcdUI;
 
@@ -16,19 +17,12 @@ protected:
     lcdUI *_UI;
 
 public:
-    enum touchEvent : uint8_t
-    {
-        press=0,
-        release,
-        hold
-    };
-    
     Screen(lcdUI* UI);
     virtual ~Screen();
 
     virtual void render(tftLCD& tft) = 0;
-    virtual void update(const uint32_t deltaTime) = 0;
-    virtual void handleTouch(const touchEvent event, const Vec2h pos);
+    virtual void update(const uint32_t deltaTime, TchScr_Drv& ts) = 0;
+    virtual void handleTouch(const TchEvent& event);
 };
 
 #endif

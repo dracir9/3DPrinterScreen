@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 02-02-2022
+ * Last Modified: 06-02-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -24,7 +24,7 @@
 
 #include "info_w.h"
 
-Info_W::Info_W(lcdUI* UI, tftLCD& tft):
+Info_W::Info_W(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     Screen(UI), cellAdv(416.0f/(items)), cellW(cellAdv-8)
 {
     tft.fillScreen(TFT_BLACK);
@@ -74,9 +74,20 @@ Info_W::Info_W(lcdUI* UI, tftLCD& tft):
     tft.drawRoundRect(163, 256, 154, 64, 4, TFT_ORANGE);
     tft.drawBmpSPIFFS("/spiffs/settings_48.bmp", 378, 264);
     tft.drawRoundRect(325, 256, 155, 64, 4, TFT_ORANGE);
+
+    // Setup buttons
+    Button sdCard;
+    sdCard.id = 0;
+    sdCard.xmin = 0;
+    sdCard.xmax = 160;
+    sdCard.ymin = 256;
+    sdCard.ymax = 320;
+    sdCard.enReleaseEv = true;
+
+    ts.setButton(&sdCard);
 }
 
-void Info_W::update(uint32_t deltaTime)
+void Info_W::update(uint32_t deltaTime, TchScr_Drv& ts)
 {
     
 }
@@ -122,24 +133,11 @@ void Info_W::render(tftLCD& tft)
     nextP = millis() + 1000;
 }
 
-void Info_W::handleTouch(const touchEvent event, const Vec2h pos)
+void Info_W::handleTouch(const TchEvent& event)
 {
-    if (event == press)
+    if (event.trigger != TrgSrc::RELEASE) return;
+    if (event.id == 0)
     {
-        if (pos.y > 256)
-        {
-            if (pos.x < 160)
-            {
-                if (_UI->isSDinit()) _UI->setScreen(lcdUI::FileBrowser);
-            }
-            else if (pos.x < 320)
-            {
-
-            }
-            else
-            {
-
-            }
-        }
+        if (_UI->isSDinit()) _UI->setScreen(lcdUI::FileBrowser);
     }
 }
