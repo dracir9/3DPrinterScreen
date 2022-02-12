@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 21-01-2022
  * -----
- * Last Modified: 02-02-2022
+ * Last Modified: 12-02-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -22,7 +22,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
+#include <cstdio>
 #include <Arduino.h>
 #include "esp_system.h"
 #include "esp_spi_flash.h"

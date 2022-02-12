@@ -1,5 +1,6 @@
 
 #include "parser.h"
+#include <cstring>
 
 //**********************************************************************
 // Must be declared for allocation and to satisfy the linker           *

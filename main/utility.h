@@ -3,7 +3,7 @@
 #define UTILITY_H
 
 #ifdef TIMER_U
-    #include <Arduino.h>
+    #include <cstdio>
     class Timer
     {
     public:

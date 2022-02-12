@@ -1,5 +1,29 @@
+/**
+ * @file   gcodePreview_Scr.cpp
+ * @author Ricard Bitriá Ribes (https://github.com/dracir9)
+ * Created Date: 22-01-2022
+ * -----
+ * Last Modified: 12-02-2022
+ * Modified By: Ricard Bitriá Ribes
+ * -----
+ * @copyright (c) 2022 Ricard Bitriá Ribes
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "gcodePreview_Scr.h"
+#include "dbg_log.h"
 
 char GcodePreview_Scr::fileBuffer[];
 
@@ -53,7 +77,7 @@ bool GcodePreview_Scr::readLine()
             }
             else if (ferror(GcodeFile))
             {
-                ESP_LOGE("GcodePreview_Scr", "Error reading file \"%s\"", _UI->getFile().c_str());
+                DBG_LOGE("Error reading file \"%s\"", _UI->getFile().c_str());
                 return false;
             }
             bufPos = 0;
@@ -83,7 +107,7 @@ bool GcodePreview_Scr::readLine()
             gCodeLine[i] = inChar; // Fill line buffer
     }
 
-    ESP_LOGE("GcodePreview_Scr", "Very long line in file \"%s\". ABORT!", _UI->getFile().c_str());
+    DBG_LOGE("Very long line in file \"%s\". ABORT!", _UI->getFile().c_str());
     return false;
 }
 
@@ -190,29 +214,29 @@ bool GcodePreview_Scr::initRender()
     readBuffer = (char*)malloc(bufferLen);
     if (readBuffer == NULL)
     {
-        ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for read buffer");
+        DBG_LOGE("Could not allocate memory for read buffer");
         goto init_fail;
     }
 
     gCodeLine = (char*)malloc(maxLineLen);
     if (gCodeLine == NULL)
     {
-        ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for line buffer");
+        DBG_LOGE("Could not allocate memory for line buffer");
         goto init_fail;
     }
 
     commentLine = (char*)malloc(maxLineLen);
     if (gCodeLine == NULL)
     {
-        ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for comment buffer");
+        DBG_LOGE("Could not allocate memory for comment buffer");
         goto init_fail;
     }
 
     // ZBuffer maps to only half of the screen to save RAM.
-    Zbuffer = (float*) ps_calloc(320*320, sizeof(float));
+    Zbuffer = (float*) calloc(320*320, sizeof(float));
     if (Zbuffer == NULL)
     {
-        ESP_LOGE("GcodePreview_Scr", "Could not allocate memory for Z buffer");
+        DBG_LOGE("Could not allocate memory for Z buffer");
         goto init_fail;
     }
     memset(Zbuffer, 0x7F, 320*320*sizeof(float));
@@ -221,7 +245,7 @@ bool GcodePreview_Scr::initRender()
     img->setColorDepth(16);
     if (img->createSprite(320, 320) == NULL)
     {
-        ESP_LOGE("GcodePreview_Scr", "Failed to create sprite");
+        DBG_LOGE("Failed to create sprite");
         goto init_fail;
     }
     img->fillSprite(TFT_BLACK);
@@ -231,7 +255,7 @@ bool GcodePreview_Scr::initRender()
     GcodeFile = fopen(_UI->getFile().c_str(), "r");
     if (GcodeFile == NULL)
     {
-        ESP_LOGE("GcodePreview_Scr", "Failed to open file \"%s\"", _UI->getFile().c_str());
+        DBG_LOGE("Failed to open file \"%s\"", _UI->getFile().c_str());
         goto init_fail;
     }
 
@@ -241,6 +265,7 @@ bool GcodePreview_Scr::initRender()
     filesize = ftell(GcodeFile);
     rewind(GcodeFile);
 
+    DBG_LOGD("Render initialized");
     return true;
 
     init_fail:
@@ -258,7 +283,7 @@ void GcodePreview_Scr::renderGCode(tftLCD& tft)
     case 0:
         if (initRender())
         {
-            readState = 1;
+            //readState = 1;
             TIC
         }
         break;
@@ -307,7 +332,7 @@ void GcodePreview_Scr::renderGCode(tftLCD& tft)
     }
     case 2:
         TOC
-        ESP_LOGD(__FILE__, "Total Lines: %d", lines);
+        DBG_LOGD("Total Lines: %d", lines);
         img->pushSprite(0, 0);
         // Close file
         fclose(GcodeFile);
@@ -326,7 +351,7 @@ void GcodePreview_Scr::renderGCode(tftLCD& tft)
         break;
 
     default:
-        ESP_LOGE(__FILE__, "Unexpected state reached!");
+        DBG_LOGE("Unexpected state reached!");
         readState = 255;
         break;
     }
@@ -367,7 +392,7 @@ void GcodePreview_Scr::parseComment(const char* line)
         int32_t y1 = (160 * minPos.y - (maxPos.x - minPos.x)*near/2) / 160;
         int32_t y2 = (160 * minPos.y - (maxPos.z - minPos.z)*near/2) / 160;
         camPos = Vec3f(x, min(y1, y2), z);
-        ESP_LOGD("GcodePreview_Scr", "camPos(%f, %f, %f)", camPos.x, camPos.y, camPos.z);
+        DBG_LOGD("camPos(%f, %f, %f)", camPos.x, camPos.y, camPos.z);
         zCmin = minPos.y - camPos.y;
         zCmax = maxPos.y - camPos.y;
     }
@@ -394,7 +419,7 @@ void GcodePreview_Scr::parseComment(const char* line)
     }
     else
     {
-        ESP_LOGV("GcodePreview_Scr", "Unseen comment: %s", line);
+        DBG_LOGV("Unseen comment: %s", line);
     }
 }
 

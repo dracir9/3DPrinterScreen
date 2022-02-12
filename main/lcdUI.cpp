@@ -316,6 +316,7 @@ esp_err_t lcdUI::updateObjects()
     touchScreen.setButton(&clearBtn, portMAX_DELAY);
 
     delete base;
+    base = nullptr;
 
     switch (localMenu)
     {
