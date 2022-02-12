@@ -1,3 +1,26 @@
+/**
+ * @file   fileBrowser_Scr.cpp
+ * @author Ricard Bitriá Ribes (https://github.com/dracir9)
+ * Created Date: 22-01-2022
+ * -----
+ * Last Modified: 12-02-2022
+ * Modified By: Ricard Bitriá Ribes
+ * -----
+ * @copyright (c) 2022 Ricard Bitriá Ribes
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include "fileBrowser_Scr.h"
 #include "dbg_log.h"
@@ -6,12 +29,6 @@ FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     Screen(UI)
 {
     tft.fillScreen(TFT_BLACK);
-    /* tft.drawRect(0, 0, 480, 70, TFT_RED);
-    
-    tft.setTextDatum(CC_DATUM);
-    tft.setTextFont(4);
-    tft.drawString("SD card", 240, 35);
-    tft.setTextFont(2); */
 
     // SD Home
     tft.drawRoundRect(0, 0, 50, 50, 4, TFT_ORANGE);
@@ -20,6 +37,64 @@ FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     tft.drawBmpSPIFFS("/spiffs/return_48.bmp", 53, 272);
     tft.drawRoundRect(0, 256, 155, 64, 4, TFT_ORANGE);
     tft.drawRoundRect(288, 256, 66, 64, 4, TFT_CYAN);
+
+    // Setup buttons
+    Button tmpBut;
+    tmpBut.id = 0;
+    tmpBut.xmin = 0;
+    tmpBut.xmax = 160;
+    tmpBut.ymin = 256;
+    tmpBut.ymax = 320;
+    tmpBut.enReleaseEv = true;
+    
+    ts.setButton(&tmpBut); // Back to Info screen
+
+    tmpBut.id = 1;
+    tmpBut.xmin = 163;
+    tmpBut.xmax = 280;
+    tmpBut.ymin = 256;
+    tmpBut.ymax = 320;
+
+    ts.setButton(&tmpBut); // Prev page
+
+    tmpBut.id = 2;
+    tmpBut.xmin = 362;
+    tmpBut.xmax = 480;
+    tmpBut.ymin = 256;
+    tmpBut.ymax = 320;
+    
+    ts.setButton(&tmpBut); // Next page
+
+    for (int i = 0; i < 2; i++) // File buttons
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            tmpBut.id = j + i*4 + 3;
+            tmpBut.xmin = i * 240;
+            tmpBut.xmax = i * 240 + 240;
+            tmpBut.ymin = 50 * j + 50;
+            tmpBut.ymax = 50 * j + 100;
+            ts.setButton(&tmpBut);
+        }
+    }
+    
+    tmpBut.id = 11;
+    tmpBut.xmin = 0;
+    tmpBut.xmax = 50;
+    tmpBut.ymin = 0;
+    tmpBut.ymax = 50;
+
+    ts.setButton(&tmpBut); // Return to SD root
+
+    for (int i = 0; i < 5; i++) // Folder navigation
+    {
+        tmpBut.id = i + 12;
+        tmpBut.xmin = 50 + 86*i;
+        tmpBut.xmax = 136 + 86*i;
+        tmpBut.ymin = 0;
+        tmpBut.ymax = 50;
+        ts.setButton(&tmpBut);
+    }
 }
 
 void FileBrowser_Scr::update(const uint32_t deltaTime, TchScr_Drv& ts)
@@ -88,68 +163,74 @@ void FileBrowser_Scr::updatePath(const std::string &newPath, const bool relative
 
 void FileBrowser_Scr::handleTouch(const TchEvent& event)
 {
-    if (event.trigger == TrgSrc::PRESS) // Menu buttons
+    if (event.trigger != TrgSrc::RELEASE) return;
+
+    bool update = true;
+
+    if (event.id == 0) // Back to Main menu
     {
-        if (event.id == 0)
+        _UI->setScreen(lcdUI::Info);
+    }
+    else if (event.id == 1 && filePage > 0) // Prev page
+    {
+        filePage--;
+    }
+    else if (event.id == 2 && filePage < numFilePages-1) // Next page
+    {
+        filePage++;
+    }
+    else if (event.id > 2 && event.id <= 10) // Open file
+    {
+        uint8_t idx = event.id - 3;
+        DBG_LOGV("IDX: %d", idx);
+        if ((isDir & (1 << idx)) > 0) updatePath(dirList[idx], true);
+        else if (isGcode(dirList[idx]))
+            sendFile(dirList[idx]);
+        else
+            update = false;
+    }
+    else if (event.id == 11) // Return to root
+    {
+        updatePath("/sdcard", false);
+    }
+    else if (event.id > 11 && event.id <= 16) // Navigation bar
+    {
+        int8_t k = fileDepth > 5 ? 5 : fileDepth;
+        k -= event.id - 12;
+        switch (k)
         {
-            _UI->setScreen(lcdUI::Info);
-        }
-        else if (event.id == 1 && filePage > 0)
-        {
-            filePage--;
-        }
-        else if (event.id == 2 && filePage < numFilePages-1)
-        {
-            filePage++;
+        case 1:
+            filePage = 0;
+            break;
+
+        case 2:
+            updatePath("/..1", true);
+            break;
+
+        case 3:
+            updatePath("/..2", true);
+            break;
+
+        case 4:
+            updatePath("/..3", true);
+            break;
+
+        case 5:
+            updatePath("/..4", true);
+            break;
+
+        default:
+            update = false;
+            break;
         }
     }
-    else if (event.trigger == TrgSrc::RELEASE)
+    else
     {
-        Vec2h pos = Vec2h();
-        if (pos.y < 50) // Navigation bar
-        {
-            if (pos.x < 50) updatePath("/sdcard", false);       // Return to root
-            uint8_t k = 1;
-            for (uint8_t i = fileDepth > 5? 5 : fileDepth; i > 0; i--)
-            {
-                if (pos.x >= 86*i-36 && pos.x < 50 + 86*i)
-                {
-                    switch (k)
-                    {
-                    case 1:
-                        filePage = 0;
-                        break;
-
-                    case 2:
-                        updatePath("/..1", true);
-                        break;
-
-                    case 3:
-                        updatePath("/..2", true);
-                        break;
-
-                    case 4:
-                        updatePath("/..3", true);
-                        break;
-
-                    case 5:
-                        updatePath("/..4", true);
-                        break;
-                    }
-                }
-                k++;
-            }
-        }
-        else if (pos.y < 250) // Folder content
-        {
-            uint8_t idx = (pos.y - 50) / 50;
-            if (pos.x >= 240) idx += 4;
-            ESP_LOGV("Touch", "IDX: %d", idx);
-            if ((isDir & (1 << idx)) > 0) updatePath(dirList[idx], true);
-            else if (isGcode(dirList[idx]))
-                sendFile(dirList[idx]);
-        }
+        update = false;
     }
+    
+    if (update)
+        _UI->requestUpdate();
 }
 
 void FileBrowser_Scr::printDirectory(DIR *dp)
@@ -346,6 +427,6 @@ bool FileBrowser_Scr::isGcode(const std::string &file)
 
 void FileBrowser_Scr::sendFile(const std::string &file)
 {
-    if (_UI->setFile(path + "/" + file))
+    if (_UI->setFile(path + "/" + file) == ESP_OK)
         _UI->setScreen(lcdUI::GcodePreview);
 }

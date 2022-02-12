@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 06-02-2022
+ * Last Modified: 12-02-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -260,7 +260,10 @@ bool lcdUI::isSDinit() const
 esp_err_t lcdUI::setFile(const std::string& file)
 {
     if (access(file.c_str(), F_OK) == 0)
+    {
+        DBG_LOGD("Set file %s", file.c_str());
         selectedFile = file;
+    }
     else
         return ESP_ERR_NOT_FOUND;
     return ESP_OK;
@@ -305,7 +308,7 @@ esp_err_t lcdUI::updateObjects()
 {
     menu localMenu = newMenuID; // Local copy so that it remains unchanged
     if (menuID == localMenu) return ESP_OK;
-    DBG_LOGI("Change screen to ID: %d", localMenu);
+    DBG_LOGD("Change screen to ID: %d", localMenu);
 
     tft.fillScreen(TFT_BLACK);
     Button clearBtn;
