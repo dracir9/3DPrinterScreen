@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 13-02-2022
+ * Last Modified: 14-02-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -246,6 +246,7 @@ bool GCodeRenderer::_init;
 GCodeRenderer GCodeRenderer::_instance;
 uint8_t GCodeRenderer::eState = STOP;
 uint8_t GCodeRenderer::isReady = 0;
+constexpr int32_t GCodeRenderer::bufferLen;
 
 GCodeRenderer::GCodeRenderer()
 {   
@@ -254,11 +255,13 @@ GCodeRenderer::GCodeRenderer()
     thrdRetQueue = xQueueCreate(rQueueLen, sizeof(JobData));
     vectorQueue = xQueueCreate(vecQueueLen, sizeof(VectorData));
     vectRetQueue = xQueueCreate(vecQueueLen, sizeof(VectorData));
+    readyFlag = xSemaphoreCreateBinary();
 
     if (threadQueue == nullptr || 
         thrdRetQueue == nullptr || 
         vectorQueue == nullptr ||
-        vectRetQueue == nullptr)
+        vectRetQueue == nullptr ||
+        readyFlag == nullptr)
     {
         DBG_EARLY_LOGE("Failed to create queues!");
         esp_restart();
@@ -266,10 +269,10 @@ GCodeRenderer::GCodeRenderer()
 
     outImg = (uint16_t*)calloc(320*320, sizeof(int16_t));
 
-    xTaskCreatePinnedToCore(threadTask, "Worker task", 2560, NULL, 2, &worker, 1);
+    xTaskCreatePinnedToCore(threadTask, "Worker task", 2560, NULL, 1, &worker, 1);
     vTaskDelay(100);
 
-    xTaskCreatePinnedToCore(assemblerTask, "Assembler task", 3072, NULL, 2, &assembler, 0);
+    xTaskCreatePinnedToCore(assemblerTask, "Assembler task", 3072, NULL, 1, &assembler, 0);
 
     xTaskCreate(mainTask, "Main task", 3072, NULL, 2, &main);
 
@@ -312,6 +315,7 @@ void GCodeRenderer::mainTask(void* arg)
         switch (eState)
         {
         case STOP:
+            xSemaphoreGive(instance()->readyFlag);
             vTaskSuspend(NULL);
             break;
 
@@ -341,7 +345,6 @@ void GCodeRenderer::mainTask(void* arg)
             
             break;
 
-        case ReRENDER:
         case RENDER:
             half = esp_timer_get_time();
             while (eState == RENDER) vTaskSuspend(NULL); // Wait for the assembler to finish
@@ -397,7 +400,6 @@ void GCodeRenderer::threadTask(void* arg)
             }
             break;
 
-        case ReRENDER:
         case RENDER:
             if (!instance()->readTmp()) eState = INIT;
             // Signal end of preprocessing
@@ -446,8 +448,7 @@ void GCodeRenderer::assemblerTask(void* arg)
             if (!instance()->renderMesh()) eState = ERROR;
             if (eState == RENDER)
             {
-                instance()->rotation += 0.17453f;
-                eState = ReRENDER;
+                eState = END;
                 vTaskResume(instance()->main);
                 vTaskResume(instance()->worker);
             }
@@ -611,8 +612,8 @@ bool GCodeRenderer::readTmp()
 
     float sizeFraction = 50.0f/filesize;
     
-    DBG_LOGD("CamPos(%f, %f, %f)", camPos.x, camPos.y, camPos.z);
-    projMat = Mat4::RotationZ(rotation) * Mat4::Translation(-camPos) * Mat4::RotationX(M_PI*0.5f) * Mat4::Projection(2.0f, 2.0f, near);
+    DBG_LOGD("CamPos(%.3f, %.3f, %.3f)", camPos.x, camPos.y, camPos.z);
+    projMat = Mat4::Translation(-camPos) * Mat4::RotationX(M_PI*0.5f) * projMat;
 
     // Checking
     DBG_LOGW_IF(uxQueueSpacesAvailable(vectRetQueue) != 0, "vectRetQueue not full");
@@ -685,7 +686,7 @@ bool GCodeRenderer::readTmp()
         fclose(rfile);
         rfile = nullptr;
     }
-    //isTmpOnRam = false;
+    isTmpOnRam = false;
 
     DBG_LOGD("Tmp read!");
     return true;
@@ -886,16 +887,16 @@ bool GCodeRenderer::renderMesh()
     DBG_LOGD("Save image");
 
     bool result = true;
-/*     wfile = fopen(imgPath.c_str(), "wb");
+    wfile = fopen(imgPath.c_str(), "wb");
     DBG_LOGE_AND_RETURN_IF(wfile == nullptr, false,
         "Error opening img file (%s)", imgPath.c_str());
 
     setvbuf(wfile, wBuffer, _IOFBF, bufferLen);
 
-    bool result = (fwrite(img, 2, 320*320, wfile) == 320*320);
+    result = (fwrite(outImg, 2, 320*320, wfile) == 320*320);
 
     fclose(wfile);
-    wfile = nullptr; */
+    wfile = nullptr;
 
     free(zbuf);
 
@@ -1412,9 +1413,9 @@ GCodeRenderer* GCodeRenderer::instance()
     return _init ? &_instance : nullptr;
 }
 
-bool GCodeRenderer::begin(std::string file)
+esp_err_t GCodeRenderer::begin(std::string file)
 {
-    if (eState != STOP) return false;
+    if (eState != STOP) return ESP_ERR_INVALID_STATE;
 
     filePath = file;
     generateFilenames();
@@ -1422,7 +1423,18 @@ bool GCodeRenderer::begin(std::string file)
     vTaskResume(instance()->main);
     DBG_LOGI("Render task started");
 
-    return true;
+    return ESP_OK;
+}
+
+esp_err_t GCodeRenderer::getRender(uint16_t** outPtr, TickType_t timeout)
+{
+    if (eState == STOP || eState == READY)
+        return ESP_ERR_INVALID_STATE;
+    if (xSemaphoreTake(readyFlag, timeout) != pdTRUE)
+        return ESP_ERR_TIMEOUT;
+
+    *outPtr = outImg;
+    return ESP_OK;
 }
 
 void GCodeRenderer::printMinStack()

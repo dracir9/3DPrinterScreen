@@ -34,6 +34,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
 #include "Vector.h"
 #include "dbg_log.h"
 #include "Matrix.h"
@@ -165,7 +166,6 @@ private:
         INIT,   // Initialize G Code rendering
         PRE_PROCESS, // PreProcess step
         RENDER, // Render step
-        ReRENDER,
         END,     // Finalize G Code rendering
         ERROR
     };
@@ -203,6 +203,7 @@ private:
     QueueHandle_t thrdRetQueue;
     QueueHandle_t vectorQueue;
     QueueHandle_t vectRetQueue;
+    SemaphoreHandle_t readyFlag;
 
     TaskHandle_t main;
     TaskHandle_t worker;
@@ -242,7 +243,8 @@ private:
     void stopTasks();
     
 public:
-    bool begin(std::string file);
+    esp_err_t begin(std::string file);
+    esp_err_t getRender(uint16_t** outPtr, TickType_t timeout);
     static GCodeRenderer* instance();
     void printMinStack();
     float getProgress() { return progress; };

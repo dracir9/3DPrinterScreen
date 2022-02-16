@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 12-02-2022
+ * Last Modified: 16-02-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -29,12 +29,12 @@
 #include <bitset>
 #include "../parser.h"
 #include "../utility.h"
+#include "GCodeRenderer.h"
 
 class GcodePreview_Scr final : public Screen
 {
 public:
     GcodePreview_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts);
-    ~GcodePreview_Scr();
 
     void update(const uint32_t deltaTime, TchScr_Drv& ts) override;
 
@@ -43,59 +43,14 @@ public:
     void handleTouch(const TchEvent& event) override;
 
 private:
-    bool readLine();
-    bool processLine();
-    bool initRender();
-    void renderGCode(tftLCD& tft);
-    void parseComment(const char* line);
-    void drawLineZbuf(tftLCD& tft, Vec3f u, Vec3f v, const uint32_t color);
-    void drawPixelZbuf(tftLCD& tft, Vec3f p, const uint32_t color);
     void drawInfo(tftLCD& tft);
 
-    // SD file variables
-    FILE* GcodeFile = nullptr;
-    static constexpr uint32_t maxLineLen = 96;
-    static constexpr uint32_t bufferLen = 2048;
-    static constexpr uint32_t fileBufLen = 8192;
-    static char fileBuffer[fileBufLen];
-    char* readBuffer = nullptr;
-    char* gCodeLine = nullptr;
-    char* commentLine = nullptr;
-    float* Zbuffer = nullptr;
-    uint16_t bufPos = 0;
-    uint16_t readLen = 0;
-    uint32_t filesize = 0;
-
     // Status and info
-    uint8_t readState = 0;
-    uint32_t lines = 0;
-    int64_t eTime = 0;
-    int64_t maxWorkTime = 30000;
     std::bitset<2> displayed;
     int32_t printTime = 0;
     float filament = 0.0f;
-    TFT_eSprite* img;
-
-    // Machine state (in um)
-    bool draw = false;
-    bool absPos = true;
-    bool absEPos = true;
-    Vec3f currentPos;
-    Vec3f nextPos;
-    Vec3f offset;
-    Vec3f minPos;
-    Vec3f maxPos;
-    float currentE = 0.0f;
-    float nextE = 0.0f;
-    float offsetE = 0.0f;
-
-    // Camera settings
-    static constexpr int32_t near = 200;
-    Vec3f camPos;
-    const Vec3f light = Vec3f(1.0f, 0.0f, 0.0f);
-    int32_t zCmin = 0;
-    int32_t zCmax = 0;
-    uint32_t minidx = 160*320;
+    GCodeRenderer* renderEngine;
+    bool started = false;
 };
 
 #endif
