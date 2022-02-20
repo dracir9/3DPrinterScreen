@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 13-02-2022
+ * Last Modified: 20-02-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -196,8 +196,7 @@ private:
     static constexpr int32_t near = 200;
     static constexpr Vec3f lightDir = Vec3f(1.0f, 0.0f, 0.0f);
     static constexpr Vec3f scrOff = Vec3f(160.0f, 160.0f, 0.0f);
-    Mat4 projMat = Mat4::Projection(2.0f, 2.0f, near);
-    float rotation = 0.0f;
+    Mat4 projMat;
 
     QueueHandle_t threadQueue;
     QueueHandle_t thrdRetQueue;

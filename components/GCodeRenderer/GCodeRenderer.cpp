@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 14-02-2022
+ * Last Modified: 20-02-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -315,7 +315,6 @@ void GCodeRenderer::mainTask(void* arg)
         switch (eState)
         {
         case STOP:
-            xSemaphoreGive(instance()->readyFlag);
             vTaskSuspend(NULL);
             break;
 
@@ -361,6 +360,7 @@ void GCodeRenderer::mainTask(void* arg)
                 DBG_LOGI("Render time: %d ms", (unsigned int)(endT-half)/1000);
 
             instance()->progress = 100.0f;
+            xSemaphoreGive(instance()->readyFlag);
             eState = STOP;
             break;
 
@@ -613,7 +613,7 @@ bool GCodeRenderer::readTmp()
     float sizeFraction = 50.0f/filesize;
     
     DBG_LOGD("CamPos(%.3f, %.3f, %.3f)", camPos.x, camPos.y, camPos.z);
-    projMat = Mat4::Translation(-camPos) * Mat4::RotationX(M_PI*0.5f) * projMat;
+    projMat = Mat4::Translation(-camPos) * Mat4::RotationX(M_PI*0.5f) * Mat4::Projection(2.0f, 2.0f, near);
 
     // Checking
     DBG_LOGW_IF(uxQueueSpacesAvailable(vectRetQueue) != 0, "vectRetQueue not full");
@@ -1417,6 +1417,8 @@ esp_err_t GCodeRenderer::begin(std::string file)
 {
     if (eState != STOP) return ESP_ERR_INVALID_STATE;
 
+    xSemaphoreTake(readyFlag, 0); // clear ready flag
+    progress = 0.0f;
     filePath = file;
     generateFilenames();
     eState = INIT;
@@ -1428,8 +1430,6 @@ esp_err_t GCodeRenderer::begin(std::string file)
 
 esp_err_t GCodeRenderer::getRender(uint16_t** outPtr, TickType_t timeout)
 {
-    if (eState == STOP || eState == READY)
-        return ESP_ERR_INVALID_STATE;
     if (xSemaphoreTake(readyFlag, timeout) != pdTRUE)
         return ESP_ERR_TIMEOUT;
 

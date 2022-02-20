@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 12-02-2022
+ * Last Modified: 20-02-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -140,7 +140,7 @@ void FileBrowser_Scr::updatePath(const std::string &newPath, const bool relative
             size_t slash = path.rfind('/');
             if (slash == -1 || (newPath[dot] < '0' && newPath[dot] > '9'))
             {
-                ESP_LOGE("fileBrowser", "Invalid path!");
+                DBG_LOGE("Invalid path!");
                 return;
             }
 
@@ -156,7 +156,7 @@ void FileBrowser_Scr::updatePath(const std::string &newPath, const bool relative
     {
         path = newPath;
     }
-    ESP_LOGD("fileBrowser", "New path: %s", path.c_str());
+    DBG_LOGD("New path: %s", path.c_str());
     numFilePages = 0;       // Mark as new folder for reading
     filePage++;             // Trigger page load
 }
@@ -344,7 +344,7 @@ void FileBrowser_Scr::loadPage()
     DIR * dir = opendir(path.c_str());
     if (!dir)
     {
-        ESP_LOGE("fileBrowser", "Error opening folder %s", path.c_str());
+        DBG_LOGE("Error opening folder %s", path.c_str());
         return;
     }
 
@@ -366,7 +366,7 @@ void FileBrowser_Scr::loadPage()
         if (numFilePages != 0)
             numFilePages = (numFilePages - 1) / 8;          // Translate to screen pages
         numFilePages++;
-        ESP_LOGD("fileBrowser", "File Pages: %d", numFilePages);
+        DBG_LOGD("File Pages: %d", numFilePages);
 
         fileDepth = 0;
         for (uint8_t i = 1; i < path.length(); i++)
