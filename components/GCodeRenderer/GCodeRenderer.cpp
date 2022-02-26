@@ -834,6 +834,8 @@ esp_err_t GCodeRenderer::generatePath()
         j = 0;
     }
     DBG_LOGD("Cache size: %d", tmpCache.getSize());
+    if (camP.z < 0)
+        camP.z = 0.0f;
 
     esp_err_t result = ESP_OK;
     if (wfile != nullptr)
@@ -867,9 +869,9 @@ esp_err_t GCodeRenderer::renderMesh()
 
     float* zbuf = (float*)calloc(320*320, sizeof(float));
 
-    if (zbuf == nullptr || outImg == nullptr)
+    if (zbuf == nullptr)
     { 
-        DBG_LOGE("Failed to allocate buffers");
+        DBG_LOGE("Failed to allocate Z buffer");
         return ESP_ERR_NO_MEM;
     }
 
@@ -1117,6 +1119,7 @@ void GCodeRenderer::checkCamPos(const Vec3f &u, Vec3f &minP, Vec3f &maxP, Vec3f 
         minP.z = u.z;
     }
 
+    // Min and max points relative to camera
     Vec3f minPr(minP.x - camP.x, minP.z - camP.z, minP.y - camP.y);
     Vec2f maxPr(maxP.x - camP.x, maxP.z - camP.z);
 
@@ -1128,9 +1131,11 @@ void GCodeRenderer::checkCamPos(const Vec3f &u, Vec3f &minP, Vec3f &maxP, Vec3f 
     float dz2 = 0.0f;
     float nearClip = 1.0f;
 
+    // Is on one side of the viewfield?
     if ((abs(p.z - nearClip) + nearClip) * 0.75f < abs(p.x))
     {
         // Diagonal translation
+        // Right side
         if (p.x > 0.0f)
         {
             float margin = minPr.z * 0.75f + minPr.x;
@@ -1156,6 +1161,7 @@ void GCodeRenderer::checkCamPos(const Vec3f &u, Vec3f &minP, Vec3f &maxP, Vec3f 
                 dz1 *= 0.66666666f;
             }
         }
+        // Left side
         else // p.x < 0
         {
             float margin = -minPr.z * 0.75f + maxPr.x;
@@ -1196,8 +1202,10 @@ void GCodeRenderer::checkCamPos(const Vec3f &u, Vec3f &minP, Vec3f &maxP, Vec3f 
         camP.y = u.y - nearClip;
     }
     
+    // Is over or velow the viewfield?
     if ((abs(p.z - nearClip) + nearClip) * 0.75f < abs(p.y)) // Diagonal translation
     {
+        // Bot side
         if (p.y > 0.0f)
         {
             float margin = minPr.z * 0.75f + minPr.y;
@@ -1223,6 +1231,7 @@ void GCodeRenderer::checkCamPos(const Vec3f &u, Vec3f &minP, Vec3f &maxP, Vec3f 
                 dz2 *= 0.66666666f;
             }
         }
+        // Top side
         else // p.y < 0
         {
             float margin = -minPr.z * 0.75f + maxPr.y;
@@ -1252,13 +1261,13 @@ void GCodeRenderer::checkCamPos(const Vec3f &u, Vec3f &minP, Vec3f &maxP, Vec3f 
     else if (p.z < nearClip) // Set position
     {
         if (p.y > 0.0f)
-    {
+        {
             dy = p.y + nearClip * 0.75f;
-    }
+        }
         else
-    {
+        {
             dy = p.y - nearClip * 0.75f;
-    }
+        }
         camP.y = u.y - nearClip;
     }
 
