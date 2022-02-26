@@ -94,13 +94,14 @@ uint16_t GCodeRenderer::GCache::addPoint(Vec3f &vec, Vec3f &oldV)
     return numBytes;
 }
 
-size_t GCodeRenderer::GCache::write(int32_t size, FILE* file)
+size_t GCodeRenderer::GCache::write(int32_t maxSize, FILE* file)
 {
     int32_t cnt = 0;
     TickType_t timeout = xTaskGetTickCount() + pdMS_TO_TICKS(4000);
-    while (cnt < size)
+    if (size < maxSize) maxSize = size;
+    while (cnt < maxSize)
     {
-        int32_t numBytes = std::max(bufferLen, size - cnt);
+        int32_t numBytes = std::min(bufferLen, maxSize - cnt);
         if (fwrite(&buffer[cnt], 1, numBytes, file) != numBytes)
             return cnt;// Write error
         cnt += numBytes;
@@ -451,23 +452,21 @@ void GCodeRenderer::assemblerTask(void* arg)
         switch (eState)
         {
         case PRE_PROCESS:
-            if (!instance()->generatePath()) eState = ERROR;
+            if (instance()->generatePath() != ESP_OK) eState = ERROR;
             if (eState == PRE_PROCESS)
-            {
                 eState = RENDER;
-                vTaskResume(instance()->main);
-                vTaskResume(instance()->worker);
-            }
+            vTaskResume(instance()->main);
+            vTaskResume(instance()->worker);
+
             break;
 
         case RENDER:
-            if (!instance()->renderMesh()) eState = ERROR;
+            if (instance()->renderMesh() != ESP_OK) eState = ERROR;
             if (eState == RENDER)
-            {
                 eState = END;
-                vTaskResume(instance()->main);
-                vTaskResume(instance()->worker);
-            }
+            vTaskResume(instance()->main);
+            vTaskResume(instance()->worker);
+
             break;
 
         case STOP:
@@ -490,7 +489,7 @@ esp_err_t GCodeRenderer::readFile()
     int16_t deleted = 0;
 
     rfile = fopen(filePath.c_str(), "r");
-    DBG_LOGE_AND_RETURN_IF(rfile == nullptr, false,
+    DBG_LOGE_AND_RETURN_IF(rfile == nullptr, ESP_FAIL,
         "Error opening file \"%s\"", filePath.c_str());
 
     setvbuf(rfile, rBuffer, _IOFBF, bufferLen);
@@ -775,7 +774,7 @@ void GCodeRenderer::processGcode()
     DBG_LOGD("All jobs processed");
 }
 
-bool GCodeRenderer::generatePath()
+esp_err_t GCodeRenderer::generatePath()
 {
     VectorData moveBuffer;
     Vec3f lastPos = Vec3f();
@@ -801,7 +800,7 @@ bool GCodeRenderer::generatePath()
                 if (wfile == nullptr) // Initialize file
                 {
                     wfile = fopen(tmpPath.c_str(), "wb");
-                    DBG_LOGE_AND_RETURN_IF(wfile == nullptr, false,
+                    DBG_LOGE_AND_RETURN_IF(wfile == nullptr, ESP_FAIL,
                         "Error opening tmp file for write (%s)", tmpPath.c_str());
 
                     setvbuf(wfile, wBuffer, _IOFBF, bufferLen);
@@ -819,7 +818,7 @@ bool GCodeRenderer::generatePath()
                     DBG_LOGE("Error writting file");
                     fclose(wfile);
                     wfile = nullptr;
-                    return false;
+                    return ESP_FAIL;
                 }
 
                 // Reset variables
@@ -836,7 +835,7 @@ bool GCodeRenderer::generatePath()
     }
     DBG_LOGD("Cache size: %d", tmpCache.getSize());
 
-    bool result = true;
+    esp_err_t result = ESP_OK;
     if (wfile != nullptr)
     {
         tmpCache.write(tmpCache.getSize(), wfile);
@@ -844,7 +843,7 @@ bool GCodeRenderer::generatePath()
         fseek(wfile, sizeof(time_t), SEEK_SET);
         fwrite(&camP, sizeof(Vec3f), 1, wfile);
 
-        result = !ferror(wfile);
+        result = ferror(wfile);
         fclose(wfile);
         wfile = nullptr;
     }
@@ -855,11 +854,11 @@ bool GCodeRenderer::generatePath()
     DBG_LOGD("Cam Pos: (%.3f, %.3f, %.3f)", camP.x, camP.y, camP.z);
     tmpCache.camPos = camP;
 
-    DBG_LOGD_IF(result, "Preprocess done");
+    DBG_LOGD_IF(result == ESP_OK, "Preprocess done");
     return result;
 }
 
-bool GCodeRenderer::renderMesh()
+esp_err_t GCodeRenderer::renderMesh()
 {
     VectorData moveBuffer;
     Vec3f start = Vec3f(infinityf(), 0.0f, 0.0f);
@@ -898,25 +897,26 @@ bool GCodeRenderer::renderMesh()
         xQueueSend(vectRetQueue, &moveBuffer, portMAX_DELAY);
     }
     DBG_LOGD("Rendered");
-    if (eState != RENDER) return true;
+    if (eState != RENDER) return ESP_OK;
 
     DBG_LOGD("Save image");
 
-    bool result = true;
+    esp_err_t result = ESP_OK;
 /*     wfile = fopen(imgPath.c_str(), "wb");
     DBG_LOGE_AND_RETURN_IF(wfile == nullptr, false,
         "Error opening img file (%s)", imgPath.c_str());
 
     setvbuf(wfile, wBuffer, _IOFBF, bufferLen);
 
-    result = (fwrite(outImg, 2, 320*320, wfile) == 320*320);
+    if (fwrite(outImg, 2, 320*320, wfile) != 320*320)
+        result = ESP_FAIL;
 
     fclose(wfile);
     wfile = nullptr; */
 
     free(zbuf);
 
-    DBG_LOGD_IF(result, "Saved");
+    DBG_LOGD_IF(result == ESP_OK, "Saved");
     return result;
 }
 

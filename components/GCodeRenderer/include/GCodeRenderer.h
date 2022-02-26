@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 20-02-2022
+ * Last Modified: 26-02-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -145,7 +145,7 @@ private:
         void reset();
         void rewind();
         uint16_t addPoint(Vec3f &vec, Vec3f &oldV);
-        size_t write(int32_t size, FILE* file);
+        size_t write(int32_t maxSize, FILE* file);
         size_t read(void* buff, FILE* file);
         uint16_t readPoint(Vec3f &oldP);
 
@@ -223,8 +223,8 @@ private:
     void processGcode();
 
     // Stage 3
-    bool generatePath();
-    bool renderMesh();
+    esp_err_t generatePath();
+    esp_err_t renderMesh();
 
     // Helpers
     int8_t parseGcode(char* &p, PrinterState &state);
