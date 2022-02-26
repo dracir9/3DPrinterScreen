@@ -778,9 +778,12 @@ esp_err_t GCodeRenderer::generatePath()
 {
     VectorData moveBuffer;
     Vec3f lastPos = Vec3f();
-    Vec3f minPos = Vec3f(infinityf(), infinityf(), infinityf());
-    Vec3f maxPos = Vec3f(-infinityf(), -infinityf(), -infinityf());
-    Vec3f camP = Vec3f(0.0f, infinityf(), 0.0f);
+    Boundary limits = {
+        .Xmax = Vec3f(0.0f, 0.0f, -infinityf()),
+        .Xmin = Vec3f(0.0f, 0.0f, infinityf()),
+        .Ymax = Vec3f(0.0f, 0.0f, -infinityf()),
+        .Ymin = Vec3f(0.0f, 0.0f, infinityf())
+    };
     
     isTmpOnRam = true;
     tmpCache.reset();
@@ -795,7 +798,7 @@ esp_err_t GCodeRenderer::generatePath()
             // Tmp file too large, store on SD card
             if (tmpCache.getSize() >= cacheLen - GBlock::minBytes() - 1)
             {
-                DBG_LOGD("Move tmp to RAM (%dB)", tmpCache.getSize());
+                DBG_LOGD("Move tmp to SD (%dB)", tmpCache.getSize());
                 isTmpOnRam = false;
                 if (wfile == nullptr) // Initialize file
                 {
@@ -827,15 +830,24 @@ esp_err_t GCodeRenderer::generatePath()
 
             tmpCache.addPoint(moveBuffer.data[j], lastPos);
             DBG_LOGV("P(%.3f, %.3f, %.3f)", moveBuffer.data[j].x, moveBuffer.data[j].y, moveBuffer.data[j].z);
-            checkCamPos(moveBuffer.data[j], minPos, maxPos, camP);
+            checkCamPos(moveBuffer.data[j], limits);
             lastPos = moveBuffer.data[j];
         }
         xQueueSend(vectRetQueue, &moveBuffer, portMAX_DELAY);
         j = 0;
     }
     DBG_LOGD("Cache size: %d", tmpCache.getSize());
-    if (camP.z < 0)
-        camP.z = 0.0f;
+    
+    // Calculate final camera position
+    float dx1 = limits.Xmax.x*0.5f - limits.Xmax.y*0.375f;
+    float dx2 = limits.Xmin.x*0.5f + limits.Xmin.y*0.375f;
+    float dy1 = limits.Ymax.x*0.5f - limits.Ymax.y*0.375f;
+    float dy2 = limits.Ymin.x*0.5f + limits.Ymin.y*0.375f;
+    float dz1 = dx2*4.0f/3.0f - dx1*4.0f/3.0f;
+    float dz2 = dy2*4.0f/3.0f - dy1*4.0f/3.0f;
+
+    // Calculate position and revert camera rotation
+    Vec3f camP = Vec3f(dx1 + dx2, fminf(dz1, dz2), -(dy1 + dy2));
 
     esp_err_t result = ESP_OK;
     if (wfile != nullptr)
@@ -851,8 +863,8 @@ esp_err_t GCodeRenderer::generatePath()
     }
 
     // Write final camera position
-    DBG_LOGD("Min: (%.3f, %.3f, %.3f)", minPos.x, minPos.y, minPos.z);
-    DBG_LOGD("Max: (%.3f, %.3f, %.3f)", maxPos.x, maxPos.y, maxPos.z);
+    DBG_LOGD("Ymax (%.3f, %.3f)", limits.Ymax.x, limits.Ymax.y);
+    DBG_LOGD("Ymin (%.3f, %.3f)", limits.Ymin.x, limits.Ymin.y);
     DBG_LOGD("Cam Pos: (%.3f, %.3f, %.3f)", camP.x, camP.y, camP.z);
     tmpCache.camPos = camP;
 
@@ -1089,191 +1101,42 @@ int8_t GCodeRenderer::parseGcode(char* &p, PrinterState &state)
     return p-lineStart;
 }
 
-void GCodeRenderer::checkCamPos(const Vec3f &u, Vec3f &minP, Vec3f &maxP, Vec3f &camP)
+inline void GCodeRenderer::checkCamPos(const Vec3f &u, Boundary &limit)
 {
-    // Calculate bounding box
-    if (u.x > maxP.x)
+    // Apply rotation
+    Vec3f p(u.x, -u.z, u.y);
+
+    float marg =  p.x - p.z * 0.75;
+    if (marg > limit.Xmax.z)
     {
-        maxP.x = u.x;
-    }
-    else if (u.x < minP.x)
-    {
-        minP.x = u.x;
+        limit.Xmax.x = p.x;
+        limit.Xmax.y = p.z;
+        limit.Xmax.z = marg;
     }
 
-    if (u.y > maxP.y)
+    marg = p.x + p.z * 0.75;
+    if (marg < limit.Xmin.z)
     {
-        maxP.y = u.y;
-    }
-    else if (u.y < minP.y)
-    {
-        minP.y = u.y;
-    }
-    
-    if (u.z > maxP.z)
-    {
-        maxP.z = u.z;
-    }
-    else if (u.z < minP.z)
-    {
-        minP.z = u.z;
+        limit.Xmin.x = p.x;
+        limit.Xmin.y = p.z;
+        limit.Xmin.z = marg;
     }
 
-    // Min and max points relative to camera
-    Vec3f minPr(minP.x - camP.x, minP.z - camP.z, minP.y - camP.y);
-    Vec2f maxPr(maxP.x - camP.x, maxP.z - camP.z);
-
-    // Fit new point
-    Vec3f p(u.x - camP.x, u.z - camP.z, u.y - camP.y);
-    float dx = 0.0f;
-    float dy = 0.0f;
-    float dz1 = 0.0f;
-    float dz2 = 0.0f;
-    float nearClip = 1.0f;
-
-    // Is on one side of the viewfield?
-    if ((abs(p.z - nearClip) + nearClip) * 0.75f < abs(p.x))
+    marg =  p.y - p.z * 0.75;
+    if (marg > limit.Ymax.z)
     {
-        // Diagonal translation
-        // Right side
-        if (p.x > 0.0f)
-        {
-            float margin = minPr.z * 0.75f + minPr.x;
-            dx = p.x - p.z * 0.75f;
-            dz1 = dx;
-            if (margin > 0.0f) // Can translate in X axis only?
-            {
-                if (dx > margin) // Translation in Z also needed?
-                {
-                    dx += margin;
-                    dz1 -= margin;
-                    dx *= 0.5f;
-                    dz1 *= 0.66666666f;
-                }
-                else
-                {
-                    dz1 = 0.0f;
-                }
-            }
-            else
-            {
-                dx *= 0.5f;
-                dz1 *= 0.66666666f;
-            }
-        }
-        // Left side
-        else // p.x < 0
-        {
-            float margin = -minPr.z * 0.75f + maxPr.x;
-            dx = p.x + p.z * 0.75f;
-            dz1 = -dx;
-            if (margin < 0.0f)
-            {
-                if (dx < margin)
-                {
-                    dx += margin;
-                    dz1 += margin;
-                    dx *= 0.5f;
-                    dz1 *= 0.66666666f;
-                }
-                else
-                {
-                    dz1 = 0.0f;
-                }
-            }
-            else
-            {
-                dx *= 0.5f;
-                dz1 *= 0.66666666f;
-            }
-        }
-    }
-    else if (p.z < nearClip)
-    {
-        // Set position
-        if (p.x > 0.0f)
-        {
-            dx = p.x + nearClip * 0.75f;
-        }
-        else
-        {
-            dx = p.x - nearClip * 0.75f;
-        }
-        camP.y = u.y - nearClip;
-    }
-    
-    // Is over or velow the viewfield?
-    if ((abs(p.z - nearClip) + nearClip) * 0.75f < abs(p.y)) // Diagonal translation
-    {
-        // Bot side
-        if (p.y > 0.0f)
-        {
-            float margin = minPr.z * 0.75f + minPr.y;
-            dy = p.y - p.z * 0.75f;
-            dz2 = dy;
-            if (margin > 0.0f) // Can translate in Y axis only?
-            {
-                if (dy > margin) // Translation in Z also needed?
-                {
-                    dy += margin;
-                    dz2 -= margin;
-                    dy *= 0.5f;
-                    dz2 *= 0.66666666f;
-                }
-                else
-                {
-                    dz2 = 0.0f;
-                }
-            }
-            else
-            {
-                dy *= 0.5f;
-                dz2 *= 0.66666666f;
-            }
-        }
-        // Top side
-        else // p.y < 0
-        {
-            float margin = -minPr.z * 0.75f + maxPr.y;
-            dy = p.y + p.z * 0.75f;
-            dz2 = -dy;
-            if (margin < 0.0f)
-            {
-                if (dy < margin)
-                {
-                    dy += margin;
-                    dz2 += margin;
-                    dy *= 0.5f;
-                    dz2 *= 0.66666666f;
-                }
-                else
-                {
-                    dz2 = 0.0f;
-                }
-            }
-            else
-            {
-                dy *= 0.5f;
-                dz2 *= 0.66666666f;
-            }
-        }
-    }
-    else if (p.z < nearClip) // Set position
-    {
-        if (p.y > 0.0f)
-        {
-            dy = p.y + nearClip * 0.75f;
-        }
-        else
-        {
-            dy = p.y - nearClip * 0.75f;
-        }
-        camP.y = u.y - nearClip;
+        limit.Ymax.x = p.y;
+        limit.Ymax.y = p.z;
+        limit.Ymax.z = marg;
     }
 
-    camP.x += dx;
-    camP.y -= fmaxf(dz1, dz2);
-    camP.z += dy;
+    marg = p.y + p.z * 0.75;
+    if (marg < limit.Ymin.z)
+    {
+        limit.Ymin.x = p.y;
+        limit.Ymin.y = p.z;
+        limit.Ymin.z = marg;
+    }
 }
 
 inline void GCodeRenderer::projectLine(const Vec3f &u, const Vec3f &v, float* zBuffer)

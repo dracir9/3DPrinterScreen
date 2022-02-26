@@ -159,6 +159,14 @@ private:
         int32_t lastReadPtr = 0;
     };
 
+    struct Boundary
+    {
+        Vec3f Xmax;
+        Vec3f Xmin;
+        Vec3f Ymax;
+        Vec3f Ymin;
+    };
+
     enum renderState
     {
         STOP,   // Suspended state
@@ -229,7 +237,7 @@ private:
     // Helpers
     int8_t parseGcode(char* &p, PrinterState &state);
     uint8_t assembleBlock(Vec3f &vec, Vec3f &oldV, char* &ptable, float* &data, uint8_t &i);
-    void checkCamPos(const Vec3f &u, Vec3f &min, Vec3f &max, Vec3f &camP);
+    void checkCamPos(const Vec3f &u, Boundary &limit);
 
     // Rendering
     void projectLine(const Vec3f &u, const Vec3f &v, float* zBuffer);
