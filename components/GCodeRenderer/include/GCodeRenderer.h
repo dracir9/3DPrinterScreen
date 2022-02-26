@@ -216,8 +216,8 @@ private:
     static void assemblerTask(void* arg);
 
     // Stage 1
-    bool readFile();
-    bool readTmp();
+    esp_err_t readFile();
+    esp_err_t readTmp();
 
     // Stage 2
     void processGcode();

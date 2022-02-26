@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 20-02-2022
+ * Last Modified: 26-02-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -97,12 +97,20 @@ uint16_t GCodeRenderer::GCache::addPoint(Vec3f &vec, Vec3f &oldV)
 size_t GCodeRenderer::GCache::write(int32_t size, FILE* file)
 {
     int32_t cnt = 0;
+    TickType_t timeout = xTaskGetTickCount() + pdMS_TO_TICKS(4000);
     while (cnt < size)
     {
         int32_t numBytes = std::max(bufferLen, size - cnt);
         if (fwrite(&buffer[cnt], 1, numBytes, file) != numBytes)
             return cnt;// Write error
         cnt += numBytes;
+        
+        // Allow some time for lower priority tasks
+        if (xTaskGetTickCount() > timeout)
+        {
+            vTaskDelay(10);
+            timeout += pdMS_TO_TICKS(4000);
+        }
     }
     return cnt;
 }
@@ -131,7 +139,7 @@ uint16_t GCodeRenderer::GCache::readPoint(Vec3f &oldP)
     }
 
     readPtr += chunk.readPoint(oldP);
-    DBG_LOGV(0, "P(%.3f, %.3f, %.3f) - %d/%d", oldP.x, oldP.y, oldP.z, readPtr, nextStop);
+    DBG_LOGV("P(%.3f, %.3f, %.3f) - %d/%d", oldP.x, oldP.y, oldP.z, readPtr, nextStop);
     uint16_t numBytes = readPtr - lastReadPtr;
     lastReadPtr = readPtr;
 
@@ -331,7 +339,7 @@ void GCodeRenderer::mainTask(void* arg)
             break;
 
         case PRE_PROCESS:
-            if (!instance()->readFile()) eState = ERROR;
+            if (instance()->readFile() != ESP_OK) eState = ERROR;
             if (eState == PRE_PROCESS) // Normal program flow
             {
                 // Signal the worker to stop working
@@ -339,7 +347,7 @@ void GCodeRenderer::mainTask(void* arg)
                 xQueueSend(instance()->threadQueue, &endJobKey, portMAX_DELAY);
                 while (eState == PRE_PROCESS) vTaskSuspend(NULL); // Wait for the assembler to finish
             }
-            else // Something happended
+            else // Something went wrong
                 instance()->stopTasks();
             
             break;
@@ -401,7 +409,15 @@ void GCodeRenderer::threadTask(void* arg)
             break;
 
         case RENDER:
-            if (!instance()->readTmp()) eState = INIT;
+        {
+            esp_err_t ret = instance()->readTmp();
+            if(ret != ESP_OK)
+            {
+                if (ret == ESP_FAIL) eState = ERROR;
+                else eState = INIT;
+                instance()->stopTasks();
+            }
+            
             // Signal end of preprocessing
             if (eState == RENDER)
             {
@@ -410,7 +426,7 @@ void GCodeRenderer::threadTask(void* arg)
                 while (eState == RENDER) vTaskSuspend(NULL); // Wait for the assembler to finish
             }
             break;
-        
+        }
         case STOP:
             vTaskSuspend(NULL);
             break;
@@ -468,7 +484,7 @@ void GCodeRenderer::assemblerTask(void* arg)
     vTaskDelete(NULL);
 }
 
-bool GCodeRenderer::readFile()
+esp_err_t GCodeRenderer::readFile()
 {
     JobData job;
     int16_t deleted = 0;
@@ -512,7 +528,7 @@ bool GCodeRenderer::readFile()
         if (!feof(rfile))
         {
             char* end = job.data + readLen;
-            DBG_LOGV(2, "end:%d\n", *(end-1));
+            DBG_LOGV("end:%d\n", *(end-1));
 
             while (*(--end) >= 32)
                 deleted++;
@@ -539,16 +555,16 @@ bool GCodeRenderer::readFile()
         DBG_LOGE("Error reading file \"%s\"", filePath.c_str());
         fclose(rfile);
         rfile = nullptr;
-        return false;
+        return ESP_FAIL;
     }
 
     DBG_LOGD("File read!");
     fclose(rfile);
     rfile = nullptr;
-    return true;
+    return ESP_OK;
 }
 
-bool GCodeRenderer::readTmp()
+esp_err_t GCodeRenderer::readTmp()
 {
     DBG_LOGD("Start reading tmp");
 
@@ -573,7 +589,7 @@ bool GCodeRenderer::readTmp()
         DBG_LOGD("Load tmp from SDcard");
         rfile = fopen(tmpPath.c_str(), "rb");
     
-        DBG_LOGE_AND_RETURN_IF(rfile == nullptr, false,
+        DBG_LOGE_AND_RETURN_IF(rfile == nullptr, ESP_FAIL,
             "Error opening file \"%s\"", tmpPath.c_str());
 
         setvbuf(rfile, rBuffer, _IOFBF, bufferLen);
@@ -590,7 +606,7 @@ bool GCodeRenderer::readTmp()
             fclose(rfile);
             rfile = nullptr;
             remove(tmpPath.c_str());
-            return false;
+            return ESP_ERR_INVALID_SIZE;
         }
         
         // Read header
@@ -604,7 +620,7 @@ bool GCodeRenderer::readTmp()
             DBG_LOGI("Outdated tmp file (%s), regenerating", tmpPath.c_str());
             fclose(rfile);
             rfile = nullptr;
-            return false;
+            return ESP_ERR_INVALID_VERSION;
         }
 
         fread(&camPos, sizeof(Vec3f), 1, rfile);
@@ -679,7 +695,7 @@ bool GCodeRenderer::readTmp()
             DBG_LOGE("Error reading file");
             fclose(rfile);
             rfile = nullptr;
-            return false;
+            return ESP_FAIL;
         }
 
         // Close file
@@ -689,7 +705,7 @@ bool GCodeRenderer::readTmp()
     isTmpOnRam = false;
 
     DBG_LOGD("Tmp read!");
-    return true;
+    return ESP_OK;
 }
 
 void GCodeRenderer::processGcode()
@@ -709,7 +725,7 @@ void GCodeRenderer::processGcode()
     TickType_t timeout = xTaskGetTickCount() + pdMS_TO_TICKS(2000);
     while (xQueueReceive(threadQueue, &job, portMAX_DELAY) && job.size >= 0)
     {
-        DBG_LOGV(3, "New job");
+        DBG_LOGV("New job");
 
         char* buffPtr = job.data;
 
@@ -811,7 +827,7 @@ bool GCodeRenderer::generatePath()
             }
 
             tmpCache.addPoint(moveBuffer.data[j], lastPos);
-            DBG_LOGV(4, "P(%.3f, %.3f, %.3f)", moveBuffer.data[j].x, moveBuffer.data[j].y, moveBuffer.data[j].z);
+            DBG_LOGV("P(%.3f, %.3f, %.3f)", moveBuffer.data[j].x, moveBuffer.data[j].y, moveBuffer.data[j].z);
             checkCamPos(moveBuffer.data[j], minPos, maxPos, camP);
             lastPos = moveBuffer.data[j];
         }
@@ -839,7 +855,7 @@ bool GCodeRenderer::generatePath()
     DBG_LOGD("Cam Pos: (%.3f, %.3f, %.3f)", camP.x, camP.y, camP.z);
     tmpCache.camPos = camP;
 
-    DBG_LOGD_IF(result, "File written");
+    DBG_LOGD_IF(result, "Preprocess done");
     return result;
 }
 
@@ -865,7 +881,7 @@ bool GCodeRenderer::renderMesh()
     DBG_LOGD("Start drawing");
     while (xQueueReceive(vectorQueue, &moveBuffer, portMAX_DELAY) && moveBuffer.size >= 0)
     {
-        DBG_LOGV(5, "New job");
+        DBG_LOGV("New job");
         draw = false;
         for (int32_t i = 0; i < moveBuffer.size; i++)
         {
@@ -887,7 +903,7 @@ bool GCodeRenderer::renderMesh()
     DBG_LOGD("Save image");
 
     bool result = true;
-    wfile = fopen(imgPath.c_str(), "wb");
+/*     wfile = fopen(imgPath.c_str(), "wb");
     DBG_LOGE_AND_RETURN_IF(wfile == nullptr, false,
         "Error opening img file (%s)", imgPath.c_str());
 
@@ -896,7 +912,7 @@ bool GCodeRenderer::renderMesh()
     result = (fwrite(outImg, 2, 320*320, wfile) == 320*320);
 
     fclose(wfile);
-    wfile = nullptr;
+    wfile = nullptr; */
 
     free(zbuf);
 
@@ -993,22 +1009,22 @@ int8_t GCodeRenderer::parseGcode(char* &p, PrinterState &state)
                 if (param == 'X') {
                     if(state.absPos) state.nextPos.x = state.offset.x + strtof(p, &p);
                     else state.nextPos.x = state.currentPos.x + strtof(p, &p);
-                    DBG_LOGV(6, "X%f", state.nextPos.x);
+                    DBG_LOGV("X%f", state.nextPos.x);
                 }
                 if (param == 'Y') {
                     if(state.absPos) state.nextPos.y = state.offset.y + strtof(p, &p);
                     else state.nextPos.y = state.currentPos.y + strtof(p, &p);
-                    DBG_LOGV(6, "Y%f", state.nextPos.y);
+                    DBG_LOGV("Y%f", state.nextPos.y);
                 }
                 if (param == 'Z') {
                     if(state.absPos) state.nextPos.z = state.offset.z + strtof(p, &p);
                     else state.nextPos.z = state.currentPos.z + strtof(p, &p);
-                    DBG_LOGV(6, "Z%f", state.nextPos.z);
+                    DBG_LOGV("Z%f", state.nextPos.z);
                 }
                 if (param == 'E') {
                     if(state.absEPos) state.nextE = state.offsetE + strtof(p, &p);
                     else state.nextE = state.currentE + strtof(p, &p);
-                    DBG_LOGV(6, "E%f", state.nextE);
+                    DBG_LOGV("E%f", state.nextE);
                 }
             }
             break;
@@ -1253,7 +1269,7 @@ void GCodeRenderer::checkCamPos(const Vec3f &u, Vec3f &minP, Vec3f &maxP, Vec3f 
 
 inline void GCodeRenderer::projectLine(const Vec3f &u, const Vec3f &v, float* zBuffer)
 {
-    DBG_LOGV(7, "(%.3f, %.3f, %.3f) -> (%.3f, %.3f, %.3f)", u.x, u.y, u.z, v.x, v.y, v.z);
+    DBG_LOGV("(%.3f, %.3f, %.3f) -> (%.3f, %.3f, %.3f)", u.x, u.y, u.z, v.x, v.y, v.z);
     Vec4f d1(u);
     Vec4f d2(v);
 
@@ -1345,6 +1361,10 @@ void GCodeRenderer::stopTasks()
     // Stop assembler
     xQueueSendToFront(vectorQueue, &job, portMAX_DELAY);
 
+    vTaskResume(worker);
+    vTaskResume(assembler);
+    vTaskResume(main);
+
     DBG_LOGD("Stopped");
 }
 
@@ -1394,6 +1414,14 @@ void GCodeRenderer::init()
         DBG_LOGW("Write file not closed!");
         fclose(wfile);
         wfile = nullptr;
+    }
+
+    struct stat sb;
+
+    if (stat("/sdcard/.cache", &sb) != 0 || !S_ISDIR(sb.st_mode))
+    {
+        if (mkdir("/sdcard/.cache", 0777) != 0)
+            DBG_LOGE("Error creating cache folder");
     }
 
     if (access(tmpPath.c_str(), F_OK) == 0)
