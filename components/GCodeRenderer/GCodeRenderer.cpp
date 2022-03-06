@@ -1165,7 +1165,12 @@ inline void GCodeRenderer::projectLine(const Vec3f &u, const Vec3f &v, float* zB
     // Calculate illumination
     Vec3f dir = u-v;
     dir.Normalize();
-    uint16_t color = (uint32_t)(23 * abs(dir*lightDir) + 8) << 11;
+
+    uint16_t alpha = fabsf(dir*lightDir)*191.0f + 64.0f;
+    uint16_t r = alpha;
+    uint16_t g = alpha;
+    uint16_t b = alpha;
+    uint16_t color = ((uint16_t)(r & 0xF8)<<8) | ((uint16_t)(g & 0xFC)<<3) | (b >> 3);
 
     // Render line
     drawLine(d1, d2, color, zBuffer);
@@ -1179,18 +1184,16 @@ inline void GCodeRenderer::drawLine(const Vec3f &u, const Vec3f &v, uint16_t col
     Pixel pix;
     pix.color = color;
 
-    if (abs(diff.x) >= abs(diff.y))
-    {
-        cnt = abs(diff.x);
-        diff /= abs(diff.x);
-    }
+    if (fabsf(diff.x) >= fabsf(diff.y))
+        cnt = fabsf(diff.x);
     else
-    {
-        cnt = abs(diff.y);
-        diff /= abs(diff.y);
-    }
-    
-    for (uint32_t i = 0; i < cnt; i++)
+        cnt = fabsf(diff.y);
+
+    cnt++;
+    if (cnt > 1)
+        diff /= (float)cnt;
+
+    for (uint32_t i = 0; i <= cnt; i++)
     {
         pix.x = point.x;
         pix.y = point.y;
