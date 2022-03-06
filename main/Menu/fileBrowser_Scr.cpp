@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 20-02-2022
+ * Last Modified: 06-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -83,8 +83,11 @@ FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     tmpBut.xmax = 50;
     tmpBut.ymin = 0;
     tmpBut.ymax = 50;
+    tmpBut.enHoldEv = true;
+    tmpBut.holdTime = 31;
 
     ts.setButton(&tmpBut); // Return to SD root
+    tmpBut.enHoldEv = false;
 
     for (int i = 0; i < 5; i++) // Folder navigation
     {
@@ -163,7 +166,16 @@ void FileBrowser_Scr::updatePath(const std::string &newPath, const bool relative
 
 void FileBrowser_Scr::handleTouch(const TchEvent& event)
 {
-    if (event.trigger != TrgSrc::RELEASE) return;
+    if (event.trigger == TrgSrc::PRESS) return;
+
+    if (event.trigger == TrgSrc::HOLD_STRT && event.id == 11)
+    {
+        if (removeDir("/sdcard/.cache") == ESP_OK)
+            DBG_LOGI("Cache deleted!");
+        else
+            DBG_LOGI("Failed to delete cache");
+        return;
+    }
 
     bool update = true;
 
@@ -233,19 +245,47 @@ void FileBrowser_Scr::handleTouch(const TchEvent& event)
         _UI->requestUpdate();
 }
 
-void FileBrowser_Scr::printDirectory(DIR *dp)
+esp_err_t FileBrowser_Scr::removeDir(const char* path)
 {
-    struct dirent *ep;     
+    static char fullName[128];
+    DIR *dp = opendir (path);
 
     if (dp != NULL)
     {
+        struct dirent *ep;
         while ((ep = readdir (dp)))
-            DBG_LOGI("%s", ep->d_name);
+        {
+            if (ep->d_type == DT_DIR)
+            {
+                if (removeDir(ep->d_name) != ESP_OK)
+                {
+                    closedir (dp);
+                    return ESP_FAIL;
+                }
+            }
+            else
+            {
+                strcpy(fullName, path);
+                strcat(fullName, "/");
+                strcat(fullName, ep->d_name);
+                DBG_LOGD("%s", fullName);
+                if (remove(fullName) != 0)
+                {
+                    closedir (dp);
+                    return ESP_FAIL;
+                }
+            }
+        }
 
-        (void) closedir (dp);
+        closedir (dp);
+        remove(path);
     }
     else
+    {
         DBG_LOGE("Couldn't open the directory");
+        return ESP_FAIL;
+    }
+    return ESP_OK;
 }
 
 void FileBrowser_Scr::renderPage(tftLCD& tft)

@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 12-02-2022
+ * Last Modified: 06-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -41,7 +41,7 @@ public:
     void handleTouch(const TchEvent& event) override;
 
 private:
-    void printDirectory(DIR *dir);
+    esp_err_t removeDir(const char* path);
     void loadPage();
     void renderPage(tftLCD& tft);
     bool isPageLoaded();
