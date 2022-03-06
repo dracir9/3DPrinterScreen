@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 26-02-2022
+ * Last Modified: 06-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -206,6 +206,10 @@ private:
     static constexpr Vec3f scrOff = Vec3f(160.0f, 160.0f, 0.0f);
     Mat4 projMat;
 
+    float filament = 0.0f;
+    uint32_t printTime = 0;
+    bool isShell = true;
+
     QueueHandle_t threadQueue;
     QueueHandle_t thrdRetQueue;
     QueueHandle_t vectorQueue;
@@ -236,7 +240,7 @@ private:
 
     // Helpers
     int8_t parseGcode(char* &p, PrinterState &state);
-    uint8_t assembleBlock(Vec3f &vec, Vec3f &oldV, char* &ptable, float* &data, uint8_t &i);
+    void parseComment(const char* str);
     void checkCamPos(const Vec3f &u, Boundary &limit);
 
     // Rendering

@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 26-02-2022
+ * Last Modified: 06-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -709,11 +709,12 @@ esp_err_t GCodeRenderer::readTmp()
 
 void GCodeRenderer::processGcode()
 {
-    PrinterState PrintState;
+    PrinterState printState;
     JobData job;
     VectorData moveBuffer;
     moveBuffer.size = -1;
     Vec3f lastPoint = Vec3f();
+    isShell = true;
 
     // Checking
     DBG_LOGW_IF(uxQueueSpacesAvailable(vectRetQueue) != 0, "vectRetQueue not full");
@@ -728,34 +729,39 @@ void GCodeRenderer::processGcode()
 
         char* buffPtr = job.data;
 
-        while (parseGcode(buffPtr, PrintState) >= 0)
+        while (parseGcode(buffPtr, printState) >= 0)
         {
-            // Ensure enough space
-            // At worst 3 Vec3f will go into the buffer
-            if (moveBuffer.size >= vecBufferLen-2) 
+            if (isShell) // Ignore infill
             {
-                xQueueSend(vectorQueue, &moveBuffer, portMAX_DELAY);
-                moveBuffer.size = -1; // Request new buffer
-            }
-            if (moveBuffer.size == -1) // Get new buffer
-            {
-                xQueueReceive(vectRetQueue, &moveBuffer, portMAX_DELAY);
-                moveBuffer.size = 0;
-            }
-            if (PrintState.nextE > PrintState.currentE && PrintState.currentPos != PrintState.nextPos)
-            {
-                // Send movement
-                if (lastPoint != PrintState.currentPos) // Is this line not connected to the last one?
+                // Ensure enough space
+                // At worst 3 Vec3f will go into the buffer
+                if (moveBuffer.size >= vecBufferLen-2) 
                 {
-                    moveBuffer.data[moveBuffer.size++] = lastPoint; // Create a chain break
-                    moveBuffer.data[moveBuffer.size++] = PrintState.currentPos; // Send new starting position
+                    xQueueSend(vectorQueue, &moveBuffer, portMAX_DELAY);
+                    moveBuffer.size = -1; // Request new buffer
                 }
-                moveBuffer.data[moveBuffer.size++] = PrintState.nextPos;
-                lastPoint = PrintState.nextPos;
+                if (moveBuffer.size == -1) // Get new buffer
+                {
+                    xQueueReceive(vectRetQueue, &moveBuffer, portMAX_DELAY);
+                    moveBuffer.size = 0;
+                }
+                if (printState.nextE > printState.currentE && printState.currentPos != printState.nextPos)
+                {
+                    // Send movement
+                    if (lastPoint != printState.currentPos) // Is this line not connected to the last one?
+                    {
+                        moveBuffer.data[moveBuffer.size++] = lastPoint; // Create a chain break
+                        moveBuffer.data[moveBuffer.size++] = printState.currentPos; // Send new starting position
+                    }
+                    moveBuffer.data[moveBuffer.size++] = printState.nextPos;
+                    lastPoint = printState.nextPos;
+                }
             }
 
-            PrintState.currentPos = PrintState.nextPos; // Update position
-            PrintState.currentE = PrintState.nextE;
+            printState.currentPos = printState.nextPos; // Update position
+            printState.currentE = printState.nextE;
+            if (printState.currentE > filament)
+                filament = printState.currentE;
         }
 
         xQueueSend(thrdRetQueue, &job, portMAX_DELAY);  // Return buffer
@@ -934,38 +940,6 @@ esp_err_t GCodeRenderer::renderMesh()
     return result;
 }
 
-inline uint8_t GCodeRenderer::assembleBlock(Vec3f &vec, Vec3f &oldV, char* &ptable, float* &data, uint8_t &i)
-{
-    uint8_t size = 0;
-
-    if (i >= 8)
-    {
-        i = 0;
-        ptable = (char*)data;
-        data = (float*)(ptable + 3);
-        size = 3;
-        memset(ptable, 0, 3);
-    }
-
-    uint32_t &table = *reinterpret_cast<uint32_t*>(ptable);
-
-    for (uint8_t j = 0; j < 3; j++)
-    {
-        if (vec[j] != oldV[j])
-        {
-            //        ptable[3]       |       ptable[2]       |      ptable[1]      |   ptable[0]
-            // 31 30 29 28 27 26 25 24|23 22 21 20 19 18 17 16|15 14 13 12 11 10 9 8|7 6 5 4 3 2 1 0
-            // 0  0  0  0  0  0  0  0 |z  y  x  z  y  x  z  y |x  z  y  x  z  y  x z|y x z y x z y x
-            *(data++) = vec[j];
-            size += 4;
-            table |= 1 << (j + i*3);
-        }
-    }
-    i++;
-
-    return size;
-}
-
 int8_t GCodeRenderer::parseGcode(char* &p, PrinterState &state)
 {
     char* lineStart = p;
@@ -1002,11 +976,20 @@ int8_t GCodeRenderer::parseGcode(char* &p, PrinterState &state)
         while (*p == ' ') p++;
     }
     else if (letter == ';')
+    {
+        parseComment(p);
+        while (*p > 31) p++; // Find end of line
+        while (*p == '\r' || *p == '\n') p++; // Handle "\r\n"
         return 0; // Gcode comment
+    }
     else if (letter == '\0')
         return -1;  // End of buffer
     else
+    {
+        while (*p > 31) p++; // Find end of line
+        while (*p == '\r' || *p == '\n') p++; // Handle "\r\n"
         return 0;
+    }
 
     // The command parameters (if any) start here, for sure!
     switch (letter)
@@ -1018,8 +1001,8 @@ int8_t GCodeRenderer::parseGcode(char* &p, PrinterState &state)
         {
             while (*p > 31 && *p != ';') // Get the next parameter. A control character or a semicolon ends the loop
             {
-                const char param = toupper(*p++);
                 while (*p == ' ') p++;           // Skip spaces between parameters & values
+                const char param = toupper(*p++);
                 if (param == 'X') {
                     if(state.absPos) state.nextPos.x = state.offset.x + strtof(p, &p);
                     else state.nextPos.x = state.currentPos.x + strtof(p, &p);
@@ -1062,8 +1045,8 @@ int8_t GCodeRenderer::parseGcode(char* &p, PrinterState &state)
         {
             while (*p > 31 && *p != ';') // Get the next parameter. A control character or a semicolon ends the loop
             {
-                const char param = toupper(*p++);
                 while (*p == ' ') p++;           // Skip spaces between parameters & values
+                const char param = toupper(*p++);
                 if (param == 'X') {
                     state.offset.x = state.currentPos.x - strtof(p, &p);
                 }
@@ -1099,6 +1082,27 @@ int8_t GCodeRenderer::parseGcode(char* &p, PrinterState &state)
     while (*p == '\r' || *p == '\n') p++; // Handle "\r\n"
     // p should point to a new G code line or the end of file
     return p-lineStart;
+}
+
+void GCodeRenderer::parseComment(const char* str)
+{
+    // Only tested with Ultimaker Cura
+
+    if (strncmp(str, "TYPE:", 5) == 0)
+    {
+        if (strncmp(&str[5], "FILL", 4) == 0)
+            isShell = false;
+        else
+            isShell = true;
+    }
+    else if (strncmp(str, "Filament used:", 14) == 0)
+    {
+        filament = strtof(&str[14], nullptr);
+    }
+    else if (strncmp(str, "TIME:", 5))
+    {
+        printTime = strtoul(&str[5], NULL, 10);
+    }
 }
 
 inline void GCodeRenderer::checkCamPos(const Vec3f &u, Boundary &limit)
