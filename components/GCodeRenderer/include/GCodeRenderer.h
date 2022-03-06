@@ -39,6 +39,14 @@
 #include "dbg_log.h"
 #include "Matrix.h"
 
+struct PrintInfo
+{
+    bool filamentReady:1;
+    bool timeReady:1;
+    float filament = 0.0f;
+    uint32_t printTime = 0;
+};
+
 class GCodeRenderer
 {
 public:
@@ -206,8 +214,7 @@ private:
     static constexpr Vec3f scrOff = Vec3f(160.0f, 160.0f, 0.0f);
     Mat4 projMat;
 
-    float filament = 0.0f;
-    uint32_t printTime = 0;
+    PrintInfo info;
     bool isShell = true;
 
     QueueHandle_t threadQueue;
@@ -259,6 +266,7 @@ public:
     static GCodeRenderer* instance();
     void printMinStack();
     float getProgress() { return progress; };
+    const PrintInfo* getInfo() { return &info; };
 };
 
 #endif // GCODERENDERER_H

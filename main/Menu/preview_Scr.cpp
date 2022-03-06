@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 20-02-2022
+ * Last Modified: 06-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -22,17 +22,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "gcodePreview_Scr.h"
+#include "preview_Scr.h"
 #include "dbg_log.h"
 
-GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
+Preview_Scr::Preview_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     Screen(UI)
 {
     renderEngine = GCodeRenderer::instance();
     if (renderEngine == nullptr)
         DBG_LOGE("Render engine uninitialized!");
 
-    displayed.set();
+    displayed.reset();
     tft.fillScreen(TFT_BLACK);
     tft.drawRoundRect(0, 0, 320, 320, 4, TFT_GREEN);
     tft.drawRoundRect(320, 0, 160, 50, 4, TFT_BLUE);
@@ -60,7 +60,7 @@ GcodePreview_Scr::GcodePreview_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     ts.setButton(&tmpBut); // Back to Info screen
 }
 
-void GcodePreview_Scr::update(const uint32_t deltaTime, TchScr_Drv& ts)
+void Preview_Scr::update(const uint32_t deltaTime, TchScr_Drv& ts)
 {
     if (!started)
     {
@@ -76,7 +76,7 @@ void GcodePreview_Scr::update(const uint32_t deltaTime, TchScr_Drv& ts)
     }
 }
 
-void GcodePreview_Scr::render(tftLCD& tft)
+void Preview_Scr::render(tftLCD& tft)
 {
     uint16_t* img = nullptr;
     // Main update loop is paused here
@@ -90,15 +90,12 @@ void GcodePreview_Scr::render(tftLCD& tft)
     }
     else
     {
-        tft.setTextPadding(0);
-        tft.setTextDatum(CC_DATUM);
-        tft.setTextColor(TFT_WHITE, TFT_BLACK);
-        tft.drawString(String(renderEngine->getProgress(), 0) + String("%"), 160, 168);
+        drawInfo(tft);
         _UI->requestUpdate();
     }
 }
 
-void GcodePreview_Scr::handleTouch(const TchEvent& event)
+void Preview_Scr::handleTouch(const TchEvent& event)
 {
     if (event.trigger == TrgSrc::RELEASE && event.id == 0)
     {
@@ -107,9 +104,8 @@ void GcodePreview_Scr::handleTouch(const TchEvent& event)
     }
 }
 
-void GcodePreview_Scr::drawInfo(tftLCD& tft)
+void Preview_Scr::drawInfo(tftLCD& tft)
 {
-    if (displayed.all()) return;
     // Text settings
     tft.setTextDatum(TL_DATUM);
     tft.setTextFont(2);
@@ -118,21 +114,23 @@ void GcodePreview_Scr::drawInfo(tftLCD& tft)
     tft.setTextColor(TFT_WHITE);
     String txt;
 
-    if (!displayed[0])
+    const PrintInfo* info = renderEngine->getInfo();
+
+    if (info->filamentReady && !displayed[0])
     {
         tft.drawString("Filament cost: " , 328, 55);
-        txt = String(filament, 3) + " m";
+        txt = String(info->filament, 3) + " m";
         tft.drawString(txt, 335, 71);
         displayed[0] = true;
     }
 
-    if (!displayed[1])
+    if (info->timeReady && !displayed[1])
     {
         tft.drawString("Estimated time: " , 328, 95);
-        uint8_t seconds = printTime % 60;
-        uint8_t minutes = printTime/60 % 60;
-        uint8_t hours = printTime/3600 % 24;
-        uint16_t days = printTime/86400;
+        int16_t seconds = info->printTime % 60;
+        int16_t minutes = info->printTime/60 % 60;
+        int16_t hours = info->printTime/3600 % 24;
+        int16_t days = info->printTime/86400;
         txt = "";
         if (days > 0) txt += String(days) + "d ";
         if (hours > 0) txt += String(hours) + "h ";
@@ -141,4 +139,8 @@ void GcodePreview_Scr::drawInfo(tftLCD& tft)
         tft.drawString(txt, 335, 111);
         displayed[1] = true;
     }
+
+    tft.setTextDatum(CC_DATUM);
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.drawString(String(renderEngine->getProgress(), 0) + String("%"), 160, 168);
 }

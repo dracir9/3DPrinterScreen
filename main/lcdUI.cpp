@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 12-02-2022
+ * Last Modified: 06-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -28,7 +28,7 @@
 #include "Menu/info_w.h"
 #include "Menu/black_w.h"
 #include "Menu/fileBrowser_Scr.h"
-#include "Menu/gcodePreview_Scr.h"
+#include "Menu/preview_Scr.h"
 
 bool lcdUI::init;
 lcdUI lcdUI::_instance;
@@ -336,7 +336,7 @@ esp_err_t lcdUI::updateObjects()
         case menu::control:
             break;
         case menu::GcodePreview:
-            base = new GcodePreview_Scr(this, tft, touchScreen);
+            base = new Preview_Scr(this, tft, touchScreen);
             break;
         default:
             base = nullptr;

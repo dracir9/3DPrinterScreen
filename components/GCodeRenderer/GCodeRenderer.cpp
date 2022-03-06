@@ -760,8 +760,6 @@ void GCodeRenderer::processGcode()
 
             printState.currentPos = printState.nextPos; // Update position
             printState.currentE = printState.nextE;
-            if (printState.currentE > filament)
-                filament = printState.currentE;
         }
 
         xQueueSend(thrdRetQueue, &job, portMAX_DELAY);  // Return buffer
@@ -1097,11 +1095,13 @@ void GCodeRenderer::parseComment(const char* str)
     }
     else if (strncmp(str, "Filament used:", 14) == 0)
     {
-        filament = strtof(&str[14], nullptr);
+        info.filament = strtof(&str[14], nullptr);
+        info.filamentReady = true;
     }
-    else if (strncmp(str, "TIME:", 5))
+    else if (strncmp(str, "TIME:", 5) == 0)
     {
-        printTime = strtoul(&str[5], NULL, 10);
+        info.printTime = strtoul(&str[5], NULL, 10);
+        info.timeReady = true;
     }
 }
 
@@ -1327,6 +1327,10 @@ esp_err_t GCodeRenderer::begin(std::string file)
     xSemaphoreTake(readyFlag, 0); // clear ready flag
     progress = 0.0f;
     filePath = file;
+
+    info.filamentReady = false;
+    info.timeReady = false;
+
     generateFilenames();
     eState = INIT;
     vTaskResume(instance()->main);

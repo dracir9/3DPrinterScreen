@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 16-02-2022
+ * Last Modified: 06-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -31,10 +31,10 @@
 #include "../utility.h"
 #include "GCodeRenderer.h"
 
-class GcodePreview_Scr final : public Screen
+class Preview_Scr final : public Screen
 {
 public:
-    GcodePreview_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts);
+    Preview_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts);
 
     void update(const uint32_t deltaTime, TchScr_Drv& ts) override;
 
@@ -47,8 +47,6 @@ private:
 
     // Status and info
     std::bitset<2> displayed;
-    int32_t printTime = 0;
-    float filament = 0.0f;
     GCodeRenderer* renderEngine;
     bool started = false;
 };
