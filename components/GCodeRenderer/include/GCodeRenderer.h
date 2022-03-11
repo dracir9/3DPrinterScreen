@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 07-03-2022
+ * Last Modified: 11-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -123,8 +123,16 @@ private:
         void nextBlock();
         void reset();
         void rewind();
-        uint16_t addPoint(Vec3f &vec, Vec3f &oldV);
-        uint16_t readPoint(Vec3f &oldP);
+        int16_t addPoint(Vec3f &vec, Vec3f &oldV);
+        int16_t readPoint(Vec3f &oldP);
+
+        /**
+         * @brief Load chunk from file
+         * 
+         * @param buff Memory buffer to store the chunk. MUST BE OF AT LEAST 'bufferLen' BYTES!
+         * @param file File struct where the chunk is stored
+         * @return size_t Return the number of bytes read. Returns 0 on error.
+         */
         size_t read(void* buff, FILE* file);
         void setChunk(void* ptr);
         int16_t getSize() const { return *chunkSize; }
@@ -152,10 +160,26 @@ private:
         void nextChunk();
         void reset();
         void rewind();
-        uint16_t addPoint(Vec3f &vec, Vec3f &oldV);
+
+        /**
+         * @brief Add point to cache
+         * 
+         * @param vec   New point
+         * @param oldV  Previous point
+         * @return int16_t Returns number of bytes written. Returns -1 on error
+         */
+        int16_t addPoint(Vec3f &vec, Vec3f &oldV);
         size_t write(int32_t maxSize, FILE* file);
+
+        /**
+         * @brief Load cache from file. Only one chunk is read
+         * 
+         * @param buff Memory buffer to store the cache. MUST BE OF AT LEAST 'bufferLen' BYTES!
+         * @param file File struct where the cache is stored
+         * @return size_t Return the number of bytes read. Returns 0 on error.
+         */
         size_t read(void* buff, FILE* file);
-        uint16_t readPoint(Vec3f &oldP);
+        int16_t readPoint(Vec3f &oldP);
 
         int32_t getSize() const { return size; }
 

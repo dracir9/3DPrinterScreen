@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 07-03-2022
+ * Last Modified: 11-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -76,7 +76,7 @@ void GCodeRenderer::GCache::rewind()
     nextStop = chunk.getSize() + GChunk::headBytes();
 }
 
-uint16_t GCodeRenderer::GCache::addPoint(Vec3f &vec, Vec3f &oldV)
+int16_t GCodeRenderer::GCache::addPoint(Vec3f &vec, Vec3f &oldV)
 {
     uint16_t numBytes = 0;
     // Ensure enough space in chunk
@@ -126,7 +126,7 @@ size_t GCodeRenderer::GCache::read(void* buff, FILE* file)
     return numBytes;
 }
 
-uint16_t GCodeRenderer::GCache::readPoint(Vec3f &oldP)
+int16_t GCodeRenderer::GCache::readPoint(Vec3f &oldP)
 {
     if (readPtr >= nextStop)
     {
@@ -139,11 +139,17 @@ uint16_t GCodeRenderer::GCache::readPoint(Vec3f &oldP)
         nextStop += chunk.getSize() + GChunk::headBytes();
     }
 
-    readPtr += chunk.readPoint(oldP);
-    DBG_LOGV("P(%.3f, %.3f, %.3f) - %d/%d", oldP.x, oldP.y, oldP.z, readPtr, nextStop);
-    uint16_t numBytes = readPtr - lastReadPtr;
-    lastReadPtr = readPtr;
-
+    int16_t numBytes = chunk.readPoint(oldP);
+    if (numBytes > 0)
+    {
+        readPtr += numBytes;
+        DBG_LOGV("P(%.3f, %.3f, %.3f) - %d/%d", oldP.x, oldP.y, oldP.z, readPtr, nextStop);
+        numBytes = readPtr - lastReadPtr;
+        lastReadPtr = readPtr;
+    }
+    else
+        numBytes = -1;
+    
     return numBytes;
 }
 
@@ -168,7 +174,7 @@ void GCodeRenderer::GChunk::rewind()
     mask = 1;
 }
 
-uint16_t GCodeRenderer::GChunk::addPoint(Vec3f &vec, Vec3f &oldV)
+int16_t GCodeRenderer::GChunk::addPoint(Vec3f &vec, Vec3f &oldV)
 {
     uint16_t numBytes = block->addPoint(vec, oldV, idx);
     *chunkSize += numBytes;
@@ -183,9 +189,9 @@ uint16_t GCodeRenderer::GChunk::addPoint(Vec3f &vec, Vec3f &oldV)
     return numBytes;
 }
 
-uint16_t GCodeRenderer::GChunk::readPoint(Vec3f &oldP)
+int16_t GCodeRenderer::GChunk::readPoint(Vec3f &oldP)
 {
-    uint16_t numBytes = 0;
+    int16_t numBytes = 0;
     for (uint8_t j = 0; j < 3; j++) // For each vector component
     {
         if (block->table & mask) // If exists
@@ -198,10 +204,16 @@ uint16_t GCodeRenderer::GChunk::readPoint(Vec3f &oldP)
     }
     if (mask >= (1 << GBlock::maxSize()))
     {
-        DBG_LOGD_IF(block->size != idx, "Block size: %d, idx: %d", block->size, idx);
-        assert(block->size == idx);
+        if (block->size != idx)
+        {
+            DBG_LOGE("Block size: %d, idx: %d", block->size, idx);
+            numBytes = -1;
+        }
+        else
+        {
+            numBytes += GBlock::headBytes();
+        }
         block = (GBlock*)&block->data[idx];
-        numBytes += GBlock::headBytes();
         mask = 1;
         idx = 0;
     }
@@ -212,7 +224,11 @@ size_t GCodeRenderer::GChunk::read(void* buff, FILE* file)
 {
     setChunk(buff);
     fread(chunkSize, sizeof(chunkSize[0]), 1, file);
-    assert(getSize() >= 0 && getSize() < bufferLen);
+    if (getSize() < 0 || getSize() >= bufferLen)
+    {
+        DBG_LOGE("Invalid chunk size (Max %dB, got %dB)", bufferLen, getSize());
+        return 0;
+    }
     
     return fread(block, 1, getSize(), file);
 }
@@ -644,7 +660,8 @@ esp_err_t GCodeRenderer::readTmp()
         }
         else
         {
-            size_t size = tmpCache.read(readBuffers[0], rfile);
+            char n[5];
+            size_t size = tmpCache.read(n, rfile);
             if (size == 0 || size != tmpCache.chunk.getSize()) // End of file or error encountered
                 break;
 
@@ -662,7 +679,21 @@ esp_err_t GCodeRenderer::readTmp()
         int32_t chunkSize = tmpCache.chunk.getSize() + GChunk::headBytes();
         while (chunkSize > 0) // While data available
         {
-            uint16_t size = tmpCache.readPoint(point);
+            int16_t size = tmpCache.readPoint(point);
+            if (size < 0)
+            {
+                if (isTmpOnRam)
+                {
+                    isTmpOnRam = false;
+                }
+                else
+                {
+                    fclose(rfile);
+                    rfile = nullptr;
+                }
+                DBG_LOGE("Cache error");
+                return ESP_FAIL;
+            }
             chunkSize -= size;
             filePtr += size;
 
@@ -1457,6 +1488,7 @@ esp_err_t GCodeRenderer::begin(std::string file)
 
 esp_err_t GCodeRenderer::getRender(uint16_t** outPtr, TickType_t timeout)
 {
+    // TODO: Return error image on error state
     if (xSemaphoreTake(readyFlag, timeout) != pdTRUE)
         return ESP_ERR_TIMEOUT;
 
