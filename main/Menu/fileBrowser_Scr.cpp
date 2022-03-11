@@ -446,7 +446,9 @@ void FileBrowser_Scr::loadPage()
 bool FileBrowser_Scr::isHidden(const char *name)
 {
     //const char *lookupTable[1] = {"System Volume Information"};
-    if (strncmp(name, "System Volume Information", 256) == 0) return true;
+    if (strncmp(name, "System Volume Information", 25) == 0 ||
+        strncmp(name, ".cache", 6) == 0)
+        return true;
 
     // May add extra system files here
 
