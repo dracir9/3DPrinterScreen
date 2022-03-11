@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 06-03-2022
+ * Last Modified: 07-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -851,7 +851,7 @@ esp_err_t GCodeRenderer::generatePath()
     float dz2 = dy2*4.0f/3.0f - dy1*4.0f/3.0f;
 
     // Calculate position and revert camera rotation
-    Vec3f camP = Vec3f(dx1 + dx2, fminf(dz1, dz2), -(dy1 + dy2));
+    Vec3f camP = Vec3f(dx1 + dx2, fminf(dz1, dz2) - 1.0f, -(dy1 + dy2));
 
     esp_err_t result = ESP_OK;
     if (wfile != nullptr)
@@ -938,6 +938,122 @@ esp_err_t GCodeRenderer::renderMesh()
     return result;
 }
 
+static const float power_of_ten[] = {
+    1e0f,  1e1f,  1e2f,  1e3f,  1e4f,  1e5f,  1e6f,  1e7f,  1e8f,  1e9f,  1e10f};
+inline float getFloat(char* p, char** endPtr)
+{
+    bool negative = false;
+    // Skip spaces
+    while (*p == ' ') p++;
+
+    if (*p == '-') {
+        ++p;
+        negative = true;
+        if (!NUMERIC(*p)) { // a negative sign must be followed by an integer
+        return 0.0f;
+        }
+    }
+
+    // Get integer part
+    uint32_t integer = 0;
+    if (*p == '0') { // 0 cannot be followed by an integer
+        p++;
+        if (NUMERIC(*p)) {
+        return 0.0f;
+        }
+        integer = 0;
+    } else {
+        if (!(NUMERIC(*p))) // must start with an integer
+            return 0.0f;
+
+        integer = *p++ - '0';
+
+        while (NUMERIC(*p)) {
+            integer = integer*10 + (*p++ - '0');
+        }
+    }
+
+    // Get farctional part if any
+    int32_t exponent = 1;
+    int32_t fraction = 0;
+    const char *first_after_period = NULL;
+    if (*p == '.') {
+        p++;
+        first_after_period = p;
+        if (NUMERIC(*p)) {
+            fraction = *p++ - '0';
+            exponent *= 10;
+        } else {
+            return 0.0f;
+        }
+
+        while (NUMERIC(*p)) {
+            fraction = fraction*10 + (*p++ - '0');
+            exponent *= 10;
+        }
+    }
+    
+    // Compose float
+    float out = (float)fraction;
+    out /= exponent;
+    out += (float)integer;
+
+    // Get exponent if any
+    if (('e' == *p) || ('E' == *p)) {
+        p++;
+        bool neg_exp = false;
+        if ('-' == *p) {
+            neg_exp = true;
+            ++p;
+        } else if ('+' == *p) {
+            ++p;
+        }
+
+        if (!NUMERIC(*p))
+            return 0.0f;
+
+        exponent = *p++ - '0';
+
+        if (NUMERIC(*p)) {
+            exponent = exponent*10 + (*p++ - '0');
+        }
+
+        while (NUMERIC(*p)) {
+            if (exponent < 10) { // we need to check for overflows
+                exponent = exponent*10 + (*p++ - '0');
+            }
+            else
+                break; // Unsupported exponent
+            ++p;
+        }
+
+        if (neg_exp)
+            exponent = -exponent;
+        
+        if (-10 <= exponent && exponent <= 10)
+        {
+            if (exponent < 0)
+                out /= power_of_ten[-exponent];
+            else
+                out *= power_of_ten[exponent];
+        }
+        else // Treat large exponents as infinity. This should never happen in this application
+        {
+            if (exponent < 0)
+                out = infinityf();
+            else
+                out = -infinityf();
+        }
+    }
+
+    if (negative)
+        out = -out;
+
+    *endPtr = p;
+
+    return out;
+}
+
 int8_t GCodeRenderer::parseGcode(char* &p, PrinterState &state)
 {
     char* lineStart = p;
@@ -945,7 +1061,7 @@ int8_t GCodeRenderer::parseGcode(char* &p, PrinterState &state)
     while (*p == ' ') ++p;
 
     // Skip line number field: N[-0-9]
-    if (toupper(*p) == 'N' && NUMERIC_SIGNED(p[1]))
+    if (*p == 'N' && NUMERIC_SIGNED(p[1]))
     {
         //strtol(++p, &p, 10);   // Check line number
 
@@ -955,7 +1071,7 @@ int8_t GCodeRenderer::parseGcode(char* &p, PrinterState &state)
     }
 
     // Get the command letter, which must be G, M, or T
-    const char letter = toupper(*p++);
+    const char letter = *p++;
     uint16_t codenum = 0;
 
     // Only G and M commands are parsed
@@ -1000,25 +1116,25 @@ int8_t GCodeRenderer::parseGcode(char* &p, PrinterState &state)
             while (*p > 31 && *p != ';') // Get the next parameter. A control character or a semicolon ends the loop
             {
                 while (*p == ' ') p++;           // Skip spaces between parameters & values
-                const char param = toupper(*p++);
+                const char param = *p++;
                 if (param == 'X') {
-                    if(state.absPos) state.nextPos.x = state.offset.x + strtof(p, &p);
-                    else state.nextPos.x = state.currentPos.x + strtof(p, &p);
+                    if(state.absPos) state.nextPos.x = state.offset.x + getFloat(p, &p);
+                    else state.nextPos.x = state.currentPos.x + getFloat(p, &p);
                     DBG_LOGV("X%f", state.nextPos.x);
                 }
                 if (param == 'Y') {
-                    if(state.absPos) state.nextPos.y = state.offset.y + strtof(p, &p);
-                    else state.nextPos.y = state.currentPos.y + strtof(p, &p);
+                    if(state.absPos) state.nextPos.y = state.offset.y + getFloat(p, &p);
+                    else state.nextPos.y = state.currentPos.y + getFloat(p, &p);
                     DBG_LOGV("Y%f", state.nextPos.y);
                 }
                 if (param == 'Z') {
-                    if(state.absPos) state.nextPos.z = state.offset.z + strtof(p, &p);
-                    else state.nextPos.z = state.currentPos.z + strtof(p, &p);
+                    if(state.absPos) state.nextPos.z = state.offset.z + getFloat(p, &p);
+                    else state.nextPos.z = state.currentPos.z + getFloat(p, &p);
                     DBG_LOGV("Z%f", state.nextPos.z);
                 }
                 if (param == 'E') {
-                    if(state.absEPos) state.nextE = state.offsetE + strtof(p, &p);
-                    else state.nextE = state.currentE + strtof(p, &p);
+                    if(state.absEPos) state.nextE = state.offsetE + getFloat(p, &p);
+                    else state.nextE = state.currentE + getFloat(p, &p);
                     DBG_LOGV("E%f", state.nextE);
                 }
             }
@@ -1044,18 +1160,18 @@ int8_t GCodeRenderer::parseGcode(char* &p, PrinterState &state)
             while (*p > 31 && *p != ';') // Get the next parameter. A control character or a semicolon ends the loop
             {
                 while (*p == ' ') p++;           // Skip spaces between parameters & values
-                const char param = toupper(*p++);
+                const char param = *p++;
                 if (param == 'X') {
-                    state.offset.x = state.currentPos.x - strtof(p, &p);
+                    state.offset.x = state.currentPos.x - getFloat(p, &p);
                 }
                 if (param == 'Y') {
-                    state.offset.y = state.currentPos.y - strtof(p, &p);
+                    state.offset.y = state.currentPos.y - getFloat(p, &p);
                 }
                 if (param == 'Z') {
-                    state.offset.z = state.currentPos.z - strtof(p, &p);
+                    state.offset.z = state.currentPos.z - getFloat(p, &p);
                 }
                 if (param == 'E') {
-                    state.offsetE = state.currentE - strtof(p, &p);
+                    state.offsetE = state.currentE - getFloat(p, &p);
                 }
             }
             break;

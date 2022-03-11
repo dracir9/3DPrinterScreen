@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 06-03-2022
+ * Last Modified: 07-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -26,7 +26,7 @@
 #define GCODERENDERER_H
 
 #define WITHIN(N,L,H)       ((N) >= (L) && (N) <= (H))
-#define NUMERIC(a)          WITHIN(a, '0', '9')
+#define NUMERIC(a)          ((uint8_t)(a - '0') <= 9)
 #define NUMERIC_SIGNED(a)   (NUMERIC(a) || (a) == '-' || (a) == '+')
 
 #include <sys/stat.h>
