@@ -121,9 +121,9 @@ size_t GCodeRenderer::GCache::read(void* buff, FILE* file)
     readPtr = GChunk::headBytes() + GBlock::headBytes();
     lastReadPtr = 0;
     chunk.rewind();
-    size_t numBytes = chunk.read(buff, file);
-    nextStop = numBytes + GChunk::headBytes();
-    return numBytes;
+    size = chunk.read(buff, file);
+    nextStop = size;
+    return size;
 }
 
 int16_t GCodeRenderer::GCache::readPoint(Vec3f &oldP)
@@ -131,7 +131,7 @@ int16_t GCodeRenderer::GCache::readPoint(Vec3f &oldP)
     if (readPtr >= nextStop)
     {
         if (readPtr >= size)
-            return INT16_MAX;
+            return -2;
         
         chunk.setChunk(&buffer[readPtr]);
         chunk.rewind();
@@ -225,14 +225,25 @@ int16_t GCodeRenderer::GChunk::readPoint(Vec3f &oldP)
 size_t GCodeRenderer::GChunk::read(void* buff, FILE* file)
 {
     setChunk(buff);
-    fread(chunkSize, sizeof(chunkSize[0]), 1, file);
-    if (getSize() < 0 || getSize() >= bufferLen)
+    size_t bytes = fread(chunkSize, sizeof(chunkSize[0]), 1, file);
+    if (bytes > 0)
     {
-        DBG_LOGE("Invalid chunk size (Max %dB, got %dB)", bufferLen, getSize());
-        return 0;
+        if (getSize() < 0 || getSize() > bufferLen)
+        {
+            DBG_LOGE("Invalid chunk size (Max %dB, got %dB)", bufferLen, getSize());
+            return 0;
+        }
+
+        size_t readLen = fread(block, 1, getSize(), file);
+        if (readLen != getSize())
+        {
+            DBG_LOGE("Error reading cache file");
+            return 0;
+        }
+        bytes += readLen;
     }
     
-    return fread(block, 1, getSize(), file);
+    return bytes;
 }
 
 void GCodeRenderer::GChunk::setChunk(void* ptr)
@@ -295,6 +306,7 @@ GCodeRenderer::GCodeRenderer()
     }
 
     outImg = (uint16_t*)calloc(320*320, sizeof(int16_t));
+    rotMat = Mat3::RotationZ(camTheta)*Mat3::RotationX(camPhi);
 
     xTaskCreatePinnedToCore(threadTask, "Worker task", 2560, NULL, 1, &worker, 1);
     vTaskDelay(100);
@@ -563,6 +575,7 @@ esp_err_t GCodeRenderer::readFile()
         #endif
         
         job.size = readLen - deleted; // Job ID
+        assert(job.size <= bufferLen);
         job.data[job.size] = '\0';
         xQueueSend(threadQueue, &job, portMAX_DELAY);
     }
@@ -662,9 +675,8 @@ esp_err_t GCodeRenderer::readTmp()
         }
         else
         {
-            char n[5];
-            size_t size = tmpCache.read(n, rfile);
-            if (size == 0 || size != tmpCache.chunk.getSize()) // End of file or error encountered
+            size_t size = tmpCache.read(readBuffers[0], rfile);
+            if (size == 0) // End of file or error encountered
                 break;
 
             progress = 50.0f + ftell(rfile)*sizeFraction;
@@ -678,30 +690,16 @@ esp_err_t GCodeRenderer::readTmp()
         }
         #endif
 
-        int32_t chunkSize = tmpCache.chunk.getSize() + GChunk::headBytes();
-        while (chunkSize > 0) // While data available
+        int16_t size = 0;
+        while ((size = tmpCache.readPoint(point)) >= 0) // While data available
         {
-            int16_t size = tmpCache.readPoint(point);
-            if (size < 0)
-            {
-                if (isTmpOnRam)
-                {
-                    isTmpOnRam = false;
-                }
-                else
-                {
-                    fclose(rfile);
-                    rfile = nullptr;
-                }
-                DBG_LOGE("Cache error");
-                return ESP_FAIL;
-            }
-            chunkSize -= size;
             filePtr += size;
+            progress = 50.0f + filePtr*sizeFraction;
 
             // Ensure enough space
             if (moveBuffer.size >= vecBufferLen) 
             {
+                assert(moveBuffer.size == vecBufferLen);
                 xQueueSend(vectorQueue, &moveBuffer, portMAX_DELAY);
                 moveBuffer.size = -1; // Request new buffer
             }
@@ -710,14 +708,31 @@ esp_err_t GCodeRenderer::readTmp()
                 xQueueReceive(vectRetQueue, &moveBuffer, portMAX_DELAY);
                 moveBuffer.size = 0;
             }
-
             moveBuffer.data[moveBuffer.size++] = point;
+        }
+
+        if (size == -1) // Error encountered
+        {
+            if (isTmpOnRam)
+            {
+                isTmpOnRam = false;
+            }
+            else
+            {
+                fclose(rfile);
+                rfile = nullptr;
+            }
+            DBG_LOGE("Cache error");
+            return ESP_FAIL;
         }
     }
     
     // Send last movements if any
     if (moveBuffer.size > 0)
+    {
+        assert(moveBuffer.size <= vecBufferLen);
         xQueueSend(vectorQueue, &moveBuffer, portMAX_DELAY);
+    }
 
     if (!isTmpOnRam)
     {
@@ -770,6 +785,7 @@ void GCodeRenderer::processGcode()
                 // At worst 3 Vec3f will go into the buffer
                 if (moveBuffer.size >= vecBufferLen-2) 
                 {
+                    assert(moveBuffer.size <= vecBufferLen);
                     xQueueSend(vectorQueue, &moveBuffer, portMAX_DELAY);
                     moveBuffer.size = -1; // Request new buffer
                 }
@@ -794,7 +810,7 @@ void GCodeRenderer::processGcode()
             printState.currentPos = printState.nextPos; // Update position
             printState.currentE = printState.nextE;
         }
-
+        assert(buffPtr < &readBuffers[rQueueLen][0]);
         xQueueSend(thrdRetQueue, &job, portMAX_DELAY);  // Return buffer
 
         // Allow some time for lower priority tasks
@@ -806,7 +822,10 @@ void GCodeRenderer::processGcode()
     }
     // Send remaining movements
     if (moveBuffer.size > 0)
+    {
+        assert(moveBuffer.size <= vecBufferLen);
         xQueueSend(vectorQueue, &moveBuffer, portMAX_DELAY);
+    }
     
     DBG_LOGD("All jobs processed");
 }
@@ -824,8 +843,6 @@ esp_err_t GCodeRenderer::generatePath()
     
     isTmpOnRam = true;
     tmpCache.reset();
-
-    rotMat = Mat3::RotationZ(camTheta)*Mat3::RotationX(camPhi);
 
     DBG_LOGD("Start path");
     int32_t j = 1;
@@ -851,7 +868,7 @@ esp_err_t GCodeRenderer::generatePath()
                     stat(filePath.c_str(), &st);
                     
                     // Write header
-                    fwrite(&st.st_mtime, sizeof(time_t), 1, wfile);
+                    fwrite(&st.st_mtime, sizeof(time_t), 1, wfile); // Timestamp
                     fwrite(&camPos, sizeof(Vec3f), 1, wfile);   // Wrong camera position, just to leave a gap
                 }
 
@@ -895,7 +912,7 @@ esp_err_t GCodeRenderer::generatePath()
         tmpCache.write(tmpCache.getSize(), wfile);
         
         fseek(wfile, sizeof(time_t), SEEK_SET);
-        fwrite(&camP, sizeof(Vec3f), 1, wfile);
+        fwrite(&camP, sizeof(Vec3f), 1, wfile); // Write camera position
 
         result = ferror(wfile);
         fclose(wfile);
@@ -903,8 +920,6 @@ esp_err_t GCodeRenderer::generatePath()
     }
 
     // Write final camera position
-    DBG_LOGD("Ymax (%.3f, %.3f)", limits.Ymax.x, limits.Ymax.y);
-    DBG_LOGD("Ymin (%.3f, %.3f)", limits.Ymin.x, limits.Ymin.y);
     DBG_LOGD("Cam Pos: (%.3f, %.3f, %.3f)", camP.x, camP.y, camP.z);
     tmpCache.camPos = camP;
 
@@ -1105,12 +1120,13 @@ int8_t GCodeRenderer::parseGcode(char* &p, PrinterState &state)
     }
 
     // Get the command letter, which must be G, M, or T
-    const char letter = *p++;
+    const char letter = *p;
     uint16_t codenum = 0;
 
     // Only G and M commands are parsed
     if (letter == 'G' || letter == 'M')
     {
+        p++;
         // Skip spaces to get the numeric part
         while (*p == ' ') p++;
 
@@ -1125,6 +1141,7 @@ int8_t GCodeRenderer::parseGcode(char* &p, PrinterState &state)
     }
     else if (letter == ';')
     {
+        p++;
         parseComment(p);
         while (*p > 31) p++; // Find end of line
         while (*p == '\r' || *p == '\n') p++; // Handle "\r\n"
