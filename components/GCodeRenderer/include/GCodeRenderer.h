@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 11-03-2022
+ * Last Modified: 12-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -236,8 +236,8 @@ private:
     static constexpr int32_t near = 200;
     static constexpr Vec3f lightDir = Vec3f(1.0f, 0.0f, 0.0f);
     static constexpr Vec3f scrOff = Vec3f(160.0f, 160.0f, 0.0f);
-    static constexpr float camTheta = M_PI_2;
-    static constexpr float camPhi = 0.0f;
+    static constexpr float camTheta = M_PI/6.0f;
+    static constexpr float camPhi = M_PI*2.0f/3.0f;
     Mat3 rotMat;
     Mat4 projMat;
 

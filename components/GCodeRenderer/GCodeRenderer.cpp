@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 11-03-2022
+ * Last Modified: 12-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -825,7 +825,7 @@ esp_err_t GCodeRenderer::generatePath()
     isTmpOnRam = true;
     tmpCache.reset();
 
-    rotMat = Mat3::RotationX(camTheta) * Mat3::RotationZ(camPhi);
+    rotMat = Mat3::RotationZ(camTheta)*Mat3::RotationX(camPhi);
 
     DBG_LOGD("Start path");
     int32_t j = 1;
@@ -1258,7 +1258,7 @@ void GCodeRenderer::parseComment(const char* str)
 inline void GCodeRenderer::checkCamPos(const Vec3f &u, Boundary &limit)
 {
     // Apply rotation
-    Vec3f p(u.x, -u.z, u.y);
+    Vec3f p = u*rotMat;
 
     float marg =  p.x - p.z * 0.75;
     if (marg > limit.Xmax.z)
