@@ -236,6 +236,9 @@ private:
     static constexpr int32_t near = 200;
     static constexpr Vec3f lightDir = Vec3f(1.0f, 0.0f, 0.0f);
     static constexpr Vec3f scrOff = Vec3f(160.0f, 160.0f, 0.0f);
+    static constexpr float camTheta = M_PI_2;
+    static constexpr float camPhi = 0.0f;
+    Mat3 rotMat;
     Mat4 projMat;
 
     PrintInfo info;

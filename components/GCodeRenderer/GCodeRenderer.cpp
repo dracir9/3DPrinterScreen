@@ -131,7 +131,7 @@ int16_t GCodeRenderer::GCache::readPoint(Vec3f &oldP)
     if (readPtr >= nextStop)
     {
         if (readPtr >= size)
-            return UINT16_MAX;
+            return INT16_MAX;
         
         chunk.setChunk(&buffer[readPtr]);
         chunk.rewind();
@@ -140,15 +140,17 @@ int16_t GCodeRenderer::GCache::readPoint(Vec3f &oldP)
     }
 
     int16_t numBytes = chunk.readPoint(oldP);
-    if (numBytes > 0)
+    if (numBytes < 0)
+    {
+        numBytes = -1;
+    }
+    else
     {
         readPtr += numBytes;
         DBG_LOGV("P(%.3f, %.3f, %.3f) - %d/%d", oldP.x, oldP.y, oldP.z, readPtr, nextStop);
         numBytes = readPtr - lastReadPtr;
         lastReadPtr = readPtr;
-    }
-    else
-        numBytes = -1;
+    }       
     
     return numBytes;
 }
@@ -644,7 +646,7 @@ esp_err_t GCodeRenderer::readTmp()
     float sizeFraction = 50.0f/filesize;
     
     DBG_LOGD("CamPos(%.3f, %.3f, %.3f)", camPos.x, camPos.y, camPos.z);
-    projMat = Mat4::Translation(-camPos) * Mat4::RotationX(M_PI*0.5f) * Mat4::Projection(2.0f, 2.0f, near);
+    projMat = Mat4::Translation(-camPos) * Mat4(rotMat) * Mat4::Projection(2.0f, 2.0f, near);
 
     // Checking
     DBG_LOGW_IF(uxQueueSpacesAvailable(vectRetQueue) != 0, "vectRetQueue not full");
@@ -823,6 +825,8 @@ esp_err_t GCodeRenderer::generatePath()
     isTmpOnRam = true;
     tmpCache.reset();
 
+    rotMat = Mat3::RotationX(camTheta) * Mat3::RotationZ(camPhi);
+
     DBG_LOGD("Start path");
     int32_t j = 1;
 
@@ -882,7 +886,8 @@ esp_err_t GCodeRenderer::generatePath()
     float dz2 = dy2*4.0f/3.0f - dy1*4.0f/3.0f;
 
     // Calculate position and revert camera rotation
-    Vec3f camP = Vec3f(dx1 + dx2, fminf(dz1, dz2) - 1.0f, -(dy1 + dy2));
+    Vec3f camP = Vec3f(dx1 + dx2, dy1 + dy2, fminf(dz1, dz2) - 1.0f);
+    camP *= !rotMat;
 
     esp_err_t result = ESP_OK;
     if (wfile != nullptr)
@@ -1007,10 +1012,8 @@ inline float getFloat(char* p, char** endPtr)
     // Get farctional part if any
     int32_t exponent = 1;
     int32_t fraction = 0;
-    const char *first_after_period = NULL;
     if (*p == '.') {
         p++;
-        first_after_period = p;
         if (NUMERIC(*p)) {
             fraction = *p++ - '0';
             exponent *= 10;
