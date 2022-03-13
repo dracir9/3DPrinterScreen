@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 12-03-2022
+ * Last Modified: 13-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -390,7 +390,7 @@ void GCodeRenderer::mainTask(void* arg)
 
         case END:
             endT = esp_timer_get_time();
-            if (start > 0)
+            if (half > 0)
             {
                 DBG_LOGI("Read time: %d ms", (unsigned int)(endT-start)/1000);
                 DBG_LOGI("Render time: %d ms", (unsigned int)(endT-half)/1000);
@@ -971,17 +971,22 @@ esp_err_t GCodeRenderer::renderMesh()
     DBG_LOGD("Save image");
 
     esp_err_t result = ESP_OK;
-/*     wfile = fopen(imgPath.c_str(), "wb");
-    DBG_LOGE_AND_RETURN_IF(wfile == nullptr, false,
+    wfile = fopen(imgPath.c_str(), "wb");
+    DBG_LOGE_AND_RETURN_IF(wfile == nullptr, ESP_FAIL,
         "Error opening img file (%s)", imgPath.c_str());
 
     setvbuf(wfile, wBuffer, _IOFBF, bufferLen);
 
-    if (fwrite(outImg, 2, 320*320, wfile) != 320*320)
+    if (fwrite(&info, sizeof(PrintInfo), 1, wfile) != 1)
         result = ESP_FAIL;
+    else
+    {
+        if (fwrite(outImg, 2, 320*320, wfile) != 320*320)
+            result = ESP_FAIL;
+    }
 
     fclose(wfile);
-    wfile = nullptr; */
+    wfile = nullptr;
 
     free(zbuf);
 
@@ -1395,6 +1400,39 @@ void GCodeRenderer::generateFilenames()
     imgPath.replace(dotPos, std::string::npos, ".img");
 }
 
+esp_err_t GCodeRenderer::loadImg()
+{
+    rfile = fopen(imgPath.c_str(), "r");
+    if (rfile == nullptr)
+    {
+        DBG_LOGE("Error opening file \"%s\"", filePath.c_str());
+        return ESP_FAIL;
+    }
+
+    setvbuf(rfile, rBuffer, _IOFBF, bufferLen);
+
+    if (fread(&info, sizeof(PrintInfo), 1, rfile) != 1)
+    {
+        DBG_LOGE("Error reading img file \"%s\"", filePath.c_str());
+        fclose(rfile);
+        rfile = nullptr;
+        return ESP_FAIL;
+    };
+
+    if (fread(outImg, sizeof(int16_t), 320*320, rfile) != 320*320)
+    {
+        DBG_LOGE("Error reading img file \"%s\"", filePath.c_str());
+        fclose(rfile);
+        rfile = nullptr;
+        return ESP_FAIL;
+    };
+
+    fclose(rfile);
+    rfile = nullptr;
+
+    return ESP_OK;
+}
+
 void GCodeRenderer::stopTasks()
 {
     DBG_LOGD("Stop tasks");
@@ -1470,7 +1508,16 @@ void GCodeRenderer::init()
             DBG_LOGE("Error creating cache folder");
     }
 
-    if (access(tmpPath.c_str(), F_OK) == 0)
+    if (access(imgPath.c_str(), F_OK) == 0)
+    {
+        DBG_LOGD("Load image");
+        
+        if (loadImg() == ESP_OK)
+            eState = END;
+        else
+            eState = ERROR;
+    }
+    else if (access(tmpPath.c_str(), F_OK) == 0)
     {
         DBG_LOGD("Begin rendering");
         eState = RENDER;

@@ -282,8 +282,9 @@ private:
     void drawLine(const Vec3f &u, const Vec3f &v, uint16_t color, float* zBuffer);
     void putPixel(const Pixel pix, float* zBuffer);
 
-    // State functions
+    // General functions
     void generateFilenames();
+    esp_err_t loadImg();
     void init();
     void stopTasks();
     
