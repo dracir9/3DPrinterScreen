@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 13-03-2022
+ * Last Modified: 14-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -654,6 +654,7 @@ esp_err_t GCodeRenderer::readTmp()
         }
 
         fread(&camPos, sizeof(Vec3f), 1, rfile);
+        fread(&info, sizeof(PrintInfo), 1, rfile);
     }
 
     float sizeFraction = 50.0f/filesize;
@@ -870,6 +871,7 @@ esp_err_t GCodeRenderer::generatePath()
                     // Write header
                     fwrite(&st.st_mtime, sizeof(time_t), 1, wfile); // Timestamp
                     fwrite(&camPos, sizeof(Vec3f), 1, wfile);   // Wrong camera position, just to leave a gap
+                    fwrite(&info, sizeof(PrintInfo), 1, wfile); // Gap for print information
                 }
 
                 if (tmpCache.write(tmpCache.getSize(), wfile) != tmpCache.getSize())
@@ -913,6 +915,7 @@ esp_err_t GCodeRenderer::generatePath()
         
         fseek(wfile, sizeof(time_t), SEEK_SET);
         fwrite(&camP, sizeof(Vec3f), 1, wfile); // Write camera position
+        fwrite(&info, sizeof(PrintInfo), 1, wfile); // Write info
 
         result = ferror(wfile);
         fclose(wfile);
@@ -1260,7 +1263,7 @@ void GCodeRenderer::parseComment(const char* str)
 
     if (strncmp(str, "TYPE:", 5) == 0)
     {
-        if (strncmp(&str[5], "FILL", 4) == 0)
+        if (strncmp(&str[5], "FILL", 4) == 0 || strncmp(&str[5], "WALL-INNER", 10) == 0)
             isShell = false;
         else
             isShell = true;
@@ -1273,6 +1276,11 @@ void GCodeRenderer::parseComment(const char* str)
     else if (strncmp(str, "TIME:", 5) == 0)
     {
         info.printTime = strtoul(&str[5], NULL, 10);
+        info.timeReady = true;
+    }
+    else if (strncmp(str, "PRINT.TIME:", 11) == 0)
+    {
+        info.printTime = strtoul(&str[11], NULL, 10);
         info.timeReady = true;
     }
 }
