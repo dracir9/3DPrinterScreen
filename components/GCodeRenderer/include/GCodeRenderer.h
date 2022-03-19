@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 12-03-2022
+ * Last Modified: 18-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -220,6 +220,7 @@ private:
     GCache tmpCache;
     bool isTmpOnRam = false;
     uint16_t* outImg = nullptr;
+    float* zbuf = nullptr;
 
     FILE* rfile;
     FILE* wfile;
@@ -278,9 +279,9 @@ private:
     void checkCamPos(const Vec3f &u, Boundary &limit);
 
     // Rendering
-    void projectLine(const Vec3f &u, const Vec3f &v, float* zBuffer);
-    void drawLine(const Vec3f &u, const Vec3f &v, uint16_t color, float* zBuffer);
-    void putPixel(const Pixel pix, float* zBuffer);
+    void projectLine(const Vec3f &u, const Vec3f &v);
+    void drawLine(const Vec3f &u, const Vec3f &v, uint16_t color);
+    void putPixel(const Pixel pix);
 
     // General functions
     void generateFilenames();

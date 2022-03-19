@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 14-03-2022
+ * Last Modified: 18-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -305,7 +305,20 @@ GCodeRenderer::GCodeRenderer()
         esp_restart();
     }
 
+    zbuf = (float*)calloc(320*320, sizeof(float));
+    if (zbuf == nullptr)
+    { 
+        DBG_LOGE("Failed to allocate Z buffer");
+        esp_restart();
+    }
+    
     outImg = (uint16_t*)calloc(320*320, sizeof(int16_t));
+    if (outImg == nullptr)
+    { 
+        DBG_LOGE("Failed to allocate img buffer");
+        esp_restart();
+    }
+
     rotMat = Mat3::RotationZ(camTheta)*Mat3::RotationX(camPhi);
 
     xTaskCreatePinnedToCore(threadTask, "Worker task", 2560, NULL, 1, &worker, 1);
@@ -339,6 +352,9 @@ GCodeRenderer::~GCodeRenderer()
 
     if (outImg)
         free(outImg);
+
+    if (zbuf)
+        free(zbuf);
 }
 
 void GCodeRenderer::mainTask(void* arg)
@@ -937,14 +953,6 @@ esp_err_t GCodeRenderer::renderMesh()
     Vec3f end = Vec3f();
     bool draw = false;
 
-    float* zbuf = (float*)calloc(320*320, sizeof(float));
-
-    if (zbuf == nullptr)
-    { 
-        DBG_LOGE("Failed to allocate Z buffer");
-        return ESP_ERR_NO_MEM;
-    }
-
     // Clear buffers
     memset(zbuf, 0x7F, 320*320*sizeof(float));
     memset(outImg, 0, 320*320*sizeof(int16_t));
@@ -959,7 +967,7 @@ esp_err_t GCodeRenderer::renderMesh()
             end = moveBuffer.data[i];
             if (end != start)
             {
-                if (draw) projectLine(start, end, zbuf);
+                if (draw) projectLine(start, end);
                 start = end;
                 draw = true;
             }
@@ -1323,7 +1331,7 @@ inline void GCodeRenderer::checkCamPos(const Vec3f &u, Boundary &limit)
     }
 }
 
-inline void GCodeRenderer::projectLine(const Vec3f &u, const Vec3f &v, float* zBuffer)
+inline void GCodeRenderer::projectLine(const Vec3f &u, const Vec3f &v)
 {
     DBG_LOGV("(%.3f, %.3f, %.3f) -> (%.3f, %.3f, %.3f)", u.x, u.y, u.z, v.x, v.y, v.z);
     Vec4f d1(u);
@@ -1353,10 +1361,10 @@ inline void GCodeRenderer::projectLine(const Vec3f &u, const Vec3f &v, float* zB
     uint16_t color = ((uint16_t)(r & 0xF8)<<8) | ((uint16_t)(g & 0xFC)<<3) | (b >> 3);
 
     // Render line
-    drawLine(d1, d2, color, zBuffer);
+    drawLine(d1, d2, color);
 }
 
-inline void GCodeRenderer::drawLine(const Vec3f &u, const Vec3f &v, uint16_t color, float* zBuffer)
+inline void GCodeRenderer::drawLine(const Vec3f &u, const Vec3f &v, uint16_t color)
 {
     Vec3f diff = v - u;
     Vec3f point = u;
@@ -1378,22 +1386,22 @@ inline void GCodeRenderer::drawLine(const Vec3f &u, const Vec3f &v, uint16_t col
         pix.x = point.x;
         pix.y = point.y;
         pix.z = point.z;
-        putPixel(pix, zBuffer);
+        putPixel(pix);
 
         point += diff;
     }
 }
 
-inline void GCodeRenderer::putPixel(const Pixel pix, float* zBuffer)
+inline void GCodeRenderer::putPixel(const Pixel pix)
 {
     if (pix.x < 0 || pix.x >= 320 || pix.y < 0 || pix.y >= 320)
         return;
 
     uint32_t id = pix.x + pix.y*320;
 
-    if (pix.z < zBuffer[id])
+    if (pix.z < zbuf[id])
     {
-        zBuffer[id] = pix.z;
+        zbuf[id] = pix.z;
         outImg[id] = pix.color;
     }
 }
