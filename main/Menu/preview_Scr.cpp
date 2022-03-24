@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 06-03-2022
+ * Last Modified: 24-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -78,6 +78,7 @@ void Preview_Scr::update(const uint32_t deltaTime, TchScr_Drv& ts)
 
 void Preview_Scr::render(tftLCD& tft)
 {
+    if (rendered) return;
     uint16_t* img = nullptr;
     // Main update loop is paused here
     if (renderEngine->getRender(&img, pdMS_TO_TICKS(100)) == ESP_OK)
@@ -87,6 +88,7 @@ void Preview_Scr::render(tftLCD& tft)
         tft.pushImage(0, 0, 320, 320, img);
         tft.setSwapBytes(oldBytes);
         tft.drawRoundRect(0, 0, 320, 320, 4, TFT_GREEN);
+        rendered = true;
     }
     else
     {

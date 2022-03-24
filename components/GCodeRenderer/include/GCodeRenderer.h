@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 18-03-2022
+ * Last Modified: 24-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -288,6 +288,7 @@ private:
     esp_err_t loadImg();
     void init();
     void stopTasks();
+    esp_err_t waitIdle();
     
 public:
     esp_err_t begin(std::string file);

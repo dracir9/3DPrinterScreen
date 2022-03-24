@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 18-03-2022
+ * Last Modified: 24-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -370,6 +370,7 @@ void GCodeRenderer::mainTask(void* arg)
         switch (eState)
         {
         case STOP:
+            DBG_LOGD("ZzZ");
             vTaskSuspend(NULL);
             break;
 
@@ -394,7 +395,7 @@ void GCodeRenderer::mainTask(void* arg)
                 xQueueSend(instance()->threadQueue, &endJobKey, portMAX_DELAY);
                 while (eState == PRE_PROCESS) vTaskSuspend(NULL); // Wait for the assembler to finish
             }
-            else // Something went wrong
+            else if (eState == ERROR) // Something went wrong
                 instance()->stopTasks();
             
             break;
@@ -408,11 +409,11 @@ void GCodeRenderer::mainTask(void* arg)
             endT = esp_timer_get_time();
             if (half > 0)
             {
-                DBG_LOGI("Read time: %d ms", (unsigned int)(endT-start)/1000);
+                DBG_LOGI("Total time: %d ms", (unsigned int)(endT-start)/1000);
                 DBG_LOGI("Render time: %d ms", (unsigned int)(endT-half)/1000);
             }
             else
-                DBG_LOGI("Render time: %d ms", (unsigned int)(endT-half)/1000);
+                DBG_LOGI("Render time: %d ms", (unsigned int)(endT-start)/1000);
 
             instance()->progress = 100.0f;
             xSemaphoreGive(instance()->readyFlag);
@@ -475,6 +476,7 @@ void GCodeRenderer::threadTask(void* arg)
             break;
         }
         case STOP:
+            DBG_LOGD("ZzZ");
             vTaskSuspend(NULL);
             break;
 
@@ -516,6 +518,7 @@ void GCodeRenderer::assemblerTask(void* arg)
             break;
 
         case STOP:
+            DBG_LOGD("ZzZ");
             vTaskSuspend(NULL);
             break;
 
@@ -708,7 +711,7 @@ esp_err_t GCodeRenderer::readTmp()
         #endif
 
         int16_t size = 0;
-        while ((size = tmpCache.readPoint(point)) >= 0) // While data available
+        while ((size = tmpCache.readPoint(point)) >= 0 && eState == RENDER) // While data available
         {
             filePtr += size;
             progress = 50.0f + filePtr*sizeFraction;
@@ -998,8 +1001,6 @@ esp_err_t GCodeRenderer::renderMesh()
 
     fclose(wfile);
     wfile = nullptr;
-
-    free(zbuf);
 
     DBG_LOGD_IF(result == ESP_OK, "Saved");
     return result;
@@ -1468,10 +1469,11 @@ void GCodeRenderer::stopTasks()
     DBG_LOGD("Stopped");
 }
 
-void GCodeRenderer::init()
+esp_err_t GCodeRenderer::waitIdle() 
 {
     vTaskResume(worker);
     vTaskResume(assembler);
+    vTaskResume(main);
 
     // Wait for all tasks to be idle
     DBG_LOGD("Wait for tasks");
@@ -1482,6 +1484,16 @@ void GCodeRenderer::init()
         timeout--;
         vTaskDelay(1);
     }
+
+    if (timeout == 0)
+        return ESP_FAIL;
+    else
+        return ESP_OK;
+}
+
+void GCodeRenderer::init()
+{
+    while (waitIdle() != ESP_OK);
 
     assert(xQueueReset(threadQueue) == pdPASS);
     assert(xQueueReset(thrdRetQueue) == pdPASS);
@@ -1552,7 +1564,22 @@ GCodeRenderer* GCodeRenderer::instance()
 
 esp_err_t GCodeRenderer::begin(std::string file)
 {
-    if (eState != STOP) return ESP_ERR_INVALID_STATE;
+    if (eState == ERROR)
+        return ESP_ERR_INVALID_STATE;
+    
+    if (file != filePath)
+    {
+        if (!(eState == STOP || eState == READY))
+        {
+            eState = READY;
+            stopTasks();
+            waitIdle();
+        }
+    }
+    else
+    {
+        return ESP_OK;
+    }
 
     xSemaphoreTake(readyFlag, 0); // clear ready flag
     progress = 0.0f;
