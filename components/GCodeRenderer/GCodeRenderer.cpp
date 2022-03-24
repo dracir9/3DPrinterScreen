@@ -1598,7 +1598,9 @@ esp_err_t GCodeRenderer::begin(std::string file)
 
 esp_err_t GCodeRenderer::getRender(uint16_t** outPtr, TickType_t timeout)
 {
-    // TODO: Return error image on error state
+    if (eState == ERROR)
+        return ESP_FAIL;
+
     if (xSemaphoreTake(readyFlag, timeout) != pdTRUE)
         return ESP_ERR_TIMEOUT;
 

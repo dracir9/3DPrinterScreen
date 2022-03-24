@@ -81,13 +81,24 @@ void Preview_Scr::render(tftLCD& tft)
     if (rendered) return;
     uint16_t* img = nullptr;
     // Main update loop is paused here
-    if (renderEngine->getRender(&img, pdMS_TO_TICKS(100)) == ESP_OK)
+    esp_err_t ret = renderEngine->getRender(&img, pdMS_TO_TICKS(100));
+    if (ret == ESP_OK)
     {
         bool oldBytes = tft.getSwapBytes();
         tft.setSwapBytes(true);
         tft.pushImage(0, 0, 320, 320, img);
         tft.setSwapBytes(oldBytes);
         tft.drawRoundRect(0, 0, 320, 320, 4, TFT_GREEN);
+        rendered = true;
+    }
+    else if (ret == ESP_FAIL)
+    {
+        tft.setTextDatum(CC_DATUM);
+        tft.setTextFont(4);
+        tft.setTextSize(1);
+        tft.setTextPadding(150);
+        tft.setTextColor(TFT_WHITE, TFT_RED);
+        tft.drawString("Render error", 160, 160);
         rendered = true;
     }
     else
