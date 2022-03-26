@@ -25,10 +25,6 @@
 #ifndef GCODERENDERER_H
 #define GCODERENDERER_H
 
-#define WITHIN(N,L,H)       ((N) >= (L) && (N) <= (H))
-#define NUMERIC(a)          ((uint8_t)(a - '0') <= 9)
-#define NUMERIC_SIGNED(a)   (NUMERIC(a) || (a) == '-' || (a) == '+')
-
 #include <sys/stat.h>
 #include <string>
 #include "freertos/FreeRTOS.h"

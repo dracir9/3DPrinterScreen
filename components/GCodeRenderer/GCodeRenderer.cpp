@@ -1006,6 +1006,10 @@ esp_err_t GCodeRenderer::renderMesh()
     return result;
 }
 
+#define WITHIN(N,L,H)       ((N) >= (L) && (N) <= (H))
+#define NUMERIC(a)          ((uint8_t)(a - '0') <= 9)
+#define NUMERIC_SIGNED(a)   (NUMERIC(a) || (a) == '-' || (a) == '+')
+
 static const float power_of_ten[] = {
     1e0f,  1e1f,  1e2f,  1e3f,  1e4f,  1e5f,  1e6f,  1e7f,  1e8f,  1e9f,  1e10f};
 inline float getFloat(char* p, char** endPtr)

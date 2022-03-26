@@ -629,6 +629,15 @@ void tftLCD::printCenter(const char *str)
     printCenter(String(str));
 }
 
+/**
+ * @brief Draw string wrapped
+ * 
+ * @param str   String to draw
+ * @param x     String X position
+ * @param y     String Y position
+ * @param w     Max string width
+ * @param h     Max string height
+ */
 void tftLCD::drawStringWr(const char *str, int32_t x, int32_t y, uint16_t w, uint16_t h)
 {
     const uint16_t cheight = fontHeight();
