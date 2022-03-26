@@ -544,9 +544,10 @@ esp_err_t GCodeRenderer::readFile()
     setvbuf(rfile, rBuffer, _IOFBF, bufferLen);
 
     // Get File size
-    fseek(rfile, 0, SEEK_END);
-    float filesize = 50.0f/ftell(rfile);
-    rewind(rfile);
+    struct stat st;
+    stat(filePath.c_str(), &st);
+    float filesize = 50.0f/st.st_size;
+    info.timestamp = st.st_mtime;
 
     #if CONFIG_DBG_LOG_LEVEL >= DBG_LOG_DEBUG
     int32_t percent = 0;
@@ -659,21 +660,19 @@ esp_err_t GCodeRenderer::readTmp()
         }
         
         // Read header
-        time_t timestamp;
-        fread(&timestamp, sizeof(time_t), 1, rfile);
-
         struct stat st;
         stat(filePath.c_str(), &st);
-        if (timestamp != st.st_mtime)
+
+        fread(&info, sizeof(FileInfo), 1, rfile);
+
+        if (info.timestamp != st.st_mtime)
         {
             DBG_LOGI("Outdated tmp file (%s), regenerating", tmpPath.c_str());
             fclose(rfile);
             rfile = nullptr;
             return ESP_ERR_INVALID_VERSION;
         }
-
-        fread(&camPos, sizeof(Vec3f), 1, rfile);
-        fread(&info, sizeof(PrintInfo), 1, rfile);
+        camPos = info.camPos;
     }
 
     float sizeFraction = 50.0f/filesize;
@@ -884,13 +883,8 @@ esp_err_t GCodeRenderer::generatePath()
 
                     setvbuf(wfile, wBuffer, _IOFBF, bufferLen);
                     
-                    struct stat st;
-                    stat(filePath.c_str(), &st);
-                    
                     // Write header
-                    fwrite(&st.st_mtime, sizeof(time_t), 1, wfile); // Timestamp
-                    fwrite(&camPos, sizeof(Vec3f), 1, wfile);   // Wrong camera position, just to leave a gap
-                    fwrite(&info, sizeof(PrintInfo), 1, wfile); // Gap for print information
+                    fwrite(&info, sizeof(FileInfo), 1, wfile); // Gap for file information
                 }
 
                 if (tmpCache.write(tmpCache.getSize(), wfile) != tmpCache.getSize())
@@ -932,9 +926,9 @@ esp_err_t GCodeRenderer::generatePath()
     {
         tmpCache.write(tmpCache.getSize(), wfile);
         
-        fseek(wfile, sizeof(time_t), SEEK_SET);
-        fwrite(&camP, sizeof(Vec3f), 1, wfile); // Write camera position
-        fwrite(&info, sizeof(PrintInfo), 1, wfile); // Write info
+        rewind(wfile);
+        info.camPos = camP; // Write camera position
+        fwrite(&info, sizeof(FileInfo), 1, wfile); // Write info
 
         result = ferror(wfile);
         fclose(wfile);
@@ -991,7 +985,7 @@ esp_err_t GCodeRenderer::renderMesh()
 
     setvbuf(wfile, wBuffer, _IOFBF, bufferLen);
 
-    if (fwrite(&info, sizeof(PrintInfo), 1, wfile) != 1)
+    if (fwrite(&info, sizeof(FileInfo), 1, wfile) != 1)
         result = ESP_FAIL;
     else
     {
@@ -1426,27 +1420,50 @@ esp_err_t GCodeRenderer::loadImg()
     rfile = fopen(imgPath.c_str(), "r");
     if (rfile == nullptr)
     {
-        DBG_LOGE("Error opening file \"%s\"", filePath.c_str());
+        DBG_LOGE("Error opening file \"%s\"", imgPath.c_str());
         return ESP_FAIL;
     }
 
     setvbuf(rfile, rBuffer, _IOFBF, bufferLen);
 
-    if (fread(&info, sizeof(PrintInfo), 1, rfile) != 1)
+    // Get File size
+    struct stat st;
+    stat(filePath.c_str(), &st);
+
+    // Error in tmp file
+    if (st.st_size == 0)
     {
-        DBG_LOGE("Error reading img file \"%s\"", filePath.c_str());
+        DBG_LOGW("Empty img file (%s), regenerating", tmpPath.c_str());
+        fclose(rfile);
+        rfile = nullptr;
+        remove(imgPath.c_str());
+        return ESP_ERR_INVALID_SIZE;
+    }
+
+    if (fread(&info, sizeof(FileInfo), 1, rfile) != 1)
+    {
+        DBG_LOGE("Error reading img file \"%s\"", imgPath.c_str());
         fclose(rfile);
         rfile = nullptr;
         return ESP_FAIL;
-    };
+    }
+
+    if (info.timestamp != st.st_mtime)
+    {
+        DBG_LOGI("Outdated img file (%s), regenerating", tmpPath.c_str());
+        fclose(rfile);
+        rfile = nullptr;
+        remove(imgPath.c_str());
+        return ESP_ERR_INVALID_VERSION;
+    }
 
     if (fread(outImg, sizeof(int16_t), 320*320, rfile) != 320*320)
     {
-        DBG_LOGE("Error reading img file \"%s\"", filePath.c_str());
+        DBG_LOGE("Error reading img file \"%s\"", imgPath.c_str());
         fclose(rfile);
         rfile = nullptr;
         return ESP_FAIL;
-    };
+    }
 
     fclose(rfile);
     rfile = nullptr;
@@ -1544,8 +1561,11 @@ void GCodeRenderer::init()
     {
         DBG_LOGD("Load image");
         
-        if (loadImg() == ESP_OK)
+        esp_err_t ret = loadImg();
+        if (ret == ESP_OK)
             eState = END;
+        else if (ret != ESP_FAIL)
+            eState = RENDER;
         else
             eState = ERROR;
     }
