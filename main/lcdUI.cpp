@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 06-03-2022
+ * Last Modified: 26-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -45,8 +45,6 @@ lcdUI::~lcdUI()
     vTaskDelete(cardTaskH);
     vTaskDelete(touchTaskH);
     vTaskDelete(updateTaskH);
-    vSemaphoreDelete(cardFlag);
-    vSemaphoreDelete(updateFlag);
     delete base;
 }
 
@@ -61,9 +59,9 @@ void IRAM_ATTR lcdUI::cardISRhandle(void* arg)
 
     lcdUI* UI = static_cast<lcdUI*>(arg);
     if (UI)
-        xSemaphoreGiveFromISR(UI->cardFlag, &xHigherPriorityTaskWoken);
+        vTaskNotifyGiveFromISR(UI->cardTaskH, &xHigherPriorityTaskWoken)
 
-    portYIELD_FROM_ISR();
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 void lcdUI::cardDetectTask(void* arg)
@@ -107,7 +105,7 @@ void lcdUI::cardDetectTask(void* arg)
             DBG_LOGD("Card connected");
             connected = UI->initSD();
         }
-        xSemaphoreTake(UI->cardFlag, portMAX_DELAY);
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
     }
     
     vTaskDelete(nullptr);
@@ -163,8 +161,7 @@ void lcdUI::updateTask(void* arg)
             DBG_LOGE("Update display failed");
             break;
         }
-
-        xSemaphoreTake(UI->updateFlag, portMAX_DELAY);
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         vTaskDelayUntil(&xLastWakeTime, xFrameTime);
         xLastWakeTime = xTaskGetTickCount();
     }
@@ -173,25 +170,18 @@ void lcdUI::updateTask(void* arg)
 
 esp_err_t lcdUI::begin()
 {
-    if (booted) return false;
+    if (booted) return ESP_OK;
 
     tft.begin();
     tft.setRotation(3);
     tft.fillScreen(TFT_RED);
 
     // Crete semaphores
-    cardFlag = xSemaphoreCreateBinary();
-    if (cardFlag == nullptr)
+    touchMutex = xSemaphoreCreateMutex();
+    if (touchMutex == nullptr)
     {
-        DBG_LOGE("Failed to create card detect semaphore");
-        return false;
-    }
-
-    updateFlag = xSemaphoreCreateBinary();
-    if (updateFlag == nullptr)
-    {
-        DBG_LOGE("Failed to create update flag semaphore");
-        return false;
+        DBG_LOGE("Failed to create touch mutex");
+        return ESP_FAIL;
     }
 
     // Create tasks
@@ -199,7 +189,7 @@ esp_err_t lcdUI::begin()
     if (touchTaskH == nullptr)
     {
         DBG_LOGE("Failed to create touch task");
-        return false;
+        return ESP_FAIL;
     }
     vTaskDelay(pdMS_TO_TICKS(100));
 
@@ -207,7 +197,7 @@ esp_err_t lcdUI::begin()
     if (cardTaskH == nullptr)
     {
         DBG_LOGE("Failed to create card detect task");
-        return false;
+        return ESP_FAIL;
     }
     vTaskDelay(pdMS_TO_TICKS(100));
 
@@ -215,7 +205,7 @@ esp_err_t lcdUI::begin()
     if (updateTaskH == nullptr)
     {
         DBG_LOGE("Failed to create render task");
-        return false;
+        return ESP_FAIL;
     }
     vTaskDelay(pdMS_TO_TICKS(100)); // Allow some time for the task to start
 
@@ -231,7 +221,7 @@ esp_err_t lcdUI::begin()
 void lcdUI::setScreen(const menu screen)
 {
     newMenuID = screen;
-    xSemaphoreGive(updateFlag);
+    xTaskNotifyGive(updateTaskH);
 }
 
 bool lcdUI::initSD()
@@ -282,7 +272,9 @@ void lcdUI::processTouch()
     //#endif
 
     if (!base) return;
+    xSemaphoreTake(touchMutex, portMAX_DELAY);
     base->handleTouch(event);
+    xSemaphoreGive(touchMutex);
 }
 
 esp_err_t lcdUI::updateDisplay()
@@ -290,7 +282,9 @@ esp_err_t lcdUI::updateDisplay()
     int64_t deltaTime = esp_timer_get_time() - lastRender;
     lastRender = esp_timer_get_time();
 
+    xSemaphoreTake(touchMutex, portMAX_DELAY);
     esp_err_t ret = updateObjects(); // Update to the latest screen
+    xSemaphoreGive(touchMutex);
     if (ret != ESP_OK) return ret;
 
     base->update(deltaTime, touchScreen);    // Update logic
@@ -351,5 +345,5 @@ esp_err_t lcdUI::updateObjects()
 
 void lcdUI::requestUpdate()
 {
-    xSemaphoreGive(updateFlag);
+    xTaskNotifyGive(updateTaskH);
 }
