@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 24-03-2022
+ * Last Modified: 26-03-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -1567,18 +1567,18 @@ esp_err_t GCodeRenderer::begin(std::string file)
     if (eState == ERROR)
         return ESP_ERR_INVALID_STATE;
     
-    if (file != filePath)
+    if (!(eState == STOP || eState == READY))
     {
-        if (!(eState == STOP || eState == READY))
+        if (file != filePath)
         {
             eState = READY;
             stopTasks();
             waitIdle();
         }
-    }
-    else
-    {
-        return ESP_OK;
+        else
+        {
+            return ESP_OK;
+        }
     }
 
     xSemaphoreTake(readyFlag, 0); // clear ready flag
@@ -1613,4 +1613,13 @@ void GCodeRenderer::printMinStack()
     DBG_LOGI("Min stack worker: %dB", uxTaskGetStackHighWaterMark(worker));
     DBG_LOGI("Min stack Main: %dB", uxTaskGetStackHighWaterMark(main));
     DBG_LOGI("Min stack assembler: %dB", uxTaskGetStackHighWaterMark(assembler));
+}
+
+void GCodeRenderer::stop()
+{
+    if (!(eState == STOP || eState == READY))
+    {
+        eState = STOP;
+        stopTasks();
+    }
 }

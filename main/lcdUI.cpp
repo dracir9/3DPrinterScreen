@@ -96,6 +96,7 @@ void lcdUI::cardDetectTask(void* arg)
             DBG_LOGD("Card disconnected");
             UI->endSD();
             connected = false;
+            UI->requestUpdate();
         }
         else if (!prevRead && !connected)
         {
@@ -104,6 +105,7 @@ void lcdUI::cardDetectTask(void* arg)
 
             DBG_LOGD("Card connected");
             connected = UI->initSD();
+            UI->requestUpdate();
         }
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
     }
@@ -236,6 +238,7 @@ bool lcdUI::initSD()
 
 void lcdUI::endSD()
 {
+    GCodeRenderer::instance()->stop();
     if (SDinit)
         SD_MMC.end();
     
