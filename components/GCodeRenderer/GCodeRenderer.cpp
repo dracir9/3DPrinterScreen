@@ -777,6 +777,7 @@ esp_err_t GCodeRenderer::readTmp()
 void GCodeRenderer::processGcode()
 {
     PrinterState printState;
+    float maxE = 0.0f;
     JobData job;
     VectorData moveBuffer;
     moveBuffer.size = -1;
@@ -813,7 +814,7 @@ void GCodeRenderer::processGcode()
                     xQueueReceive(vectRetQueue, &moveBuffer, portMAX_DELAY);
                     moveBuffer.size = 0;
                 }
-                if (printState.nextE > printState.currentE && printState.currentPos != printState.nextPos)
+                if (printState.nextE > maxE && printState.currentPos != printState.nextPos)
                 {
                     // Send movement
                     if (lastPoint != printState.currentPos) // Is this line not connected to the last one?
@@ -823,6 +824,7 @@ void GCodeRenderer::processGcode()
                     }
                     moveBuffer.data[moveBuffer.size++] = printState.nextPos;
                     lastPoint = printState.nextPos;
+                    maxE = printState.nextE;
                 }
             }
 
@@ -844,6 +846,12 @@ void GCodeRenderer::processGcode()
     {
         assert(moveBuffer.size <= vecBufferLen);
         xQueueSend(vectorQueue, &moveBuffer, portMAX_DELAY);
+    }
+
+    if (!info.filamentReady)
+    {
+        info.filament = maxE/1000.0f;
+        info.filamentReady = true;
     }
     
     DBG_LOGD("All jobs processed");
