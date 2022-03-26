@@ -814,17 +814,20 @@ void GCodeRenderer::processGcode()
                     xQueueReceive(vectRetQueue, &moveBuffer, portMAX_DELAY);
                     moveBuffer.size = 0;
                 }
-                if (printState.nextE > maxE && printState.currentPos != printState.nextPos)
+                if (printState.nextE > maxE)
                 {
-                    // Send movement
-                    if (lastPoint != printState.currentPos) // Is this line not connected to the last one?
-                    {
-                        moveBuffer.data[moveBuffer.size++] = lastPoint; // Create a chain break
-                        moveBuffer.data[moveBuffer.size++] = printState.currentPos; // Send new starting position
-                    }
-                    moveBuffer.data[moveBuffer.size++] = printState.nextPos;
-                    lastPoint = printState.nextPos;
                     maxE = printState.nextE;
+                    if (printState.currentPos != printState.nextPos)
+                    {
+                        // Send movement
+                        if (lastPoint != printState.currentPos) // Is this line not connected to the last one?
+                        {
+                            moveBuffer.data[moveBuffer.size++] = lastPoint; // Create a chain break
+                            moveBuffer.data[moveBuffer.size++] = printState.currentPos; // Send new starting position
+                        }
+                        moveBuffer.data[moveBuffer.size++] = printState.nextPos;
+                        lastPoint = printState.nextPos;
+                    }
                 }
             }
 
