@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 26-03-2022
+ * Last Modified: 09-04-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -175,7 +175,7 @@ esp_err_t lcdUI::begin()
     if (booted) return ESP_OK;
 
     tft.begin();
-    tft.setRotation(3);
+    tft.setRotation(1);
     tft.fillScreen(TFT_RED);
 
     // Crete semaphores

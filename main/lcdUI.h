@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 26-03-2022
+ * Last Modified: 09-04-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -50,11 +50,11 @@ private:
     
     static constexpr TchCalib calib = {
         .dx = 480,
-        .rx_min = 80,
-        .rx_max = 820,
+        .rx_min = 900,
+        .rx_max = 80,
         .dy = 320,
-        .ry_min = 100,
-        .ry_max = 730
+        .ry_min = 830,
+        .ry_max = 100
     };
 
     tftLCD tft;
