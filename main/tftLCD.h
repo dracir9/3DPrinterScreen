@@ -6,7 +6,6 @@
 #include <TFT_eSPI.h>
 #include "Free_Fonts.h"
 #include "Vector.h"
-#include "Configuration.h"
 
 class tftSprite : public TFT_eSprite
 {

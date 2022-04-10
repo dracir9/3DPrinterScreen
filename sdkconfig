@@ -131,6 +131,18 @@ CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
 
 #
+# Project Configuration
+#
+
+#
+# Debug
+#
+CONFIG_TOUCH_DBG=y
+# CONFIG_ENABLE_TIMER is not set
+# end of Debug
+# end of Project Configuration
+
+#
 # Arduino Configuration
 #
 CONFIG_ENABLE_ARDUINO_DEPENDS=y

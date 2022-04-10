@@ -2,7 +2,7 @@
 #ifndef UTILITY_H
 #define UTILITY_H
 
-#ifdef TIMER_U
+#ifdef CONFIG_ENABLE_TIMER
     #include <cstdio>
     class Timer
     {

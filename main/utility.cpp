@@ -1,7 +1,7 @@
 
 #include "utility.h"
 
-#ifdef TIMER_U
+#ifdef CONFIG_ENABLE_TIMER
     int64_t Timer::startTime;
 
     void Timer::tic()

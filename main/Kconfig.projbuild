@@ -1,0 +1,18 @@
+menu "Project Configuration"
+    menu "Debug"
+        config TOUCH_DBG
+            bool
+            prompt "Display touch points in LCD"
+            default "n"
+            help
+                Draws a colored dot on screen when touch input is detected.
+
+        config ENABLE_TIMER
+            bool
+            prompt "Enable tic-toc timer"
+            default "n"
+            help
+                allows time to be measured with TIC and TOC macros
+        
+    endmenu
+endmenu
