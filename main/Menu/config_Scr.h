@@ -32,9 +32,11 @@ class Config_Scr final: public Screen
 private:
     /* data */
 public:
-    Config_Scr(lcdUI* UI, tftLCD& tft);
+    Config_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts);
 
-    ~Config_Scr();
+    void update(uint32_t deltaTime, TchScr_Drv& ts) override;
+    void render(tftLCD& tft) override;
+    void handleTouch(const TchEvent& event) override;
 
 };
 

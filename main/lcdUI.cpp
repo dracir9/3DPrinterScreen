@@ -29,6 +29,7 @@
 #include "Menu/black_Scr.h"
 #include "Menu/fileBrowser_Scr.h"
 #include "Menu/preview_Scr.h"
+#include "Menu/config_Scr.h"
 
 bool lcdUI::init;
 lcdUI lcdUI::_instance;
@@ -328,7 +329,8 @@ esp_err_t lcdUI::updateObjects()
         case menu::FileBrowser:
             base = new FileBrowser_Scr(this, tft, touchScreen);
             break;
-        case menu::settings:
+        case menu::Config:
+            base = new Config_Scr(this, tft, touchScreen);
             break;
         case menu::control:
             break;

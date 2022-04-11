@@ -76,15 +76,30 @@ Info_Scr::Info_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     tft.drawRoundRect(325, 256, 155, 64, 4, TFT_ORANGE);
 
     // Setup buttons
-    Button sdCard;
-    sdCard.id = 0;
-    sdCard.xmin = 0;
-    sdCard.xmax = 160;
-    sdCard.ymin = 256;
-    sdCard.ymax = 320;
-    sdCard.enReleaseEv = true;
+    Button tmpBut;
+    tmpBut.id = 0;
+    tmpBut.xmin = 0;
+    tmpBut.xmax = 160;
+    tmpBut.ymin = 256;
+    tmpBut.ymax = 320;
+    tmpBut.enReleaseEv = true;
 
-    ts.setButton(&sdCard);
+    ts.setButton(&tmpBut); // SD card button
+
+    tmpBut.id = 1;
+    tmpBut.xmin = 160;
+    tmpBut.xmax = 320;
+    tmpBut.enHoldEv = true;
+    tmpBut.holdTime = 31;
+
+    ts.setButton(&tmpBut); // Move button
+
+    tmpBut.id = 2;
+    tmpBut.xmin = 320;
+    tmpBut.xmax = 480;
+    tmpBut.enHoldEv = false;
+
+    ts.setButton(&tmpBut); // Config button
 }
 
 void Info_Scr::update(uint32_t deltaTime, TchScr_Drv& ts)
@@ -139,5 +154,13 @@ void Info_Scr::handleTouch(const TchEvent& event)
     if (event.id == 0)
     {
         if (_UI->isSDinit()) _UI->setScreen(lcdUI::FileBrowser);
+    }
+    else if (event.id == 1)
+    {
+        /* code */
+    }
+    else if (event.id == 2)
+    {
+        _UI->setScreen(lcdUI::Config);
     }
 }

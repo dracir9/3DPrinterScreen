@@ -38,7 +38,7 @@ public:
         black,
         Info,
         main,
-        settings,
+        Config,
         FileBrowser,
         control,
         GcodePreview
