@@ -4,7 +4,7 @@
 **_Early development_**
 
 ## Hardware Prerequisites
-- ![This custom board](hardware/3D Printer Screen V2.pdf) or another with similar wiring similar
+- ![This custom board](hardware/3D_Printer_Screen_V2.pdf) or another with similar wiring similar
 - TFT LCD display compatible with [TFT_eSPI](https://github.com/Bodmer/TFT_eSPI) library and SPI communication
 - ESP32 Wrover-e Rev 3 with at least 4MB of SPIRAM
 - EFM8BB10F8G microcontroller
