@@ -1,9 +1,6 @@
 [submodule "components/arduino"]
 	path = components/arduino
 	url = https://github.com/espressif/arduino-esp32.git
-[submodule "components/TFT_eSPI"]
-	path = components/TFT_eSPI
-	url = https://github.com/dracir9/TFT_eSPI_IDF
 [submodule "components/TchScr_Drv"]
 	path = components/TchScr_Drv
 	url = https://github.com/dracir9/TchScr_Drv.git
