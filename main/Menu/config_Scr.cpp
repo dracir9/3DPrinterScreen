@@ -1,9 +1,9 @@
 /**
- * @file   info_w.h
+ * @file   config_Scr.cpp
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
- * Created Date: 22-01-2022
+ * Created Date: 11-04-2022
  * -----
- * Last Modified: 06-02-2022
+ * Last Modified: 11-04-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -22,28 +22,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef INFO_W_H
-#define INFO_W_H
+#include "config_Scr.h"
 
-#include "../lcdUI.h"
-
-class Info_W final: public Screen
+Config_Scr::Config_Scr(lcdUI* UI, tftLCD& tft):
+    Screen(UI)
 {
-public:
-    Info_W(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts);
+    tft.fillScreen(TFT_BLACK);
+}
 
-    void update(uint32_t deltaTime, TchScr_Drv& ts) override;
-    void render(tftLCD& tft) override;
-    void handleTouch(const TchEvent& event) override;
-
-private:
-    const uint8_t heatbed = 1;//random(0,2);
-    const uint8_t tools = 2;//random(1,6);
-    const uint8_t fans = 2;//random(0, min(8-tools-heatbed, 4));
-    const uint8_t items = heatbed + tools + fans;
-    const float cellAdv;
-    const uint16_t cellW;
-    int nextP = 0;
-};
-
-#endif

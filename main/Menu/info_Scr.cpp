@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 06-02-2022
+ * Last Modified: 11-04-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -22,9 +22,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "info_w.h"
+#include "info_Scr.h"
 
-Info_W::Info_W(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
+Info_Scr::Info_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     Screen(UI), cellAdv(416.0f/(items)), cellW(cellAdv-8)
 {
     tft.fillScreen(TFT_BLACK);
@@ -87,12 +87,12 @@ Info_W::Info_W(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     ts.setButton(&sdCard);
 }
 
-void Info_W::update(uint32_t deltaTime, TchScr_Drv& ts)
+void Info_Scr::update(uint32_t deltaTime, TchScr_Drv& ts)
 {
     
 }
 
-void Info_W::render(tftLCD& tft)
+void Info_Scr::render(tftLCD& tft)
 {
     _UI->requestUpdate();
     if (millis() < nextP) return;
@@ -133,7 +133,7 @@ void Info_W::render(tftLCD& tft)
     nextP = millis() + 1000;
 }
 
-void Info_W::handleTouch(const TchEvent& event)
+void Info_Scr::handleTouch(const TchEvent& event)
 {
     if (event.trigger != TrgSrc::RELEASE) return;
     if (event.id == 0)

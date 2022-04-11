@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 10-04-2022
+ * Last Modified: 11-04-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -25,8 +25,8 @@
 #include "lcdUI.h"
 #include "dbg_log.h"
 #include <SD_MMC.h>
-#include "Menu/info_w.h"
-#include "Menu/black_w.h"
+#include "Menu/info_Scr.h"
+#include "Menu/black_Scr.h"
 #include "Menu/fileBrowser_Scr.h"
 #include "Menu/preview_Scr.h"
 
@@ -318,10 +318,10 @@ esp_err_t lcdUI::updateObjects()
     switch (localMenu)
     {
         case menu::black:
-            base = new Black_W(this, tft);
+            base = new Black_Scr(this, tft);
             break;
         case menu::Info:
-            base = new Info_W(this, tft, touchScreen);
+            base = new Info_Scr(this, tft, touchScreen);
             break;
         case menu::main:
             break;
