@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 09-04-2022
+ * Last Modified: 11-04-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -26,7 +26,7 @@
 #define LCD_UI_H
 
 #include "tftLCD.h"
-#include "widgets.h"
+#include "Screen.h"
 #include "TchScr_Drv.h"
 
 class lcdUI
