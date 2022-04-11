@@ -29,15 +29,17 @@ Config_Scr::Config_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
 {
     tft.fillScreen(TFT_BLACK);
 
+    // Bottom menu
     tft.drawBmpSPIFFS("/spiffs/return_48.bmp", 53, 272);
     tft.drawRoundRect(0, 256, 155, 64, 4, TFT_ORANGE);
 
+    // Settings buttons
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.setTextFont(2);
     tft.setTextSize(1);
     tft.setTextDatum(CL_DATUM);
     tft.setTextPadding(202);
-    tft.drawString("Brightness", 10, 75);
+    tft.drawString("Display Settings", 10, 75);
     tft.drawRoundRect(0, 51, 239, 48, 4, TFT_OLIVE);
 
     Button tmpBut;
@@ -83,7 +85,7 @@ void Config_Scr::handleTouch(const TchEvent& event)
     }
     else if(event.id == 1)
     {
-
+        _UI->setScreen(lcdUI::DisplayConf);
     }
 }
 

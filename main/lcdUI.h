@@ -41,7 +41,8 @@ public:
         Config,
         FileBrowser,
         control,
-        GcodePreview
+        GcodePreview,
+        DisplayConf
     };
 
 private:

@@ -30,6 +30,7 @@
 #include "Menu/fileBrowser_Scr.h"
 #include "Menu/preview_Scr.h"
 #include "Menu/config_Scr.h"
+#include "Menu/displayConf_Scr.h"
 
 bool lcdUI::init;
 lcdUI lcdUI::_instance;
@@ -336,6 +337,9 @@ esp_err_t lcdUI::updateObjects()
             break;
         case menu::GcodePreview:
             base = new Preview_Scr(this, tft, touchScreen);
+            break;
+        case menu::DisplayConf:
+            base = new DisplayConf_Scr(this, tft, touchScreen);
             break;
         default:
             base = nullptr;

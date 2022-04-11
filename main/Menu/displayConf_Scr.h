@@ -1,5 +1,5 @@
 /**
- * @file   config_Scr.h
+ * @file   display_conf_Scr.h
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 11-04-2022
  * -----
@@ -22,19 +22,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef CONFIG_SCR_H
-#define CONFIG_SCR_H
+#ifndef DISPLAY_CONF_SCR_H
+#define DISPLAY_CONF_SCR_H
 
 #include "../lcdUI.h"
 
-class Config_Scr final: public Screen
+class DisplayConf_Scr final: public Screen
 {
 public:
-    Config_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts);
+    DisplayConf_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts);
 
     void update(uint32_t deltaTime, TchScr_Drv& ts) override;
     void render(tftLCD& tft) override;
     void handleTouch(const TchEvent& event) override;
+
+private:
+    bool engaged = false;
+    int16_t sliderX = 0;
 };
 
-#endif // CONFIG_SCR_H
+#endif // DISPLAY_CONF_SCR_H
