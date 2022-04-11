@@ -4,20 +4,10 @@
 **_Early development_**
 
 ## Hardware Prerequisites
-- [ESP Wrover Kit v4.1](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/hw-reference/esp32/get-started-wrover-kit.html)
-- TFT compatible with [TFT_eSPI](https://github.com/Bodmer/TFT_eSPI) library and SPI communication
-- XPT2046 touch controller
-- Pinout:
-  * TFT_DC          -> 0
-  * TFT_CS          -> 5
-  * TFT_RST         -> 22
-  * TFT_MISO        -> 19
-  * TFT_MOSI        -> 23
-  * TFT_SCLK        -> 18
-  * TFT_BackLight   -> 25
-  * Touch_IRQ       -> 27
-  * Touch_CS        -> 26
-  * SD Card_CD      -> 21
+- ![This custom board](hardware/3D Printer Screen V2.pdf) or another with similar wiring similar
+- TFT LCD display compatible with [TFT_eSPI](https://github.com/Bodmer/TFT_eSPI) library and SPI communication
+- ESP32 Wrover-e Rev 3 with at least 4MB of SPIRAM
+- EFM8BB10F8G microcontroller
 
 ## Current features
  - [x] SD card browser
