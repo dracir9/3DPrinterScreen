@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 06-03-2022
+ * Last Modified: 12-04-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -84,7 +84,7 @@ FileBrowser_Scr::FileBrowser_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     tmpBut.ymin = 0;
     tmpBut.ymax = 50;
     tmpBut.enHoldEv = true;
-    tmpBut.holdTime = 31;
+    tmpBut.holdTime = 100;
 
     ts.setButton(&tmpBut); // Return to SD root
     tmpBut.enHoldEv = false;
@@ -166,8 +166,6 @@ void FileBrowser_Scr::updatePath(const std::string &newPath, const bool relative
 
 void FileBrowser_Scr::handleTouch(const TchEvent& event)
 {
-    if (event.trigger == TrgSrc::PRESS) return;
-
     if (event.trigger == TrgSrc::HOLD_STRT && event.id == 11)
     {
         if (removeDir("/sdcard/.cache") == ESP_OK)
@@ -176,6 +174,8 @@ void FileBrowser_Scr::handleTouch(const TchEvent& event)
             DBG_LOGI("Failed to delete cache");
         return;
     }
+
+    if (event.trigger != TrgSrc::RELEASE) return;
 
     bool update = true;
 

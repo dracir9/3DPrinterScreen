@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 11-04-2022
  * -----
- * Last Modified: 11-04-2022
+ * Last Modified: 12-04-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -47,6 +47,7 @@ DisplayConf_Scr::DisplayConf_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
 
     tmpBut.id = 1;
     tmpBut.enHoldEv = true;
+    tmpBut.enHoldTickEv = true;
     tmpBut.enReleaseEv = false;
     tmpBut.holdTime = 0;
     tmpBut.xmin = 0;
@@ -55,7 +56,6 @@ DisplayConf_Scr::DisplayConf_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     tmpBut.ymax = 100;
 
     ts.setButton(&tmpBut); // Brightness slider
-    ts.setNotifications(true, true, true);
 }
 
 void DisplayConf_Scr::update(uint32_t deltaTime, TchScr_Drv& ts)
@@ -65,11 +65,8 @@ void DisplayConf_Scr::update(uint32_t deltaTime, TchScr_Drv& ts)
 
 void DisplayConf_Scr::render(tftLCD& tft)
 {
-    if (engaged)
-    {
-        tft.fillRect(20, 55, 200, 40, TFT_BLACK);
-        tft.fillRoundRect(sliderX, 55, 10, 40, 4, TFT_WHITE);
-    }
+    tft.fillRect(20, 55, 200, 40, TFT_BLACK);
+    tft.fillRoundRect(sliderX, 55, 10, 40, 4, TFT_WHITE);
 }
 
 void DisplayConf_Scr::handleTouch(const TchEvent& event)
@@ -81,15 +78,7 @@ void DisplayConf_Scr::handleTouch(const TchEvent& event)
             _UI->setScreen(lcdUI::Config);
         }
     }
-    else if (event.trigger == TrgSrc::HOLD_STRT)
-    {
-        engaged = true;
-    }
-    else if (event.trigger == TrgSrc::HOLD_END)
-    {
-        engaged = false;
-    }
-    else if (event.trigger == TrgSrc::IDLE)
+    else if (event.trigger == TrgSrc::HOLD_TICK)
     {
         sliderX = event.pos.x;
         if (sliderX > 210)

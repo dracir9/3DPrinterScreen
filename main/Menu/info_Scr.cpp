@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 11-04-2022
+ * Last Modified: 12-04-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -90,7 +90,7 @@ Info_Scr::Info_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     tmpBut.xmin = 160;
     tmpBut.xmax = 320;
     tmpBut.enHoldEv = true;
-    tmpBut.holdTime = 31;
+    tmpBut.holdTime = 100;
 
     ts.setButton(&tmpBut); // Move button
 

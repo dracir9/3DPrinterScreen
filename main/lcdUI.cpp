@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 11-04-2022
+ * Last Modified: 12-04-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -270,10 +270,11 @@ void lcdUI::processTouch()
     if (touchScreen.getEvent(&event, portMAX_DELAY) != ESP_OK) return;
 
     #ifdef CONFIG_TOUCH_DBG
-    if (event.trigger == TrgSrc::PRESS) tft.fillCircle(event.pos.x, event.pos.y, 2, TFT_YELLOW);
-    else if (event.trigger == TrgSrc::HOLD_STRT) tft.fillCircle(event.pos.x, event.pos.y, 2, TFT_MAGENTA);
-    else if (event.trigger == TrgSrc::HOLD_END) tft.fillCircle(event.pos.x, event.pos.y, 2, TFT_GREEN);
-    else if (event.trigger == TrgSrc::RELEASE) tft.fillCircle(event.pos.x, event.pos.y, 2, TFT_CYAN);
+    if (event.trigger == TrgSrc::PRESS) tft.fillCircle(event.pos.x, event.pos.y, 1, TFT_YELLOW);
+    else if (event.trigger == TrgSrc::HOLD_STRT) tft.fillCircle(event.pos.x, event.pos.y, 1, TFT_MAGENTA);
+    else if (event.trigger == TrgSrc::HOLD_TICK) tft.fillCircle(event.pos.x, event.pos.y, 1, TFT_RED);
+    else if (event.trigger == TrgSrc::HOLD_END) tft.fillCircle(event.pos.x, event.pos.y, 1, TFT_ORANGE);
+    else if (event.trigger == TrgSrc::RELEASE) tft.fillCircle(event.pos.x, event.pos.y, 1, TFT_CYAN);
     #endif
 
     if (!base) return;
