@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 26-03-2022
+ * Last Modified: 14-04-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -90,6 +90,7 @@ void Preview_Scr::render(tftLCD& tft)
         tft.setSwapBytes(oldBytes);
         tft.drawRoundRect(0, 0, 320, 320, 4, TFT_GREEN);
         rendered = true;
+        drawInfo(tft);
     }
     else if (ret == ESP_FAIL)
     {
@@ -153,7 +154,10 @@ void Preview_Scr::drawInfo(tftLCD& tft)
         displayed[1] = true;
     }
 
-    tft.setTextDatum(CC_DATUM);
-    tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.drawString(String(renderEngine->getProgress(), 0) + String("%"), 160, 168);
+    if (!rendered)
+    {
+        tft.setTextDatum(CC_DATUM);
+        tft.setTextColor(TFT_WHITE, TFT_BLACK);
+        tft.drawString(String(renderEngine->getProgress(), 0) + String("%"), 160, 168);
+    }
 }
