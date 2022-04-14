@@ -1,9 +1,9 @@
 /**
- * @file   display_conf_Scr.cpp
+ * @file   displayConf_Scr.cpp
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 11-04-2022
  * -----
- * Last Modified: 12-04-2022
+ * Last Modified: 14-04-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -23,6 +23,7 @@
  */
 
 #include "displayConf_Scr.h"
+
 DisplayConf_Scr::DisplayConf_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     Screen(UI)
 {
@@ -34,6 +35,7 @@ DisplayConf_Scr::DisplayConf_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
 
     // Slider
     tft.drawRoundRect(0, 51, 239, 48, 4, TFT_OLIVE);
+    tft.drawRoundRect(241, 51, 239, 48, 4, TFT_OLIVE);
 
     Button tmpBut;
     tmpBut.id = 0;
@@ -50,8 +52,8 @@ DisplayConf_Scr::DisplayConf_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     tmpBut.enHoldTickEv = true;
     tmpBut.enReleaseEv = false;
     tmpBut.holdTime = 0;
-    tmpBut.xmin = 0;
-    tmpBut.xmax = 240;
+    tmpBut.xmin = 266;
+    tmpBut.xmax = 456;
     tmpBut.ymin = 50;
     tmpBut.ymax = 100;
 
@@ -65,8 +67,13 @@ void DisplayConf_Scr::update(uint32_t deltaTime, TchScr_Drv& ts)
 
 void DisplayConf_Scr::render(tftLCD& tft)
 {
-    tft.fillRect(20, 55, 200, 40, TFT_BLACK);
-    tft.fillRoundRect(sliderX, 55, 10, 40, 4, TFT_WHITE);
+    tft.img.setColorDepth(16);
+    tft.img.createSprite(200, 40);
+    //tft.img.fillSprite(TFT_BLACK);
+    tft.img.fillRect(5, 20, 190, 2, TFT_WHITE);
+    tft.img.fillRoundRect(sliderX, 0, 10, 40, 4, TFT_WHITE);
+    tft.img.pushSprite(261, 55);
+    tft.img.deleteSprite();
 }
 
 void DisplayConf_Scr::handleTouch(const TchEvent& event)
@@ -80,14 +87,14 @@ void DisplayConf_Scr::handleTouch(const TchEvent& event)
     }
     else if (event.trigger == TrgSrc::HOLD_TICK)
     {
-        sliderX = event.pos.x;
-        if (sliderX > 210)
+        sliderX = event.pos.x - 266;
+        if (sliderX > 190)
         {
-            sliderX = 210;
+            sliderX = 190;
         }
-        else if (sliderX < 20)
+        else if (sliderX < 0)
         {
-            sliderX = 20;
+            sliderX = 0;
         }
         _UI->requestUpdate();
     }

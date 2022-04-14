@@ -1,9 +1,9 @@
 /**
- * @file   display_conf_Scr.h
+ * @file   displayConf_Scr.h
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 11-04-2022
  * -----
- * Last Modified: 11-04-2022
+ * Last Modified: 14-04-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -37,8 +37,7 @@ public:
     void handleTouch(const TchEvent& event) override;
 
 private:
-    bool engaged = false;
-    int16_t sliderX = 0;
+    int16_t sliderX = 100;
 };
 
 #endif // DISPLAY_CONF_SCR_H
