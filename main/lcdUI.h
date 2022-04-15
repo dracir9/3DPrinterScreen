@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 11-04-2022
+ * Last Modified: 15-04-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -100,6 +100,8 @@ public:
     const std::string& getFile() const { return selectedFile; }
     void clearFile() { selectedFile.clear(); }
     void requestUpdate();
+    esp_err_t setBrightness(uint32_t duty);
+    uint32_t getBrightness();
 };
 
 #endif

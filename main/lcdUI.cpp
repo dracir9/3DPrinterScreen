@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 12-04-2022
+ * Last Modified: 15-04-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -25,6 +25,7 @@
 #include "lcdUI.h"
 #include "dbg_log.h"
 #include <SD_MMC.h>
+#include "driver/ledc.h"
 #include "Menu/info_Scr.h"
 #include "Menu/black_Scr.h"
 #include "Menu/fileBrowser_Scr.h"
@@ -218,6 +219,29 @@ esp_err_t lcdUI::begin()
     gpio_install_isr_service(ESP_INTR_FLAG_LEVEL1);
     gpio_isr_handler_add(GPIO_NUM_34, cardISRhandle, this);
 
+    // Configure backlight PWM
+    ledc_timer_config_t ledcTimer = {
+        .speed_mode         = LEDC_LOW_SPEED_MODE,
+        .duty_resolution    = LEDC_TIMER_8_BIT,
+        .timer_num          = LEDC_TIMER_0,
+        .freq_hz            = 10000,
+        .clk_cfg            = LEDC_AUTO_CLK
+    };
+
+    ESP_ERROR_CHECK(ledc_timer_config(&ledcTimer));
+
+    ledc_channel_config_t ledcChannel = {
+        .gpio_num   = 26,
+        .speed_mode = LEDC_LOW_SPEED_MODE,
+        .channel    = LEDC_CHANNEL_0,
+        .intr_type  = LEDC_INTR_DISABLE,
+        .timer_sel  = LEDC_TIMER_0,
+        .duty       = 255, // Set duty to 100%
+        .hpoint     = 0
+    };
+
+    ESP_ERROR_CHECK(ledc_channel_config(&ledcChannel));
+
     booted = true;
     return ESP_OK;
 }
@@ -356,4 +380,26 @@ esp_err_t lcdUI::updateObjects()
 void lcdUI::requestUpdate()
 {
     xTaskNotifyGive(updateTaskH);
+}
+
+esp_err_t lcdUI::setBrightness(uint32_t duty)
+{
+    if (duty > 255)
+        duty = 255;
+    
+    esp_err_t ret = ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, duty);
+    if (ret != ESP_OK)
+        return ret;
+
+    // Update duty
+    ret = ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
+    if (ret != ESP_OK)
+        return ret;
+
+    return ESP_OK;
+}
+
+uint32_t lcdUI::getBrightness()
+{
+    return ledc_get_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
 }
