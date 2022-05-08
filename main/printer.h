@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 30-04-2022
+ * Last Modified: 08-05-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -27,6 +27,16 @@
 
 #include "stdint.h"
 #include "driver/uart.h"
+#include "Vector.h"
+
+enum TxEvent : uint8_t
+{
+    GCODE_LINE,
+    GET_TEMP,
+    GET_POS,
+    SET_POS,
+    SET_TEMP
+};
 
 class Printer
 {
@@ -35,12 +45,26 @@ private:
     const uint8_t toolheads;
     const uart_port_t uartNum;
 
-    QueueHandle_t uartQueue;
-    TaskHandle_t uartTask;
-    
-    float* tempE;
+    static constexpr uint8_t RxQueueLen = 10;
+    static constexpr uint8_t TxQueueLen = 10;
+    QueueHandle_t uartRxQueue;
+    QueueHandle_t uartTxQueue;
 
-    static void serialComTask(void* arg);
+    TaskHandle_t uartRxTask;
+    TaskHandle_t uartTxTask;
+
+    SemaphoreHandle_t readyFlag;
+    
+    float* actualTemp;
+    float* targetTemp;
+
+    Vec3f pos;
+    float* Epos;
+
+    static void serialRxTask(void* arg);
+    static void serialTxTask(void* arg);
+
+    void parseSerial(const char* str, const size_t len);
 public:
     Printer(const uint8_t tools, const uart_port_t uartNum);
     ~Printer();

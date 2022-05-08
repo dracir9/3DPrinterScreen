@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 30-04-2022
+ * Last Modified: 08-05-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -43,16 +43,39 @@ Printer::Printer(uint8_t tools, const uart_port_t uartNum):
     ESP_ERROR_CHECK(uart_set_pin(uartNum, 21, 22, -1, -1));
 
     // Setup UART buffered IO with event queue
-    ESP_ERROR_CHECK(uart_driver_install(UART_NUM_2, uartBufferSize, uartBufferSize, 10, &uartQueue, 0));
+    ESP_ERROR_CHECK(uart_driver_install(UART_NUM_2, uartBufferSize, uartBufferSize, RxQueueLen, &uartRxQueue, 0));
 
     // Create arrays
-    tempE = (float*)calloc(sizeof(float), tools);
+    actualTemp = (float*)calloc(sizeof(float), tools);
+
+    //
+    readyFlag = xSemaphoreCreateBinary();
+    if (readyFlag == nullptr)
+    {
+        DBG_EARLY_LOGE("Failed to create card detect semaphore");
+        esp_restart();
+    }
+
+    // Queues
+    uartTxQueue = xQueueCreate(TxQueueLen, sizeof(TxEvent));
+    if (uartTxQueue == nullptr)
+    {
+        DBG_EARLY_LOGE("Failed to create queues!");
+        esp_restart();
+    }
 
     // Create tasks
-    xTaskCreate(serialComTask, "Printer UART task", 4096, this, 1, &uartTask);
-    if (uartTask == nullptr)
+    xTaskCreate(serialRxTask, "UART receiver task", 4096, this, 1, &uartRxTask);
+    if (uartRxTask == nullptr)
     {
-        DBG_LOGE("Failed to create serial task");
+        DBG_EARLY_LOGE("Failed to create serial receiver task");
+        esp_restart();
+    }
+
+    xTaskCreate(serialTxTask, "UART transmitter task", 4096, this, 1, &uartTxTask);
+    if (uartTxTask == nullptr)
+    {
+        DBG_EARLY_LOGE("Failed to create serial transmitter task");
         esp_restart();
     }
 }
@@ -61,12 +84,12 @@ Printer::~Printer()
 {
 }
 
-void Printer::serialComTask(void* arg)
+void Printer::serialRxTask(void* arg)
 {
-    DBG_LOGI("Starting UART task");
+    DBG_LOGI("Starting UART receiver task");
     Printer* CNC = static_cast<Printer*>(arg);
     uart_event_t event;
-    uint8_t* dtmp = (uint8_t*) malloc(CNC->uartBufferSize);
+    char* dtmp = (char*) malloc(CNC->uartBufferSize);
     if (dtmp == nullptr)
     {
         DBG_LOGE("Unable to allocate buffers");
@@ -75,7 +98,7 @@ void Printer::serialComTask(void* arg)
 
     while (CNC)
     {
-        if(xQueueReceive(CNC->uartQueue, (void *)&event, 100))
+        if(xQueueReceive(CNC->uartRxQueue, (void *)&event, portMAX_DELAY))
         {
             switch(event.type)
             {
@@ -83,19 +106,19 @@ void Printer::serialComTask(void* arg)
                 case UART_DATA:
                     uart_read_bytes(CNC->uartNum, dtmp, event.size, portMAX_DELAY);
                     dtmp[event.size] = '\0';
-                    printf(">>%s<<\n", dtmp);
+                    CNC->parseSerial(dtmp, event.size);
                     break;
                 //Event of HW FIFO overflow detected
                 case UART_FIFO_OVF:
                     DBG_LOGW("HW fifo overflow");
                     uart_flush_input(CNC->uartNum);
-                    xQueueReset(CNC->uartQueue);
+                    xQueueReset(CNC->uartRxQueue);
                     break;
                 //Event of UART ring buffer full
                 case UART_BUFFER_FULL:
                     DBG_LOGW("Ring buffer full");
                     uart_flush_input(CNC->uartNum);
-                    xQueueReset(CNC->uartQueue);
+                    xQueueReset(CNC->uartRxQueue);
                     break;
                 //Event of UART RX break detected
                 case UART_BREAK:
@@ -125,5 +148,31 @@ void Printer::serialComTask(void* arg)
             uart_write_bytes(CNC->uartNum, "P", 2);
         }
     }
+
     vTaskDelete(nullptr);
+}
+
+void Printer::serialTxTask(void* arg)
+{
+    DBG_LOGI("Starting UART transmitter task");
+    Printer* CNC = static_cast<Printer*>(arg);
+
+    while (CNC)
+    {
+        xSemaphoreTake(CNC->readyFlag, portMAX_DELAY);
+    }
+
+    vTaskDelete(nullptr);
+}
+
+void Printer::parseSerial(const char* str, const size_t len)
+{
+    printf(">>%s\n", str);
+    if (len == 2)
+    {
+        if (str[0] == 'O' && str[1] == 'K')
+        {
+            xSemaphoreGive(readyFlag);
+        }
+    }
 }
