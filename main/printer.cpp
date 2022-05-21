@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 08-05-2022
+ * Last Modified: 18-05-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -156,10 +156,16 @@ void Printer::serialTxTask(void* arg)
 {
     DBG_LOGI("Starting UART transmitter task");
     Printer* CNC = static_cast<Printer*>(arg);
+    TxEvent event;
 
     while (CNC)
     {
         xSemaphoreTake(CNC->readyFlag, portMAX_DELAY);
+
+        if (xQueueReceive(CNC->uartTxQueue, (void *)&event, portMAX_DELAY))
+        {
+            /* code */
+        }
     }
 
     vTaskDelete(nullptr);
