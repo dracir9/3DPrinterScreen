@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 08-05-2022
+ * Last Modified: 28-05-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -41,18 +41,20 @@ enum TxEvent : uint8_t
 class Printer
 {
 private:
-    static constexpr int uartBufferSize = 1024 * 2;
+    static constexpr size_t uartBufferSize = 1024;
     const uint8_t toolheads;
     const uart_port_t uartNum;
 
-    static constexpr uint8_t RxQueueLen = 10;
-    static constexpr uint8_t TxQueueLen = 10;
+    static constexpr size_t RxQueueLen = 10;
+    static constexpr size_t TxQueueLen = 10;
+    static constexpr size_t maxLineLen = 96;
     QueueHandle_t uartRxQueue;
     QueueHandle_t uartTxQueue;
 
     TaskHandle_t uartRxTask;
     TaskHandle_t uartTxTask;
 
+    bool initialized = false;
     SemaphoreHandle_t readyFlag;
     
     float* actualTemp;

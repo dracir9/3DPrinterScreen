@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 18-05-2022
+ * Last Modified: 06-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -24,6 +24,7 @@
 
 #include "printer.h"
 #include "dbg_log.h"
+#include <cstring>
 
 Printer::Printer(uint8_t tools, const uart_port_t uartNum):
     toolheads(tools), uartNum(uartNum)
@@ -89,7 +90,9 @@ void Printer::serialRxTask(void* arg)
     DBG_LOGI("Starting UART receiver task");
     Printer* CNC = static_cast<Printer*>(arg);
     uart_event_t event;
-    char* dtmp = (char*) malloc(CNC->uartBufferSize);
+    size_t linePtr = 0;
+    char* dtmp = (char*) malloc(CNC->maxLineLen);
+    char* line = (char*) malloc(CNC->maxLineLen);
     if (dtmp == nullptr)
     {
         DBG_LOGE("Unable to allocate buffers");
@@ -104,9 +107,24 @@ void Printer::serialRxTask(void* arg)
             {
                 // Data received
                 case UART_DATA:
-                    uart_read_bytes(CNC->uartNum, dtmp, event.size, portMAX_DELAY);
-                    dtmp[event.size] = '\0';
-                    CNC->parseSerial(dtmp, event.size);
+                    while (uart_read_bytes(CNC->uartNum, dtmp, CNC->maxLineLen, 0))
+                    {
+                        size_t len = event.size > CNC->maxLineLen ? CNC->maxLineLen : event.size;
+                        for (size_t i = 0; i < len; i++)
+                        {
+                            if (dtmp[i] < 32)
+                            {
+                                if (linePtr == 0) continue;
+                                line[linePtr] = '\0';
+                                CNC->parseSerial(line, linePtr);
+                                linePtr = 0;
+                            }
+                            else
+                                line[linePtr++] = dtmp[i];
+                                
+                            event.size--;
+                        }
+                    }
                     break;
                 //Event of HW FIFO overflow detected
                 case UART_FIFO_OVF:
@@ -142,11 +160,6 @@ void Printer::serialRxTask(void* arg)
                     break;
             }
         }
-        else
-        {
-            DBG_LOGI("Send");
-            uart_write_bytes(CNC->uartNum, "P", 2);
-        }
     }
 
     vTaskDelete(nullptr);
@@ -173,12 +186,14 @@ void Printer::serialTxTask(void* arg)
 
 void Printer::parseSerial(const char* str, const size_t len)
 {
-    printf(">>%s\n", str);
-    if (len == 2)
+    printf(">|%s\n", str);
+    if (strcmp(str, "ok\n") == 0)
     {
-        if (str[0] == 'O' && str[1] == 'K')
-        {
-            xSemaphoreGive(readyFlag);
-        }
+        xSemaphoreGive(readyFlag);
+    }
+    else if (strcmp(str, "start") == 0)
+    {
+        DBG_LOGI("Printer initialized");
+        initialized = true;
     }
 }
