@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-09-2021
  * -----
- * Last Modified: 13-02-2022
+ * Last Modified: 06-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -39,7 +39,14 @@ extern "C" {
 #define DBG_LOG_VERBOSE 5   /*!< All information of the process. */
 
 #define CONFIG_DBG_LOG_LEVEL   DBG_LOG_DEBUG
+#define CONFIG_DBG_COUNT
 
+/**
+ * @brief Ever increasing counter
+ * 
+ * @return uint32_t counter value
+ */
+uint32_t dbg_log_cnt();
 
 /**
  * @brief Create new section
@@ -85,11 +92,15 @@ void dbg_log_write(const char *format, ...);
     #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #endif
 
+#ifdef CONFIG_DBG_COUNT
+#define DBG_FORMAT(letter, format) LOG_COLOR_ ## letter #letter " (%lu) %s:%u: " format LOG_RESET_COLOR "\n", dbg_log_cnt(), __FILENAME__, __LINE__
+#else
 #if CONFIG_LOG_TIMESTAMP_SOURCE_RTOS
 #define DBG_FORMAT(letter, format) LOG_COLOR_ ## letter #letter " (%u) %s:%u: " format LOG_RESET_COLOR "\n", esp_log_timestamp(), __FILENAME__, __LINE__
 #elif CONFIG_LOG_TIMESTAMP_SOURCE_SYSTEM
 #define DBG_FORMAT(letter, format) LOG_COLOR_ ## letter #letter " (%s) %s:%u: " format LOG_RESET_COLOR "\n", esp_log_system_timestamp(), __FILENAME__, __LINE__
 #endif //CONFIG_LOG_TIMESTAMP_SOURCE_xxx
+#endif
 
 #define DBG_LOG_EARLY_IMPL(format, level, letter, ...) if (LOG_LOCAL_LEVEL >= level) \
         esp_rom_printf(DBG_FORMAT(letter, format), ##__VA_ARGS__)

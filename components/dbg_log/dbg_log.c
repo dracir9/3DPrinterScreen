@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 04-12-2021
  * -----
- * Last Modified: 12-02-2022
+ * Last Modified: 06-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -29,6 +29,12 @@
 static uint8_t activeSection = 0;
 static uint64_t sectionD_state = UINT64_MAX;
 static uint64_t sectionV_state = 0;
+static uint32_t cnt = 0;
+
+uint32_t dbg_log_cnt()
+{
+    return cnt++;
+}
 
 void dbg_log_define_section(uint8_t id)
 {
