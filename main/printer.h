@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 28-05-2022
+ * Last Modified: 07-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -28,6 +28,7 @@
 #include "stdint.h"
 #include "driver/uart.h"
 #include "Vector.h"
+#include <string>
 
 enum TxEvent : uint8_t
 {
@@ -35,14 +36,19 @@ enum TxEvent : uint8_t
     GET_TEMP,
     GET_POS,
     SET_POS,
-    SET_TEMP
+    SET_TEMP,
+    AUTOTEMP_EN,
+    AUTOTEMP_DIS,
+    AUTOPOS_EN,
+    AUTOPOS_DIS,
+    FW_INFO,
+    GET_SETTINGS,
 };
 
 class Printer
 {
 private:
     static constexpr size_t uartBufferSize = 1024;
-    const uint8_t toolheads;
     const uart_port_t uartNum;
 
     static constexpr size_t RxQueueLen = 10;
@@ -55,20 +61,41 @@ private:
     TaskHandle_t uartTxTask;
 
     bool initialized = false;
+    bool isMetric = true;
+    bool volumetricEn = false;
+    char tempUnit = 'C';
     SemaphoreHandle_t readyFlag;
+
+    std::string fwVersion;
+
+    uint8_t toolheads;
     
     float* actualTemp;
     float* targetTemp;
 
     Vec3f pos;
-    float* Epos;
+    float* pos_E;
+
+    Vec3f stpsPerUnit;
+    float* stpsPerUnit_E;
+
+    Vec3f maxFeedrate;
+    float* maxFeedrate_E;
+
+    Vec3f maxAccel;
+    float* maxAccel_E;
+
+    Vec3f homeOffset;
+    float* homeOffset_E;
+
+    Vec3f hotendPID;
 
     static void serialRxTask(void* arg);
     static void serialTxTask(void* arg);
 
-    void parseSerial(const char* str, const size_t len);
+    void parseSerial(char* str, const size_t len);
 public:
-    Printer(const uint8_t tools, const uart_port_t uartNum);
+    Printer(const uart_port_t uartNum);
     ~Printer();
 };
 

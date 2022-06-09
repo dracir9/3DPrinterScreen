@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 30-04-2022
+ * Last Modified: 07-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -38,7 +38,7 @@ lcdUI lcdUI::_instance;
 constexpr TchCalib lcdUI::calib;
 
 lcdUI::lcdUI() :
-    touchScreen(I2C_NUM_0), device(2, UART_NUM_2)
+    touchScreen(I2C_NUM_0), device(UART_NUM_2)
 {
     init = true;
 }
