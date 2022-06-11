@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 28-04-2022
+ * Last Modified: 11-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -80,7 +80,7 @@ private:
 
     std::string selectedFile;
     
-    lcdUI(/* args */);
+    lcdUI();
     ~lcdUI();
 
     static void updateTask(void* arg);

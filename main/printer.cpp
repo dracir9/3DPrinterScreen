@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 07-06-2022
+ * Last Modified: 11-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -64,14 +64,14 @@ Printer::Printer(const uart_port_t uartNum):
     }
 
     // Create tasks
-    xTaskCreate(serialRxTask, "UART receiver task", 4096, this, 1, &uartRxTask);
+    xTaskCreate(serialRxTask, "UART RX task", 4096, this, 1, &uartRxTask);
     if (uartRxTask == nullptr)
     {
         DBG_EARLY_LOGE("Failed to create serial receiver task");
         esp_restart();
     }
 
-    xTaskCreate(serialTxTask, "UART transmitter task", 4096, this, 1, &uartTxTask);
+    xTaskCreate(serialTxTask, "UART RX task", 4096, this, 1, &uartTxTask);
     if (uartTxTask == nullptr)
     {
         DBG_EARLY_LOGE("Failed to create serial transmitter task");
@@ -172,7 +172,7 @@ void Printer::serialTxTask(void* arg)
     TxEvent event;
 
     vTaskDelay(pdMS_TO_TICKS(500));
-    while (!CNC->initialized)
+    while (CNC->state == OFFLINE)
     {
         uart_write_bytes(CNC->uartNum, "M115\n", 5);
         vTaskDelay(pdMS_TO_TICKS(1000));
@@ -265,27 +265,48 @@ void Printer::parseSerial(char* str, const size_t len)
         }
         else if (strncmp(&str[6], " M92 ", 5) == 0)
         {
-            char* endChr = &str[5];
-            while (endChr != 0)
+            char* endChr = &str[11];
+            while (*endChr != '\0')
             {
                 if (*endChr == 'X')
-                    stpsPerUnit.x = strtof(endChr, &endChr);
+                    stpsPerUnit.x = strtof(&endChr[1], &endChr);
                 else if (*endChr == 'Y')
-                    stpsPerUnit.y = strtof(endChr, &endChr);
+                    stpsPerUnit.y = strtof(&endChr[1], &endChr);
                 else if (*endChr == 'Z')
-                    stpsPerUnit.z = strtof(endChr, &endChr);
+                    stpsPerUnit.z = strtof(&endChr[1], &endChr);
                 else if (*endChr == 'E')
-                    stpsPerUnit.x = strtof(endChr, &endChr);
+                    endChr++; // TODO: Add extruder
                 else
                     endChr++;
             }
         }
-        else if (strncmp(&str[6], " M200 S", 7) == 0)
+        else if (strncmp(&str[6], " M200 ", 6) == 0)
         {
-            if (str[13] == '1')
-                volumetricEn = true;
-            else if (str[13] == '0')
-                volumetricEn = false;
+            char* endChr = &str[12];
+            while (*endChr != '\0')
+            {
+                if (*endChr == 'D')
+                    endChr++;
+                else if (*endChr == 'L')
+                    endChr++;
+                else if (*endChr == 'S')
+                {
+                    if (endChr[1] == '1')
+                        volumetricEn = true;
+                    else if (endChr[1] == '0')
+                        volumetricEn = false;
+                    endChr++;
+                }
+                else if (*endChr == 'T')
+                {
+                    uint8_t num = endChr[1] - '0';
+                    toolheads = (num > toolheads && num < 10) ? num : toolheads;
+                    DBG_LOGI("Tools: %d", toolheads);
+                    endChr++;
+                }
+                else
+                    endChr++;
+            }
         }
         else if (strncmp(&str[6], " M149 ", 6) == 0 && str[13] == ' ')
         {
@@ -313,7 +334,7 @@ void Printer::parseSerial(char* str, const size_t len)
     else if (strcmp(str, "start") == 0 || strncmp(str, "FIRMWARE_NAME:Marlin", 20) == 0)
     {
         DBG_LOGI("Printer initialized");
-        initialized = true;
+        state = READ_CNFG;
 
         if (str[0] == 'F')
         {

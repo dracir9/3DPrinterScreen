@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 07-06-2022
+ * Last Modified: 11-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -45,6 +45,13 @@ enum TxEvent : uint8_t
     GET_SETTINGS,
 };
 
+enum PState : uint8_t
+{
+    OFFLINE,
+    READ_CNFG,
+    INIT
+};
+
 class Printer
 {
 private:
@@ -60,7 +67,7 @@ private:
     TaskHandle_t uartRxTask;
     TaskHandle_t uartTxTask;
 
-    bool initialized = false;
+    PState state = OFFLINE;
     bool isMetric = true;
     bool volumetricEn = false;
     char tempUnit = 'C';
