@@ -55,8 +55,11 @@ enum PState : uint8_t
 class Printer
 {
 private:
+    static bool _init;
+    static Printer _instance;
+
     static constexpr size_t uartBufferSize = 1024;
-    const uart_port_t uartNum;
+    static const uart_port_t uartNum = UART_NUM_2;
 
     static constexpr size_t RxQueueLen = 10;
     static constexpr size_t TxQueueLen = 10;
@@ -107,9 +110,12 @@ private:
     esp_err_t parseTemp(char* str);
     void allocateFields();
     void cleanFields();
+
+    Printer();
+
 public:
-    Printer(const uart_port_t uartNum);
     ~Printer();
+    static Printer* instance();
 };
 
 #endif // PRINTER_H

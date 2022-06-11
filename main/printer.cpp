@@ -27,8 +27,7 @@
 #include <cstring>
 #include <freertos/FreeRTOS.h>
 
-Printer::Printer(const uart_port_t uartNum):
-    uartNum(uartNum)
+Printer::Printer()
 {
     // Initialize comunication
     uart_config_t uart_config = {
@@ -77,10 +76,17 @@ Printer::Printer(const uart_port_t uartNum):
         DBG_EARLY_LOGE("Failed to create serial transmitter task");
         esp_restart();
     }
+
+    _init = true;
 }
 
 Printer::~Printer()
 {
+}
+
+Printer* Printer::instance()
+{
+    return _init ? &_instance : nullptr;
 }
 
 void Printer::serialRxTask(void* arg)

@@ -63,7 +63,6 @@ private:
     tftLCD tft;
     Screen* base = nullptr;
     TchScr_Drv touchScreen;
-    Printer device;
 
     bool booted = false;
     bool SDinit = false;
