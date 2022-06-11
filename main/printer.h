@@ -49,7 +49,8 @@ enum PState : uint8_t
 {
     OFFLINE,
     READ_CNFG,
-    INIT
+    INIT,
+    READY
 };
 
 class Printer
@@ -116,6 +117,11 @@ private:
 public:
     ~Printer();
     static Printer* instance();
+
+    float getBedTemp();
+    float getTarBedTemp();
+    float getToolTemp(uint8_t tool);
+    float getTarToolTemp(uint8_t tool);
 };
 
 #endif // PRINTER_H

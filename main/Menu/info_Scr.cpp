@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 12-04-2022
+ * Last Modified: 11-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -114,7 +114,7 @@ void Info_Scr::render(tftLCD& tft)
     tft.setTextFont(2);
     tft.setTextSize(1);
     tft.setTextDatum(CC_DATUM);
-    tft.setTextPadding(40);
+    tft.setTextPadding(cellW - 4);
 
     // Draw temperatures
     tft.setTextColor(TFT_WHITE, TFT_DARKCYAN);
@@ -122,13 +122,14 @@ void Info_Scr::render(tftLCD& tft)
     {
         if (i < heatbed)
         {
-            tft.drawString(String(random(50, 70)) + "`C", 72+cellW/2+cellAdv*i, 70);
-            tft.drawString(String(random(50, 70)) + "`C", 72+cellW/2+cellAdv*i, 103);
+            tft.drawString(String(Printer::instance()->getBedTemp(), 1) + "`C", 72+cellW/2+cellAdv*i, 70);
+            tft.drawString(String(Printer::instance()->getTarBedTemp(), 0) + "`C", 72+cellW/2+cellAdv*i, 103);
         }
         else if (i < tools+heatbed)
         {
-            tft.drawString(String(random(180, 250)) + "`C", 72+cellW/2+cellAdv*i, 70);
-            tft.drawString(String(random(180, 250)) + "`C", 72+cellW/2+cellAdv*i, 103);
+            uint8_t k = i - heatbed;
+            tft.drawString(String(Printer::instance()->getToolTemp(k), 1) + "`C", 72+cellW/2+cellAdv*i, 70);
+            tft.drawString(String(Printer::instance()->getTarToolTemp(k), 0) + "`C", 72+cellW/2+cellAdv*i, 103);
         }
         else
         {

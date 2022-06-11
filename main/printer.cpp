@@ -27,6 +27,9 @@
 #include <cstring>
 #include <freertos/FreeRTOS.h>
 
+bool Printer::_init = false;
+Printer Printer::_instance;
+
 Printer::Printer()
 {
     // Initialize comunication
@@ -382,7 +385,7 @@ void Printer::parseSerial(char* str, const size_t len)
 
 esp_err_t Printer::parseTemp(char* str)
 {
-    if (state != INIT) return ESP_OK;
+    if (state != READY) return ESP_OK;
     // T:174.67 /0.00 B:173.28 /0.00 T0:174.67 /0.00 T1:172.17 /0.00 @:0 B@:0 @0:0 @1:0
     char* endChr = &str[2];
 
@@ -481,6 +484,8 @@ void Printer::allocateFields()
     {
         DBG_LOGE("No memory!");
     }
+
+    state = READY;
 }
 
 void Printer::cleanFields()
@@ -538,4 +543,40 @@ void Printer::cleanFields()
         free(hotendPID);
         hotendPID = nullptr;
     }
+}
+
+float Printer::getBedTemp()
+{
+    if (state == READY)
+        return bedTemp;
+    else
+        return 0.0f;
+}
+
+float Printer::getTarBedTemp()
+{
+    if (state == READY)
+        return tarBedTemp;
+    else
+        return 0.0f;
+}
+
+float Printer::getToolTemp(uint8_t tool)
+{
+    if (tool >= toolheads) tool = toolheads - 1;
+
+    if (state == READY)
+        return currentTemp[tool];
+    else
+        return 0.0f;
+}
+
+float Printer::getTarToolTemp(uint8_t tool)
+{
+    if (tool >= toolheads) tool = toolheads - 1;
+
+    if (state == READY)
+        return targetTemp[tool];
+    else
+        return 0.0f;
 }
