@@ -75,32 +75,35 @@ private:
 
     std::string fwVersion;
 
-    uint8_t toolheads;
+    uint8_t toolheads = 1;
+    uint8_t heatbeds = 1;
     
-    float* actualTemp;
-    float* targetTemp;
+    float* actualTemp = nullptr;
+    float* targetTemp = nullptr;
 
     Vec3f pos;
-    float* pos_E;
+    float* pos_E = nullptr;
+
+    Vec3f offset;
+    float* offset_E = nullptr;
 
     Vec3f stpsPerUnit;
-    float* stpsPerUnit_E;
+    float* stpsPerUnit_E = nullptr;
 
     Vec3f maxFeedrate;
-    float* maxFeedrate_E;
+    float* maxFeedrate_E = nullptr;
 
     Vec3f maxAccel;
-    float* maxAccel_E;
+    float* maxAccel_E = nullptr;
 
-    Vec3f homeOffset;
-    float* homeOffset_E;
-
-    Vec3f hotendPID;
+    Vec3f* hotendPID;
 
     static void serialRxTask(void* arg);
     static void serialTxTask(void* arg);
 
     void parseSerial(char* str, const size_t len);
+    void allocateFields();
+    void cleanFields();
 public:
     Printer(const uart_port_t uartNum);
     ~Printer();

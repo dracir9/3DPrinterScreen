@@ -280,6 +280,11 @@ void Printer::parseSerial(char* str, const size_t len)
                     endChr++;
             }
         }
+        else if (strncmp(&str[6], " M149 ", 6) == 0 && str[13] == ' ')
+        {
+            tempUnit = str[12];
+            DBG_LOGD("Teperature unit: %c", tempUnit);
+        }
         else if (strncmp(&str[6], " M200 ", 6) == 0)
         {
             char* endChr = &str[12];
@@ -299,7 +304,7 @@ void Printer::parseSerial(char* str, const size_t len)
                 }
                 else if (*endChr == 'T')
                 {
-                    uint8_t num = endChr[1] - '0';
+                    uint8_t num = (endChr[1] - '0') + 1;
                     toolheads = (num > toolheads && num < 10) ? num : toolheads;
                     DBG_LOGI("Tools: %d", toolheads);
                     endChr++;
@@ -308,10 +313,13 @@ void Printer::parseSerial(char* str, const size_t len)
                     endChr++;
             }
         }
-        else if (strncmp(&str[6], " M149 ", 6) == 0 && str[13] == ' ')
+        else if (strncmp(&str[6], " M301 ", 6) == 0)
         {
-            tempUnit = str[12];
-            DBG_LOGD("Teperature unit: %c", tempUnit);
+            if (state == READ_CNFG)
+            {
+                state = INIT;
+                allocateFields();
+            }
         }
         else
             printf(">|%s\n", str);
@@ -333,13 +341,15 @@ void Printer::parseSerial(char* str, const size_t len)
     }
     else if (strcmp(str, "start") == 0 || strncmp(str, "FIRMWARE_NAME:Marlin", 20) == 0)
     {
+        if (state == OFFLINE || str[0] == 's')
+            state = READ_CNFG;
+        else
+            return;
+        
         DBG_LOGI("Printer initialized");
-        state = READ_CNFG;
 
         if (str[0] == 'F')
-        {
             event = GET_SETTINGS;
-        }
         else
         {
             event = FW_INFO;
@@ -354,4 +364,119 @@ void Printer::parseSerial(char* str, const size_t len)
     }
     else
         printf(">|%s\n", str);
+}
+
+void Printer::allocateFields()
+{
+    if (state != INIT) return;
+
+    // Make sure all memory is freed
+    cleanFields();
+
+    // Temperatures
+    actualTemp = (float*)calloc(toolheads + heatbeds, sizeof(float));
+    targetTemp = (float*)calloc(toolheads + heatbeds, sizeof(float));
+    if (actualTemp == nullptr || targetTemp == nullptr)
+    {
+        DBG_LOGE("No memory!");
+    }
+
+    // Position
+    pos_E = (float*)calloc(toolheads, sizeof(float));
+    if (pos_E == nullptr)
+    {
+        DBG_LOGE("No memory!");
+    }
+
+    // Offsets
+    offset_E = (float*)calloc(toolheads, sizeof(float));
+    if (offset_E == nullptr)
+    {
+        DBG_LOGE("No memory!");
+    }
+
+    // Steps per unit
+    stpsPerUnit_E = (float*)calloc(toolheads, sizeof(float));
+    if (stpsPerUnit_E == nullptr)
+    {
+        DBG_LOGE("No memory!");
+    }
+
+    // Max feedrate
+    maxFeedrate_E = (float*)calloc(toolheads, sizeof(float));
+    if (maxFeedrate_E == nullptr)
+    {
+        DBG_LOGE("No memory!");
+    }
+
+    // Max acceleration
+    maxAccel_E = (float*)calloc(toolheads, sizeof(float));
+    if (maxAccel_E == nullptr)
+    {
+        DBG_LOGE("No memory!");
+    }
+
+    // PID settings
+    hotendPID = (Vec3f*)calloc(toolheads, sizeof(Vec3f));
+    if (hotendPID == nullptr)
+    {
+        DBG_LOGE("No memory!");
+    }
+}
+
+void Printer::cleanFields()
+{
+    // Temperatures
+    if (actualTemp != nullptr)
+    {
+        free(actualTemp);
+        actualTemp = nullptr;
+    }
+    if (targetTemp != nullptr)
+    {
+        free(targetTemp);
+        targetTemp = nullptr;
+    }
+
+    // Position
+    if (pos_E != nullptr)
+    {
+        free(pos_E);
+        pos_E = nullptr;
+    }
+
+    // Offsets
+    if (offset_E != nullptr)
+    {
+        free(offset_E);
+        offset_E = nullptr;
+    }
+
+    // Steps per unit
+    if (stpsPerUnit_E != nullptr)
+    {
+        free(stpsPerUnit_E);
+        stpsPerUnit_E = nullptr;
+    }
+
+    // Max feedrate
+    if (maxFeedrate_E != nullptr)
+    {
+        free(maxFeedrate_E);
+        maxFeedrate_E = nullptr;
+    }
+
+    // Max acceleration
+    if (maxAccel_E != nullptr)
+    {
+        free(maxAccel_E);
+        maxAccel_E = nullptr;
+    }
+
+    // PID settings
+    if (hotendPID != nullptr)
+    {
+        free(hotendPID);
+        hotendPID = nullptr;
+    }
 }
