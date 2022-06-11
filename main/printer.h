@@ -76,9 +76,11 @@ private:
     std::string fwVersion;
 
     uint8_t toolheads = 1;
-    uint8_t heatbeds = 1;
+    uint8_t activeTool = 0;
     
-    float* actualTemp = nullptr;
+    float bedTemp;
+    float tarBedTemp;
+    float* currentTemp = nullptr;
     float* targetTemp = nullptr;
 
     Vec3f pos;
@@ -102,6 +104,7 @@ private:
     static void serialTxTask(void* arg);
 
     void parseSerial(char* str, const size_t len);
+    esp_err_t parseTemp(char* str);
     void allocateFields();
     void cleanFields();
 public:

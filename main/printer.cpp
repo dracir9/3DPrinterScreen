@@ -240,9 +240,17 @@ void Printer::serialTxTask(void* arg)
 void Printer::parseSerial(char* str, const size_t len)
 {
     TxEvent event;
+    // Skip initial spaces
+    while (*str == ' ') str++;
+
     if (strcmp(str, "ok") == 0)
     {
         xSemaphoreGive(readyFlag);
+    }
+    else if (strncmp(str, "T:", 2) == 0)
+    {
+        if (parseTemp(str) != ESP_OK)
+            printf(">|%s\n", str);
     }
     else if (strncmp(str, "echo:;", 6) == 0)
     {
@@ -334,7 +342,7 @@ void Printer::parseSerial(char* str, const size_t len)
         else if (strncmp(&str[4], "AUTOREPORT_TEMP:1", 17) == 0)
         {
             event = AUTOTEMP_EN;
-            //xQueueSend(uartTxQueue, &event, portMAX_DELAY);
+            xQueueSend(uartTxQueue, &event, portMAX_DELAY);
         }
         else
             printf(">|%s\n", str);
@@ -366,6 +374,51 @@ void Printer::parseSerial(char* str, const size_t len)
         printf(">|%s\n", str);
 }
 
+esp_err_t Printer::parseTemp(char* str)
+{
+    if (state != INIT) return ESP_OK;
+    // T:174.67 /0.00 B:173.28 /0.00 T0:174.67 /0.00 T1:172.17 /0.00 @:0 B@:0 @0:0 @1:0
+    char* endChr = &str[2];
+
+    // Active tool
+    currentTemp[activeTool] = strtof(&endChr[0], &endChr);
+    while (*endChr == ' ') endChr++;
+    if (endChr[0] != '/')
+        return ESP_FAIL;
+
+    targetTemp[activeTool] = strtof(&endChr[1], &endChr);
+
+    // Bed
+    while (*endChr == ' ') endChr++;
+    if (strncmp(endChr, "B:", 2) == 0)
+    {
+        bedTemp = strtof(&endChr[2], &endChr);
+        while (*endChr == ' ') endChr++;
+        if (endChr[0] != '/')
+            return ESP_FAIL;
+
+        tarBedTemp = strtof(&endChr[1], &endChr);
+    }
+
+    // Tools
+    if (toolheads < 2) return ESP_OK;
+    for (uint8_t i = 0; i < toolheads; i++)
+    {
+        while (*endChr == ' ') endChr++;
+        if (endChr[0] != 'T' || endChr[1] != i + '0')
+            return ESP_FAIL;
+
+        currentTemp[i] = strtof(&endChr[3], &endChr);
+        while (*endChr == ' ') endChr++;
+        if (endChr[0] != '/')
+            return ESP_FAIL;
+
+        targetTemp[i] = strtof(&endChr[1], &endChr);
+    }
+
+    return ESP_OK;
+}
+
 void Printer::allocateFields()
 {
     if (state != INIT) return;
@@ -374,9 +427,9 @@ void Printer::allocateFields()
     cleanFields();
 
     // Temperatures
-    actualTemp = (float*)calloc(toolheads + heatbeds, sizeof(float));
-    targetTemp = (float*)calloc(toolheads + heatbeds, sizeof(float));
-    if (actualTemp == nullptr || targetTemp == nullptr)
+    currentTemp = (float*)calloc(toolheads, sizeof(float));
+    targetTemp = (float*)calloc(toolheads, sizeof(float));
+    if (currentTemp == nullptr || targetTemp == nullptr)
     {
         DBG_LOGE("No memory!");
     }
@@ -427,10 +480,10 @@ void Printer::allocateFields()
 void Printer::cleanFields()
 {
     // Temperatures
-    if (actualTemp != nullptr)
+    if (currentTemp != nullptr)
     {
-        free(actualTemp);
-        actualTemp = nullptr;
+        free(currentTemp);
+        currentTemp = nullptr;
     }
     if (targetTemp != nullptr)
     {
