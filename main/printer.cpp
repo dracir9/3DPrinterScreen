@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 11-06-2022
+ * Last Modified: 12-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -202,6 +202,7 @@ void Printer::serialTxTask(void* arg)
         switch (event)
         {
         case GCODE_LINE:
+            CNC->sendLine();
             break;
 
         case GET_TEMP:
@@ -252,7 +253,7 @@ void Printer::parseSerial(char* str, const size_t len)
     // Skip initial spaces
     while (*str == ' ') str++;
 
-    if (strcmp(str, "ok") == 0)
+    if (strncmp(str, "ok", 2) == 0)
     {
         xSemaphoreGive(readyFlag);
     }
@@ -383,9 +384,65 @@ void Printer::parseSerial(char* str, const size_t len)
         printf(">|%s\n", str);
 }
 
+esp_err_t Printer::sendFile(std::string path)
+{
+    if (state != READY)
+        return ESP_ERR_INVALID_STATE;
+    if (file != nullptr)
+        return ESP_ERR_NOT_FINISHED;
+        
+    filePath = path;
+    file = fopen(filePath.c_str(), "r");
+    DBG_LOGE_AND_RETURN_IF(file == nullptr, ESP_FAIL,
+        "Error opening file \"%s\"", filePath.c_str());
+
+    state = PRINTING;
+
+    TxEvent event = GCODE_LINE;
+    xQueueSend(uartTxQueue, &event, portMAX_DELAY);
+
+    DBG_LOGI("File open");
+    return ESP_OK;
+}
+
+void Printer::sendLine()
+{
+    static char line[96];
+    if (file == nullptr) return;
+
+    char* ret = nullptr;
+    do
+    {
+        ret = fgets(line, 96, file);
+    } while (line[0] == ';' && ret != nullptr);
+    
+    if (ret == nullptr)
+    {
+        // Print completed
+        if (feof(file))
+            DBG_LOGI("Print complete!");
+        else if (ferror(file))
+            DBG_LOGE("Error reading file \"%s\"", filePath.c_str());
+
+        fclose(file);
+        file = nullptr;
+        state = READY;
+    }
+    else
+    {
+        DBG_LOGI("Send line");
+        // Send line
+        uart_write_bytes(uartNum, line, strlen(line));
+        
+        // Queue next line
+        TxEvent event = GCODE_LINE;
+        xQueueSend(uartTxQueue, &event, portMAX_DELAY);
+    }
+}
+
 esp_err_t Printer::parseTemp(char* str)
 {
-    if (state != READY) return ESP_OK;
+    if (state < READY) return ESP_OK;
     // T:174.67 /0.00 B:173.28 /0.00 T0:174.67 /0.00 T1:172.17 /0.00 @:0 B@:0 @0:0 @1:0
     char* endChr = &str[2];
 
@@ -547,7 +604,7 @@ void Printer::cleanFields()
 
 float Printer::getBedTemp()
 {
-    if (state == READY)
+    if (state >= READY)
         return bedTemp;
     else
         return 0.0f;
@@ -555,7 +612,7 @@ float Printer::getBedTemp()
 
 float Printer::getTarBedTemp()
 {
-    if (state == READY)
+    if (state >= READY)
         return tarBedTemp;
     else
         return 0.0f;
@@ -565,7 +622,7 @@ float Printer::getToolTemp(uint8_t tool)
 {
     if (tool >= toolheads) tool = toolheads - 1;
 
-    if (state == READY)
+    if (state >= READY)
         return currentTemp[tool];
     else
         return 0.0f;
@@ -575,7 +632,7 @@ float Printer::getTarToolTemp(uint8_t tool)
 {
     if (tool >= toolheads) tool = toolheads - 1;
 
-    if (state == READY)
+    if (state >= READY)
         return targetTemp[tool];
     else
         return 0.0f;

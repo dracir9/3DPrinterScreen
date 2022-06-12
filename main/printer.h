@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 11-06-2022
+ * Last Modified: 12-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -50,7 +50,8 @@ enum PState : uint8_t
     OFFLINE,
     READ_CNFG,
     INIT,
-    READY
+    READY,
+    PRINTING
 };
 
 class Printer
@@ -104,9 +105,13 @@ private:
 
     Vec3f* hotendPID;
 
+    std::string filePath;
+    FILE* file = nullptr;
+
     static void serialRxTask(void* arg);
     static void serialTxTask(void* arg);
 
+    void sendLine();
     void parseSerial(char* str, const size_t len);
     esp_err_t parseTemp(char* str);
     void allocateFields();
@@ -117,6 +122,8 @@ private:
 public:
     ~Printer();
     static Printer* instance();
+
+    esp_err_t sendFile(std::string path);
 
     float getBedTemp();
     float getTarBedTemp();

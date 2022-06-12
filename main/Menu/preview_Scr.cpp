@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 14-04-2022
+ * Last Modified: 12-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -58,6 +58,14 @@ Preview_Scr::Preview_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     tmpBut.enReleaseEv = true;
     
     ts.setButton(&tmpBut); // Back to Info screen
+
+    tmpBut.id = 1;
+    tmpBut.xmin = 320;
+    tmpBut.xmax = 480;
+    tmpBut.ymin = 220;
+    tmpBut.ymax = 270;
+    
+    ts.setButton(&tmpBut); // Start button
 }
 
 void Preview_Scr::update(const uint32_t deltaTime, TchScr_Drv& ts)
@@ -111,10 +119,16 @@ void Preview_Scr::render(tftLCD& tft)
 
 void Preview_Scr::handleTouch(const TchEvent& event)
 {
-    if (event.trigger == TrgSrc::RELEASE && event.id == 0)
+    if (event.trigger != TrgSrc::RELEASE) return;
+
+    if (event.id == 0)
     {
         _UI->clearFile();
         _UI->setScreen(lcdUI::FileBrowser);
+    }
+    else if (event.id == 1)
+    {
+        Printer::instance()->sendFile(_UI->getFile());
     }
 }
 
