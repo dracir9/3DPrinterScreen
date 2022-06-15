@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 12-06-2022
+ * Last Modified: 15-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -262,6 +262,11 @@ void Printer::parseSerial(char* str, const size_t len)
         if (parseTemp(str) != ESP_OK)
             printf(">|%s\n", str);
     }
+    else if (strncmp(str, "X:", 2) == 0)
+    {
+        if(parsePos(str) != ESP_OK)
+            printf(">|%s\n", str);
+    }
     else if (strncmp(str, "echo:;", 6) == 0)
     {
         return;
@@ -347,7 +352,7 @@ void Printer::parseSerial(char* str, const size_t len)
         if (strncmp(&str[4], "AUTOREPORT_POS:1", 16) == 0)
         {
             event = AUTOPOS_EN;
-            //xQueueSend(uartTxQueue, &event, portMAX_DELAY);
+            xQueueSend(uartTxQueue, &event, portMAX_DELAY);
         }
         else if (strncmp(&str[4], "AUTOREPORT_TEMP:1", 17) == 0)
         {
@@ -430,8 +435,8 @@ void Printer::sendLine()
     }
     else
     {
-        DBG_LOGI("Send line");
         // Send line
+        DBG_LOGD("Send line");
         uart_write_bytes(uartNum, line, strlen(line));
         
         // Queue next line
@@ -468,6 +473,7 @@ esp_err_t Printer::parseTemp(char* str)
 
     // Tools
     if (toolheads < 2) return ESP_OK;
+
     for (uint8_t i = 0; i < toolheads; i++)
     {
         while (*endChr == ' ') endChr++;
@@ -481,6 +487,35 @@ esp_err_t Printer::parseTemp(char* str)
 
         targetTemp[i] = strtof(&endChr[1], &endChr);
     }
+
+    return ESP_OK;
+}
+
+esp_err_t Printer::parsePos(char* str)
+{
+    if (state < READY) return ESP_OK;
+    //X:0.00 Y:0.00 Z:0.00 E:0.00 Count X:0 Y:0 Z:0
+    char* endChr = &str[2];
+
+    pos.x = strtof(endChr, &endChr);
+
+    while (*endChr == ' ') endChr++;
+    if (strncmp(endChr, "Y:", 2) != 0)
+        return ESP_FAIL;
+
+    pos.y = strtof(&endChr[2], &endChr);
+
+    while (*endChr == ' ') endChr++;
+    if (strncmp(endChr, "Z:", 2) != 0)
+        return ESP_FAIL;
+
+    pos.z = strtof(&endChr[2], &endChr);
+
+    while (*endChr == ' ') endChr++;
+    if (strncmp(endChr, "E:", 2) != 0)
+        return ESP_FAIL;
+
+    pos_E[activeTool] = strtof(&endChr[2], &endChr);
 
     return ESP_OK;
 }
@@ -636,4 +671,31 @@ float Printer::getTarToolTemp(uint8_t tool)
         return targetTemp[tool];
     else
         return 0.0f;
+}
+
+esp_err_t Printer::getPosition(Vec3f* vec)
+{
+    if (state >= READY)
+    {
+        *vec = pos;
+        return ESP_OK;
+    }
+    else
+    {
+        return ESP_ERR_INVALID_STATE;
+    }
+}
+
+esp_err_t Printer::getExtruderPos(float* pos, uint8_t tool)
+{
+    if (state >= READY)
+    {
+        if (tool >= toolheads) tool = toolheads - 1;
+        *pos = pos_E[tool];
+        return ESP_OK;
+    }
+    else
+    {
+        return ESP_ERR_INVALID_STATE;
+    }
 }

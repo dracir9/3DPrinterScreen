@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 12-06-2022
+ * Last Modified: 15-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -114,6 +114,7 @@ private:
     void sendLine();
     void parseSerial(char* str, const size_t len);
     esp_err_t parseTemp(char* str);
+    esp_err_t parsePos(char* str);
     void allocateFields();
     void cleanFields();
 
@@ -129,6 +130,8 @@ public:
     float getTarBedTemp();
     float getToolTemp(uint8_t tool);
     float getTarToolTemp(uint8_t tool);
+    esp_err_t getPosition(Vec3f* vec);
+    esp_err_t getExtruderPos(float* pos, uint8_t tool);
 };
 
 #endif // PRINTER_H

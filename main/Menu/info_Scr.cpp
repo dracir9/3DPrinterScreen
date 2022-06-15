@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 11-06-2022
+ * Last Modified: 15-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -139,11 +139,13 @@ void Info_Scr::render(tftLCD& tft)
     }
 
     // Draw positions
+    Vec3f pos;
+    Printer::instance()->getPosition(&pos);
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.setTextPadding(115);
-    tft.drawString("X: " + String(random(-100, 500)), 60, 137);
-    tft.drawString("Y: " + String(random(-100, 500)), 180, 137);
-    tft.drawString("Z: " + String(random(-100, 500)), 300, 137);
+    tft.drawString("X: " + String(pos.x), 60, 137);
+    tft.drawString("Y: " + String(pos.y), 180, 137);
+    tft.drawString("Z: " + String(pos.z), 300, 137);
     tft.drawString("Fr: " + String(random(70, 150)) + "%", 420, 137);
     
     nextP = millis() + 1000;
