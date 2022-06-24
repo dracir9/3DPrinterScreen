@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 18-06-2022
  * -----
- * Last Modified: 22-06-2022
+ * Last Modified: 24-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -97,6 +97,9 @@ Print_Scr::Print_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     tmpBut.xmax = 480;
 
     ts.setButton(&tmpBut); // Config button
+
+    // Send File to printer
+    printer->sendFile(_UI->getFile());
 }
 
 void Print_Scr::update(const uint32_t deltaTime, TchScr_Drv& ts)
@@ -122,14 +125,14 @@ void Print_Scr::render(tftLCD& tft)
     {
         if (i < heatbed)
         {
-            tft.drawString(String(Printer::instance()->getBedTemp(), 0) + "`C", 256+cellW/2+cellAdv*i, 60);
-            tft.drawString(String(Printer::instance()->getTarBedTemp(), 0) + "`C", 256+cellW/2+cellAdv*i, 93);
+            tft.drawString(String(printer->getBedTemp(), 0) + "`C", 256+cellW/2+cellAdv*i, 60);
+            tft.drawString(String(printer->getTarBedTemp(), 0) + "`C", 256+cellW/2+cellAdv*i, 93);
         }
         else if (i < tools+heatbed)
         {
             uint8_t k = i - heatbed;
-            tft.drawString(String(Printer::instance()->getToolTemp(k), 0) + "`C", 256+cellW/2+cellAdv*i, 60);
-            tft.drawString(String(Printer::instance()->getTarToolTemp(k), 0) + "`C", 256+cellW/2+cellAdv*i, 93);
+            tft.drawString(String(printer->getToolTemp(k), 0) + "`C", 256+cellW/2+cellAdv*i, 60);
+            tft.drawString(String(printer->getTarToolTemp(k), 0) + "`C", 256+cellW/2+cellAdv*i, 93);
         }
         else
         {
@@ -140,7 +143,7 @@ void Print_Scr::render(tftLCD& tft)
 
     // Draw positions
     Vec3f pos;
-    Printer::instance()->getPosition(&pos);
+    printer->getPosition(&pos);
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.setTextPadding(56);
     tft.drawString("X:", 284, 127);

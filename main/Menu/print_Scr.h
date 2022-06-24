@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 18-06-2022
  * -----
- * Last Modified: 18-06-2022
+ * Last Modified: 24-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -37,6 +37,8 @@ public:
     void handleTouch(const TchEvent& event) override;
 
 private:
+    Printer* printer = Printer::instance();
+
     uint8_t cellAdv = 58;
     uint8_t cellW = 50;
     uint8_t heatbed = 1;
