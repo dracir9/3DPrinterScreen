@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 12-06-2022
+ * Last Modified: 18-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -128,7 +128,7 @@ void Preview_Scr::handleTouch(const TchEvent& event)
     }
     else if (event.id == 1)
     {
-        Printer::instance()->sendFile(_UI->getFile());
+        _UI->setScreen(lcdUI::Print);
     }
 }
 

@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 15-06-2022
+ * Last Modified: 18-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -635,6 +635,11 @@ void Printer::cleanFields()
         free(hotendPID);
         hotendPID = nullptr;
     }
+}
+
+uint8_t Printer::getToolNum()
+{
+    return toolheads;
 }
 
 float Printer::getBedTemp()
