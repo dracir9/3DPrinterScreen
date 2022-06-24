@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 18-06-2022
+ * Last Modified: 24-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -33,6 +33,7 @@
 #include "Menu/config_Scr.h"
 #include "Menu/displayConf_Scr.h"
 #include "Menu/print_Scr.h"
+#include "Menu/draw_Scr.h"
 
 bool lcdUI::init;
 lcdUI lcdUI::_instance;
@@ -369,6 +370,9 @@ esp_err_t lcdUI::updateObjects()
             break;
         case menu::Print:
             base = new Print_Scr(this, tft, touchScreen);
+            break;
+        case menu::Draw:
+            base = new Draw_Scr(this, tft, touchScreen);
             break;
         default:
             base = nullptr;

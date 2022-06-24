@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 15-06-2022
+ * Last Modified: 24-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -153,17 +153,26 @@ void Info_Scr::render(tftLCD& tft)
 
 void Info_Scr::handleTouch(const TchEvent& event)
 {
-    if (event.trigger != TrgSrc::RELEASE) return;
-    if (event.id == 0)
+    if (event.trigger == TrgSrc::RELEASE)
     {
-        if (_UI->isSDinit()) _UI->setScreen(lcdUI::FileBrowser);
+        if (event.id == 0)
+        {
+            if (_UI->isSDinit()) _UI->setScreen(lcdUI::FileBrowser);
+        }
+        else if (event.id == 1)
+        {
+            /* code */
+        }
+        else if (event.id == 2)
+        {
+            _UI->setScreen(lcdUI::Config);
+        }
     }
-    else if (event.id == 1)
+    else if (event.trigger == TrgSrc::HOLD_STRT)
     {
-        /* code */
-    }
-    else if (event.id == 2)
-    {
-        _UI->setScreen(lcdUI::Config);
+        if (event.id == 1)
+        {
+            _UI->setScreen(lcdUI::Draw);
+        }
     }
 }
