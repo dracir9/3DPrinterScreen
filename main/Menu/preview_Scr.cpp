@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 18-06-2022
+ * Last Modified: 24-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -33,10 +33,8 @@ Preview_Scr::Preview_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
         DBG_LOGE("Render engine uninitialized!");
 
     displayed.reset();
-    tft.fillScreen(TFT_BLACK);
-    tft.drawRoundRect(0, 0, 320, 320, 4, TFT_GREEN);
     tft.drawRoundRect(320, 0, 160, 50, 4, TFT_BLUE);
-    tft.fillRoundRect(320, 220, 160, 50, 4, 0x0AE0);
+    tft.drawRoundRect(0, 0, 320, 320, 4, TFT_GREEN);
     tft.drawRoundRect(320, 270, 160, 50, 4, TFT_ORANGE);
     tft.setTextFont(2);
     tft.setTextSize(1);
@@ -44,9 +42,21 @@ Preview_Scr::Preview_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
     tft.setTextPadding(0);
     tft.drawStringWr(_UI->getFile().substr(_UI->getFile().rfind('/')+1).c_str(), 400, 25, 150, 48); // Display filename
     tft.setTextColor(TFT_WHITE);
-    tft.drawString("Start!", 400, 245);
     tft.drawString("Loading...", 160, 152);
     tft.drawBmpSPIFFS("/spiffs/return_48.bmp", 376, 277);
+
+    if (printer->getState() == READY)
+    {
+        tft.fillRoundRect(320, 220, 160, 50, 4, TFT_OLIVE);
+        tft.drawString("Start!", 400, 245);
+        printerReady = true;
+    }
+    else
+    {
+        tft.fillRoundRect(320, 220, 160, 50, 4, TFT_DARKGREY);
+        tft.drawString("Printer disconnected", 400, 245);
+        printerReady = false;
+    }
 
     // Setup buttons
     Button tmpBut;
@@ -86,6 +96,25 @@ void Preview_Scr::update(const uint32_t deltaTime, TchScr_Drv& ts)
 
 void Preview_Scr::render(tftLCD& tft)
 {
+    _UI->requestUpdate();
+
+    tft.setTextFont(2);
+    tft.setTextSize(1);
+    tft.setTextDatum(CC_DATUM);
+    tft.setTextPadding(0);
+    tft.setTextColor(TFT_WHITE);
+    if (printer->getState() == READY && printerReady == false)
+    {
+        tft.fillRoundRect(320, 220, 160, 50, 4, TFT_OLIVE);
+        tft.drawString("Start!", 400, 245);
+        printerReady = true;
+    }
+    else if (printer->getState() != READY && printerReady == true)
+    {
+        tft.fillRoundRect(320, 220, 160, 50, 4, TFT_DARKGREY);
+        tft.drawString("Printer disconnected", 400, 245);
+    }
+
     if (rendered) return;
     uint16_t* img = nullptr;
     // Main update loop is paused here
@@ -98,7 +127,6 @@ void Preview_Scr::render(tftLCD& tft)
         tft.setSwapBytes(oldBytes);
         tft.drawRoundRect(0, 0, 320, 320, 4, TFT_GREEN);
         rendered = true;
-        drawInfo(tft);
     }
     else if (ret == ESP_FAIL)
     {
@@ -110,11 +138,8 @@ void Preview_Scr::render(tftLCD& tft)
         tft.drawString("Render error", 160, 160);
         rendered = true;
     }
-    else
-    {
-        drawInfo(tft);
-        _UI->requestUpdate();
-    }
+
+    drawInfo(tft);
 }
 
 void Preview_Scr::handleTouch(const TchEvent& event)
@@ -126,7 +151,7 @@ void Preview_Scr::handleTouch(const TchEvent& event)
         _UI->clearFile();
         _UI->setScreen(lcdUI::FileBrowser);
     }
-    else if (event.id == 1)
+    else if (event.id == 1 && printer->getState() == PState::READY)
     {
         _UI->setScreen(lcdUI::Print);
     }

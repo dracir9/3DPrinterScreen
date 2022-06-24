@@ -637,7 +637,7 @@ void Printer::cleanFields()
     }
 }
 
-uint8_t Printer::getToolNum()
+uint8_t Printer::getToolNum() const
 {
     if (state >= READY)
         return toolheads;
@@ -645,12 +645,12 @@ uint8_t Printer::getToolNum()
         return 0;
 }
 
-PState Printer::getState()
+PState Printer::getState() const
 {
     return state;
 }
 
-float Printer::getBedTemp()
+float Printer::getBedTemp() const
 {
     if (state >= READY)
         return bedTemp;
@@ -658,7 +658,7 @@ float Printer::getBedTemp()
         return 0.0f;
 }
 
-float Printer::getTarBedTemp()
+float Printer::getTarBedTemp() const
 {
     if (state >= READY)
         return tarBedTemp;
@@ -666,7 +666,7 @@ float Printer::getTarBedTemp()
         return 0.0f;
 }
 
-float Printer::getToolTemp(uint8_t tool)
+float Printer::getToolTemp(uint8_t tool) const
 {
     if (tool >= toolheads) tool = toolheads - 1;
 
@@ -676,7 +676,7 @@ float Printer::getToolTemp(uint8_t tool)
         return 0.0f;
 }
 
-float Printer::getTarToolTemp(uint8_t tool)
+float Printer::getTarToolTemp(uint8_t tool) const
 {
     if (tool >= toolheads) tool = toolheads - 1;
 
@@ -686,7 +686,7 @@ float Printer::getTarToolTemp(uint8_t tool)
         return 0.0f;
 }
 
-esp_err_t Printer::getPosition(Vec3f* vec)
+esp_err_t Printer::getPosition(Vec3f* vec) const
 {
     if (state >= READY)
     {
@@ -699,7 +699,7 @@ esp_err_t Printer::getPosition(Vec3f* vec)
     }
 }
 
-esp_err_t Printer::getExtruderPos(float* pos, uint8_t tool)
+esp_err_t Printer::getExtruderPos(float* pos, uint8_t tool) const
 {
     if (state >= READY)
     {

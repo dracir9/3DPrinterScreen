@@ -126,14 +126,14 @@ public:
 
     esp_err_t sendFile(std::string path);
 
-    uint8_t getToolNum();
-    PState getState();
-    float getBedTemp();
-    float getTarBedTemp();
-    float getToolTemp(uint8_t tool);
-    float getTarToolTemp(uint8_t tool);
-    esp_err_t getPosition(Vec3f* vec);
-    esp_err_t getExtruderPos(float* pos, uint8_t tool);
+    uint8_t getToolNum() const;
+    PState getState() const;
+    float getBedTemp() const;
+    float getTarBedTemp() const;
+    float getToolTemp(uint8_t tool) const;
+    float getTarToolTemp(uint8_t tool) const;
+    esp_err_t getPosition(Vec3f* vec) const;
+    esp_err_t getExtruderPos(float* pos, uint8_t tool) const;
 };
 
 #endif // PRINTER_H
