@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 18-06-2022
+ * Last Modified: 24-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -127,6 +127,7 @@ public:
     esp_err_t sendFile(std::string path);
 
     uint8_t getToolNum();
+    PState getState();
     float getBedTemp();
     float getTarBedTemp();
     float getToolTemp(uint8_t tool);

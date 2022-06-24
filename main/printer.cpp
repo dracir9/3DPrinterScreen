@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 18-06-2022
+ * Last Modified: 24-06-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -639,7 +639,15 @@ void Printer::cleanFields()
 
 uint8_t Printer::getToolNum()
 {
-    return toolheads;
+    if (state >= READY)
+        return toolheads;
+    else
+        return 0;
+}
+
+PState Printer::getState()
+{
+    return state;
 }
 
 float Printer::getBedTemp()
