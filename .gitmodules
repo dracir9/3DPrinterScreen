@@ -9,4 +9,4 @@
 	url = https://github.com/dracir9/Vector.git
 [submodule "components/TFT_eSPI"]
 	path = components/TFT_eSPI
-	url = https://github.com/dracir9/TFT_eSPI.git
+	url = https://github.com/Bodmer/TFT_eSPI
