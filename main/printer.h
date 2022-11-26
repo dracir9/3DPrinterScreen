@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 24-06-2022
+ * Last Modified: 04-07-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -37,6 +37,7 @@ enum TxEvent : uint8_t
     GET_POS,
     SET_POS,
     SET_TEMP,
+    SET_FEEDRATE,
     AUTOTEMP_EN,
     AUTOTEMP_DIS,
     AUTOPOS_EN,
@@ -105,6 +106,8 @@ private:
 
     Vec3f* hotendPID;
 
+    uint8_t feedrate = 100;
+
     std::string filePath;
     FILE* file = nullptr;
 
@@ -134,6 +137,7 @@ public:
     float getTarToolTemp(uint8_t tool) const;
     esp_err_t getPosition(Vec3f* vec) const;
     esp_err_t getExtruderPos(float* pos, uint8_t tool) const;
+    float getFeedrate() const;
 };
 
 #endif // PRINTER_H

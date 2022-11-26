@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 24-06-2022
+ * Last Modified: 04-07-2022
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -100,7 +100,7 @@ void Printer::serialRxTask(void* arg)
     size_t linePtr = 0;
     char* dtmp = (char*) malloc(CNC->maxLineLen);
     char* line = (char*) malloc(CNC->maxLineLen);
-    if (dtmp == nullptr)
+    if (dtmp == nullptr || line == nullptr)
     {
         DBG_LOGE("Unable to allocate buffers");
         esp_restart();
@@ -179,6 +179,13 @@ void Printer::serialTxTask(void* arg)
     DBG_LOGI("Starting UART transmitter task");
     Printer* CNC = static_cast<Printer*>(arg);
     TxEvent event;
+    int len = 0;
+    char* line = (char*) malloc(20);
+    if (line == nullptr)
+    {
+        DBG_LOGE("Unable to allocate buffers");
+        esp_restart();
+    }
 
     vTaskDelay(pdMS_TO_TICKS(500));
     while (CNC->state == OFFLINE)
@@ -217,6 +224,10 @@ void Printer::serialTxTask(void* arg)
         case SET_TEMP:
             break;
 
+        case SET_FEEDRATE:
+            len = snprintf(line, 20, "M220 S%u\n", CNC->feedrate);
+            uart_write_bytes(CNC->uartNum, line, len);
+            break;
         case AUTOTEMP_EN:
             uart_write_bytes(CNC->uartNum, "M155 S1\n", 8);
             break;
