@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 24-06-2022
+ * Last Modified: 20-02-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -40,7 +40,7 @@ lcdUI lcdUI::_instance;
 constexpr TchCalib lcdUI::calib;
 
 lcdUI::lcdUI() :
-    touchScreen(I2C_NUM_0)
+    touchScreen(UART_NUM_2)
 {
     init = true;
 }
@@ -124,7 +124,7 @@ void lcdUI::touchTask(void* arg)
     lcdUI* UI = static_cast<lcdUI*>(arg);
 
     esp_err_t err;
-    err = UI->touchScreen.begin(I2C_MODE_MASTER, GPIO_NUM_32, GPIO_NUM_33, 0x22);
+    err = UI->touchScreen.begin(GPIO_NUM_40, GPIO_NUM_39);
     if (err != ESP_OK)
     {
         DBG_LOGE("Error initializing touch driver");
