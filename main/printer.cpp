@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 04-07-2022
+ * Last Modified: 25-02-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -44,10 +44,10 @@ Printer::Printer()
     // Configure UART parameters
     ESP_ERROR_CHECK(uart_param_config(uartNum, &uart_config));
 
-    ESP_ERROR_CHECK(uart_set_pin(uartNum, 21, 22, -1, -1));
+    ESP_ERROR_CHECK(uart_set_pin(uartNum, 17, 18, -1, -1));
 
     // Setup UART buffered IO with event queue
-    ESP_ERROR_CHECK(uart_driver_install(UART_NUM_2, uartBufferSize, uartBufferSize, RxQueueLen, &uartRxQueue, 0));
+    ESP_ERROR_CHECK(uart_driver_install(uartNum, uartBufferSize, uartBufferSize, RxQueueLen, &uartRxQueue, 0));
 
     // Flags
     readyFlag = xSemaphoreCreateBinary();

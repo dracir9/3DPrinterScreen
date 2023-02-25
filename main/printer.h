@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 04-07-2022
+ * Last Modified: 25-02-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -62,7 +62,7 @@ private:
     static Printer _instance;
 
     static constexpr size_t uartBufferSize = 1024;
-    static const uart_port_t uartNum = UART_NUM_2;
+    static const uart_port_t uartNum = UART_NUM_1;
 
     static constexpr size_t RxQueueLen = 10;
     static constexpr size_t TxQueueLen = 10;
