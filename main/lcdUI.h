@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 24-06-2022
+ * Last Modified: 25-02-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -65,6 +65,12 @@ private:
     tftLCD tft;
     Screen* base = nullptr;
     TchScr_Drv touchScreen;
+
+    static constexpr gpio_num_t sd_cd_pin = GPIO_NUM_38;
+    static constexpr gpio_num_t sd_led_pin = GPIO_NUM_41;
+    static constexpr gpio_num_t tch_tx_pin = GPIO_NUM_40;
+    static constexpr gpio_num_t tch_rx_pin = GPIO_NUM_39;
+    static constexpr gpio_num_t lcd_bl_pin = GPIO_NUM_46;
 
     bool booted = false;
     bool SDinit = false;

@@ -76,7 +76,7 @@ void lcdUI::cardDetectTask(void* arg)
     lcdUI* UI = static_cast<lcdUI*>(arg);
 
     gpio_config_t detectConf = {
-        .pin_bit_mask = GPIO_SEL_38,
+        .pin_bit_mask = (1<<sd_cd_pin),
         .mode = GPIO_MODE_INPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
@@ -84,7 +84,7 @@ void lcdUI::cardDetectTask(void* arg)
     };
 
     gpio_config_t ledConf = {
-        .pin_bit_mask = GPIO_SEL_41,
+        .pin_bit_mask = (1<<sd_led_pin),
         .mode = GPIO_MODE_OUTPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
@@ -97,10 +97,10 @@ void lcdUI::cardDetectTask(void* arg)
     
     while (UI)
     {
-        bool prevRead = gpio_get_level(GPIO_NUM_38);
+        bool prevRead = gpio_get_level(sd_cd_pin);
         if (prevRead && connected)
         {
-            gpio_set_level(GPIO_NUM_41, LOW);
+            gpio_set_level(sd_led_pin, LOW);
 
             DBG_LOGD("Card disconnected");
             UI->endSD();
@@ -109,7 +109,7 @@ void lcdUI::cardDetectTask(void* arg)
         }
         else if (!prevRead && !connected)
         {
-            gpio_set_level(GPIO_NUM_41, HIGH);
+            gpio_set_level(sd_led_pin, HIGH);
 
             DBG_LOGD("Card connected");
             connected = UI->initSD();
@@ -127,7 +127,7 @@ void lcdUI::touchTask(void* arg)
     lcdUI* UI = static_cast<lcdUI*>(arg);
 
     esp_err_t err;
-    err = UI->touchScreen.begin(GPIO_NUM_40, GPIO_NUM_39);
+    err = UI->touchScreen.begin(tch_tx_pin, tch_rx_pin);
     if (err != ESP_OK)
     {
         DBG_LOGE("Error initializing touch driver");
@@ -220,9 +220,9 @@ esp_err_t lcdUI::begin()
     vTaskDelay(pdMS_TO_TICKS(100)); // Allow some time for the task to start
 
     // Configure interrupts
-    gpio_set_intr_type(GPIO_NUM_34, GPIO_INTR_ANYEDGE);
+    gpio_set_intr_type(sd_cd_pin, GPIO_INTR_ANYEDGE);
     gpio_install_isr_service(ESP_INTR_FLAG_LEVEL1);
-    gpio_isr_handler_add(GPIO_NUM_34, cardISRhandle, this);
+    gpio_isr_handler_add(sd_cd_pin, cardISRhandle, this);
 
     // Configure backlight PWM
     ledc_timer_config_t ledcTimer = {
@@ -236,7 +236,7 @@ esp_err_t lcdUI::begin()
     ESP_ERROR_CHECK(ledc_timer_config(&ledcTimer));
 
     ledc_channel_config_t ledcChannel = {
-        .gpio_num   = 26,
+        .gpio_num   = lcd_bl_pin,
         .speed_mode = LEDC_LOW_SPEED_MODE,
         .channel    = LEDC_CHANNEL_0,
         .intr_type  = LEDC_INTR_DISABLE,
