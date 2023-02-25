@@ -36,7 +36,11 @@ extern "C" void app_main(void)
     initArduino();
 
     esp_reset_reason_t reason = esp_reset_reason();
-    if (reason != ESP_RST_POWERON)
+    if (reason == ESP_RST_PANIC ||
+        reason == ESP_RST_INT_WDT ||
+        reason == ESP_RST_TASK_WDT ||
+        reason == ESP_RST_WDT ||
+        reason == ESP_RST_BROWNOUT)
     {
         DBG_LOGE("System unexpected reboot! (%d)", reason);
         while (true) vTaskDelay(100);
