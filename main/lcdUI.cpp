@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 20-02-2023
+ * Last Modified: 25-02-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -74,29 +74,33 @@ void lcdUI::cardDetectTask(void* arg)
     DBG_LOGI("Starting card detect task");
 
     lcdUI* UI = static_cast<lcdUI*>(arg);
-    gpio_config_t cardEmpty = {
-        .pin_bit_mask = GPIO_SEL_27,
+
+    gpio_config_t detectConf = {
+        .pin_bit_mask = GPIO_SEL_38,
         .mode = GPIO_MODE_INPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
         .intr_type = GPIO_INTR_DISABLE
     };
 
-    gpio_config_t cardInserted = {
-        .pin_bit_mask = GPIO_SEL_27,
+    gpio_config_t ledConf = {
+        .pin_bit_mask = GPIO_SEL_41,
         .mode = GPIO_MODE_OUTPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
         .intr_type = GPIO_INTR_DISABLE
     };
     bool connected = false;
+
+    gpio_config(&detectConf);
+    gpio_config(&ledConf);
     
     while (UI)
     {
-        bool prevRead = gpio_get_level(GPIO_NUM_34);
+        bool prevRead = gpio_get_level(GPIO_NUM_38);
         if (prevRead && connected)
         {
-            gpio_config(&cardEmpty);
+            gpio_set_level(GPIO_NUM_41, LOW);
 
             DBG_LOGD("Card disconnected");
             UI->endSD();
@@ -105,8 +109,7 @@ void lcdUI::cardDetectTask(void* arg)
         }
         else if (!prevRead && !connected)
         {
-            gpio_config(&cardInserted);
-            gpio_set_level(GPIO_NUM_27, HIGH);
+            gpio_set_level(GPIO_NUM_41, HIGH);
 
             DBG_LOGD("Card connected");
             connected = UI->initSD();
