@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 26-03-2022
+ * Last Modified: 25-02-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -308,14 +308,14 @@ GCodeRenderer::GCodeRenderer()
     zbuf = (float*)calloc(320*320, sizeof(float));
     if (zbuf == nullptr)
     { 
-        DBG_LOGE("Failed to allocate Z buffer");
+        DBG_EARLY_LOGE("Failed to allocate Z buffer");
         esp_restart();
     }
     
     outImg = (uint16_t*)calloc(320*320, sizeof(int16_t));
     if (outImg == nullptr)
     { 
-        DBG_LOGE("Failed to allocate img buffer");
+        DBG_EARLY_LOGE("Failed to allocate img buffer");
         esp_restart();
     }
 
@@ -359,7 +359,7 @@ GCodeRenderer::~GCodeRenderer()
 
 void GCodeRenderer::mainTask(void* arg)
 {
-    DBG_LOGI("Renderer main task started");
+    DBG_EARLY_LOGI("Renderer main task started");
     JobData endJobKey;
     endJobKey.size = -1;
     int64_t start = 0LL;
@@ -370,7 +370,7 @@ void GCodeRenderer::mainTask(void* arg)
         switch (eState)
         {
         case STOP:
-            DBG_LOGD("ZzZ");
+            DBG_EARLY_LOGD("ZzZ");
             vTaskSuspend(NULL);
             break;
 
@@ -437,7 +437,7 @@ void GCodeRenderer::mainTask(void* arg)
 
 void GCodeRenderer::threadTask(void* arg)
 {
-    DBG_LOGI("Worker started");
+    DBG_EARLY_LOGI("Worker started");
     VectorData endJobKey;
     endJobKey.size = -1;
 
@@ -476,7 +476,7 @@ void GCodeRenderer::threadTask(void* arg)
             break;
         }
         case STOP:
-            DBG_LOGD("ZzZ");
+            DBG_EARLY_LOGI("ZzZ");
             vTaskSuspend(NULL);
             break;
 
@@ -487,13 +487,13 @@ void GCodeRenderer::threadTask(void* arg)
         }
     }
 
-    DBG_LOGW("Delete worker");
+    DBG_EARLY_LOGW("Delete worker");
     vTaskDelete(NULL);
 }
 
 void GCodeRenderer::assemblerTask(void* arg)
 {
-    DBG_LOGI("Assembler started");
+    DBG_EARLY_LOGI("Assembler started");
 
     for ( ;; )
     {
@@ -518,7 +518,7 @@ void GCodeRenderer::assemblerTask(void* arg)
             break;
 
         case STOP:
-            DBG_LOGD("ZzZ");
+            DBG_EARLY_LOGD("ZzZ");
             vTaskSuspend(NULL);
             break;
 
