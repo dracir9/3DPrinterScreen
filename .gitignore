@@ -128,3 +128,4 @@ BetsyScreen.code-workspace
 build
 sdkconfig.old
 hardware/ESPreen/ESPreen-backups/
+debug.log
