@@ -1426,6 +1426,12 @@ CONFIG_TFT_SMOOTH_FONT=y
 #
 # CONFIG_ENABLE_TOUCH is not set
 # end of Touch screen configuration
+
+#
+# Other settings
+#
+CONFIG_DISABLE_WARNINGS=y
+# end of Other settings
 # end of TFT_eSPI
 # end of Component config
 
