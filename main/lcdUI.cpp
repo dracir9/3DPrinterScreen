@@ -236,7 +236,7 @@ esp_err_t lcdUI::begin()
 
     ESP_ERROR_CHECK(ledc_timer_config(&ledcTimer));
 
-    ledc_channel_config_t ledcChannel;
+    ledc_channel_config_t ledcChannel = {};
         ledcChannel.gpio_num   = lcd_bl_pin;
         ledcChannel.speed_mode = LEDC_LOW_SPEED_MODE;
         ledcChannel.channel    = LEDC_CHANNEL_0;
