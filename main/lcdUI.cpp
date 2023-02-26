@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 25-02-2023
+ * Last Modified: 26-02-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -24,8 +24,8 @@
 
 #include "lcdUI.h"
 #include "dbg_log.h"
-#include <SD_MMC.h>
 #include "driver/ledc.h"
+#include "esp_vfs_fat.h"
 #include "Menu/info_Scr.h"
 #include "Menu/black_Scr.h"
 #include "Menu/fileBrowser_Scr.h"
@@ -38,6 +38,7 @@
 bool lcdUI::init;
 lcdUI lcdUI::_instance;
 constexpr TchCalib lcdUI::calib;
+constexpr char lcdUI::mount_point[];
 
 lcdUI::lcdUI() :
     touchScreen(UART_NUM_2)
@@ -76,7 +77,7 @@ void lcdUI::cardDetectTask(void* arg)
     lcdUI* UI = static_cast<lcdUI*>(arg);
 
     gpio_config_t detectConf = {
-        .pin_bit_mask = (1<<sd_cd_pin),
+        .pin_bit_mask = BIT64(sd_cd_pin),
         .mode = GPIO_MODE_INPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
@@ -84,7 +85,7 @@ void lcdUI::cardDetectTask(void* arg)
     };
 
     gpio_config_t ledConf = {
-        .pin_bit_mask = (1<<sd_led_pin),
+        .pin_bit_mask = BIT64(sd_led_pin),
         .mode = GPIO_MODE_OUTPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
@@ -203,14 +204,6 @@ esp_err_t lcdUI::begin()
     }
     vTaskDelay(pdMS_TO_TICKS(100));
 
-    xTaskCreate(cardDetectTask, "cardTask", 4096, this, 0, &cardTaskH);
-    if (cardTaskH == nullptr)
-    {
-        DBG_LOGE("Failed to create card detect task");
-        return ESP_FAIL;
-    }
-    vTaskDelay(pdMS_TO_TICKS(100));
-
     xTaskCreate(updateTask, "Render task", 4096, this, 2, &updateTaskH);
     if (updateTaskH == nullptr)
     {
@@ -218,6 +211,14 @@ esp_err_t lcdUI::begin()
         return ESP_FAIL;
     }
     vTaskDelay(pdMS_TO_TICKS(100)); // Allow some time for the task to start
+
+    xTaskCreate(cardDetectTask, "cardTask", 4096, this, 0, &cardTaskH);
+    if (cardTaskH == nullptr)
+    {
+        DBG_LOGE("Failed to create card detect task");
+        return ESP_FAIL;
+    }
+    vTaskDelay(pdMS_TO_TICKS(100));
 
     // Configure interrupts
     gpio_set_intr_type(sd_cd_pin, GPIO_INTR_ANYEDGE);
@@ -259,8 +260,46 @@ void lcdUI::setScreen(const menu screen)
 
 bool lcdUI::initSD()
 {
-    if (!SDinit && SD_MMC.begin("/sdcard"))
+    if (!SDinit)
     {
+        // Init SD card
+        esp_vfs_fat_sdmmc_mount_config_t mount_config = {
+            .format_if_mount_failed = false,
+            .max_files = 5,
+            .allocation_unit_size = 16 * 1024
+        };
+
+        sdmmc_host_t host = SDMMC_HOST_DEFAULT();
+        host.max_freq_khz = SDMMC_FREQ_HIGHSPEED;
+
+        sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
+
+        // Set bus width to use:
+        slot_config.width = 4;
+
+        slot_config.clk = sd_clk_pin;
+        slot_config.cmd = sd_cmd_pin;
+        slot_config.d0 = sd_D0_pin;
+        slot_config.d1 = sd_D1_pin;
+        slot_config.d2 = sd_D2_pin;
+        slot_config.d3 = sd_D3_pin;
+        slot_config.cd = sd_cd_pin;
+
+        DBG_LOGD("Mounting filesystem");
+        esp_err_t ret = esp_vfs_fat_sdmmc_mount(mount_point, &host, &slot_config, &mount_config, &card);
+
+        if (ret != ESP_OK) {
+            if (ret == ESP_FAIL) {
+                DBG_LOGE("Failed to mount filesystem");
+            }
+            else if (ret == ESP_ERR_NOT_FOUND)
+            {
+                DBG_LOGE("Failed to initialize the card, card disconnected");
+            } else {
+                DBG_LOGE("Failed to initialize the card (%s). ", esp_err_to_name(ret));
+            }
+            return false;
+        }
         DBG_LOGD("SD Card initialized");
         SDinit = true;
     }
@@ -271,7 +310,10 @@ void lcdUI::endSD()
 {
     GCodeRenderer::instance()->stop();
     if (SDinit)
-        SD_MMC.end();
+    {
+        // Card disconnected, unmount partition and disable SDMMC peripheral
+        esp_vfs_fat_sdcard_unmount(mount_point, card);
+    }
     
     SDinit = false;
 }

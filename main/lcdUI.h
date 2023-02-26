@@ -26,6 +26,7 @@
 #define LCD_UI_H
 
 #include <string>
+#include "driver/sdmmc_host.h"
 #include "tftLCD.h"
 #include "Screen.h"
 #include "TchScr_Drv.h"
@@ -68,12 +69,21 @@ private:
 
     static constexpr gpio_num_t sd_cd_pin = GPIO_NUM_38;
     static constexpr gpio_num_t sd_led_pin = GPIO_NUM_41;
+    static constexpr gpio_num_t sd_D0_pin = GPIO_NUM_47;
+    static constexpr gpio_num_t sd_D1_pin = GPIO_NUM_48;
+    static constexpr gpio_num_t sd_D2_pin = GPIO_NUM_14;
+    static constexpr gpio_num_t sd_D3_pin = GPIO_NUM_21;
+    static constexpr gpio_num_t sd_clk_pin = GPIO_NUM_45;
+    static constexpr gpio_num_t sd_cmd_pin = GPIO_NUM_0;
     static constexpr gpio_num_t tch_tx_pin = GPIO_NUM_40;
     static constexpr gpio_num_t tch_rx_pin = GPIO_NUM_39;
     static constexpr gpio_num_t lcd_bl_pin = GPIO_NUM_46;
 
     bool booted = false;
     bool SDinit = false;
+
+    static constexpr char mount_point[] = "/sdcard";
+    sdmmc_card_t *card;
 
     xTaskHandle updateTaskH = nullptr;
     xTaskHandle touchTaskH = nullptr;
