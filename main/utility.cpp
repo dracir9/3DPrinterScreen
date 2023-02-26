@@ -9,7 +9,7 @@
         startTime = esp_timer_get_time();
     }
 
-    const int64_t Timer::toc()
+    int64_t Timer::toc()
     {
         int64_t eTime = esp_timer_get_time()-startTime;
         ESP_LOGD("Utility", "\nElapsed time: %lu\n", (unsigned long)eTime);

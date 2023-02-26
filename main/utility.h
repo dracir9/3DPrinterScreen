@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 10-04-2022
+ * Last Modified: 26-02-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -41,7 +41,7 @@
          * 
          * @return const int64_t Time elapsed in microseconds
          */
-        static const int64_t toc();
+        static int64_t toc();
 
     private:
         static int64_t startTime;
