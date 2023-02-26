@@ -236,15 +236,14 @@ esp_err_t lcdUI::begin()
 
     ESP_ERROR_CHECK(ledc_timer_config(&ledcTimer));
 
-    ledc_channel_config_t ledcChannel = {
-        .gpio_num   = lcd_bl_pin,
-        .speed_mode = LEDC_LOW_SPEED_MODE,
-        .channel    = LEDC_CHANNEL_0,
-        .intr_type  = LEDC_INTR_DISABLE,
-        .timer_sel  = LEDC_TIMER_0,
-        .duty       = 255, // Set duty to 100%
-        .hpoint     = 0
-    };
+    ledc_channel_config_t ledcChannel;
+        ledcChannel.gpio_num   = lcd_bl_pin;
+        ledcChannel.speed_mode = LEDC_LOW_SPEED_MODE;
+        ledcChannel.channel    = LEDC_CHANNEL_0;
+        ledcChannel.intr_type  = LEDC_INTR_DISABLE;
+        ledcChannel.timer_sel  = LEDC_TIMER_0;
+        ledcChannel.duty       = 255; // Set duty to 100%
+        ledcChannel.hpoint     = 0;
 
     ESP_ERROR_CHECK(ledc_channel_config(&ledcChannel));
 
