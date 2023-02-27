@@ -4,13 +4,18 @@
 **_Early development_**
 
 ## Hardware Prerequisites
-- ![This custom board](hardware/3D_Printer_Screen_V2.pdf) or another with similar wiring similar
-- TFT LCD display compatible with [TFT_eSPI](https://github.com/Bodmer/TFT_eSPI) library and SPI communication
-- ESP32 Wrover-e Rev 3 with at least 4MB of SPIRAM
+This code is now targeted for use in a custom designed board which has an ESP32-S3 microcontroller, USB interface, micro SD card slot and 40-pin LCD connector. The design files in KiCad can be found ![here](hardware/ESPreen).
+
+Follow ![this reference shcematic](hardware/Schematic.pdf) if you want to build your own board or need a pinout reference.
+
+Pay attention to these components requirements for the project to work:
+- TFT LCD display compatible with [TFT_eSPI](https://github.com/Bodmer/TFT_eSPI) library. The current version of the sowftware uses an 8-bit parallel bus but SPI can also be used to control the LCD.
+- ESP32-S3 Wroom-1 with at least 8MB of SPIRAM (ESP32-S3 Wroom-2 can also be used)
 - EFM8BB10F8G microcontroller
 
 ## Current features
  - [x] SD card browser
+ - [x] SD card printing
  - [x] Gcode preview
  
 ## Screenshots
