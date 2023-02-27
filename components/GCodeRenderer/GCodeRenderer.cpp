@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 25-02-2023
+ * Last Modified: 27-02-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -321,7 +321,7 @@ GCodeRenderer::GCodeRenderer()
 
     rotMat = Mat3::RotationZ(camTheta)*Mat3::RotationX(camPhi);
 
-    xTaskCreatePinnedToCore(threadTask, "Worker task", 2560, NULL, 1, &worker, 1);
+    xTaskCreatePinnedToCore(threadTask, "Worker task", 3072, NULL, 1, &worker, 1);
     vTaskDelay(100);
 
     xTaskCreatePinnedToCore(assemblerTask, "Assembler task", 3072, NULL, 1, &assembler, 0);
@@ -834,7 +834,7 @@ void GCodeRenderer::processGcode()
             printState.currentPos = printState.nextPos; // Update position
             printState.currentE = printState.nextE;
         }
-        assert(buffPtr < &readBuffers[rQueueLen][0]);
+        assert(buffPtr <= (job.data + job.size));
         xQueueSend(thrdRetQueue, &job, portMAX_DELAY);  // Return buffer
 
         // Allow some time for lower priority tasks
@@ -1170,15 +1170,17 @@ int8_t GCodeRenderer::parseGcode(char* &p, PrinterState &state)
         p++;
         parseComment(p);
         while (*p > 31) p++; // Find end of line
-        while (*p == '\r' || *p == '\n') p++; // Handle "\r\n"
+        while (*p == '\r' || *p == '\n') p++; // Handle "...\r\n" end of line
         return 0; // Gcode comment
     }
     else if (letter == '\0')
         return -1;  // End of buffer
     else
     {
+        // Weird case, likely some kind of read error
+        // Attempt to proceed anyway ...
         while (*p > 31) p++; // Find end of line
-        while (*p == '\r' || *p == '\n') p++; // Handle "\r\n"
+        while (*p <= 31) p++; // Skip all non representable characters
         return 0;
     }
 
