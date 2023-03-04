@@ -129,3 +129,5 @@ build
 sdkconfig.old
 hardware/ESPreen/ESPreen-backups/
 debug.log
+managed_components
+dependencies.lock
