@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 25-02-2023
+ * Last Modified: 05-03-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -32,18 +32,7 @@
 
 enum TxEvent : uint8_t
 {
-    GCODE_LINE,
-    GET_TEMP,
-    GET_POS,
-    SET_POS,
-    SET_TEMP,
-    SET_FEEDRATE,
-    AUTOTEMP_EN,
-    AUTOTEMP_DIS,
-    AUTOPOS_EN,
-    AUTOPOS_DIS,
-    FW_INFO,
-    GET_SETTINGS,
+    GCODE_LINE
 };
 
 enum PState : uint8_t
@@ -71,7 +60,6 @@ private:
     QueueHandle_t uartTxQueue;
 
     TaskHandle_t uartRxTask;
-    TaskHandle_t uartTxTask;
 
     PState state = OFFLINE;
     bool isMetric = true;
@@ -112,7 +100,6 @@ private:
     FILE* file = nullptr;
 
     static void serialRxTask(void* arg);
-    static void serialTxTask(void* arg);
 
     void sendLine();
     void parseSerial(char* str, const size_t len);
@@ -120,6 +107,10 @@ private:
     esp_err_t parsePos(char* str);
     void allocateFields();
     void cleanFields();
+
+    esp_err_t sendCommand(const char* cmd, size_t len);
+    esp_err_t getSettings();
+    esp_err_t getFwInfo();
 
     Printer();
 
@@ -138,6 +129,9 @@ public:
     esp_err_t getPosition(Vec3f* vec) const;
     esp_err_t getExtruderPos(float* pos, uint8_t tool) const;
     float getFeedrate() const;
+
+    esp_err_t setAutoReportPos(bool enable);
+    esp_err_t setAutoReportTemp(bool enable);
 };
 
 #endif // PRINTER_H

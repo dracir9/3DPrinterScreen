@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 04-03-2023
+ * Last Modified: 05-03-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -70,13 +70,6 @@ Printer::Printer()
     if (uartRxTask == nullptr)
     {
         DBG_EARLY_LOGE("Failed to create serial receiver task");
-        esp_restart();
-    }
-
-    xTaskCreate(serialTxTask, "UART RX task", 4096, this, 1, &uartTxTask);
-    if (uartTxTask == nullptr)
-    {
-        DBG_EARLY_LOGE("Failed to create serial transmitter task");
         esp_restart();
     }
 
@@ -174,93 +167,8 @@ void Printer::serialRxTask(void* arg)
     vTaskDelete(nullptr);
 }
 
-void Printer::serialTxTask(void* arg)
-{
-    DBG_LOGI("Starting UART transmitter task");
-    Printer* CNC = static_cast<Printer*>(arg);
-    TxEvent event;
-    int len = 0;
-    char* line = (char*) malloc(20);
-    if (line == nullptr)
-    {
-        DBG_LOGE("Unable to allocate buffers");
-        esp_restart();
-    }
-
-    vTaskDelay(pdMS_TO_TICKS(500));
-    while (CNC->state == OFFLINE)
-    {
-        uart_write_bytes(CNC->uartNum, "M115\n", 5);
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
-
-    while (CNC)
-    {
-        xSemaphoreTake(CNC->readyFlag, portMAX_DELAY);
-
-        if (xQueueReceive(CNC->uartTxQueue, (void *)&event, portMAX_DELAY) != pdTRUE)
-            continue;
-
-        /**
-         * M503 Report settings
-         * M115 Firmware info
-         * M155 Autoreport temperatures
-         */
-        switch (event)
-        {
-        case GCODE_LINE:
-            CNC->sendLine();
-            break;
-
-        case GET_TEMP:
-            break;
-
-        case GET_POS:
-            break;
-
-        case SET_POS:
-            break;
-
-        case SET_TEMP:
-            break;
-
-        case SET_FEEDRATE:
-            len = snprintf(line, 20, "M220 S%u\n", CNC->feedrate);
-            uart_write_bytes(CNC->uartNum, line, len);
-            break;
-        case AUTOTEMP_EN:
-            uart_write_bytes(CNC->uartNum, "M155 S1\n", 8);
-            break;
-
-        case AUTOTEMP_DIS:
-            break;
-
-        case AUTOPOS_EN:
-            uart_write_bytes(CNC->uartNum, "M154 S1\n", 8);
-            break;
-
-        case AUTOPOS_DIS:
-            break;
-
-        case FW_INFO:
-            uart_write_bytes(CNC->uartNum, "M115\n", 5);
-            break;
-
-        case GET_SETTINGS:
-            uart_write_bytes(CNC->uartNum, "M503\n", 5);
-            break;
-
-        default:
-            break;
-        }
-    }
-
-    vTaskDelete(nullptr);
-}
-
 void Printer::parseSerial(char* str, const size_t len)
 {
-    TxEvent event;
     // Skip initial spaces
     while (*str == ' ') str++;
 
@@ -362,13 +270,11 @@ void Printer::parseSerial(char* str, const size_t len)
     {
         if (strncmp(&str[4], "AUTOREPORT_POS:1", 16) == 0)
         {
-            event = AUTOPOS_EN;
-            xQueueSend(uartTxQueue, &event, portMAX_DELAY);
+            setAutoReportPos(true);
         }
         else if (strncmp(&str[4], "AUTOREPORT_TEMP:1", 17) == 0)
         {
-            event = AUTOTEMP_EN;
-            xQueueSend(uartTxQueue, &event, portMAX_DELAY);
+            setAutoReportTemp(true);
         }
         else
             printf(">|%s\n", str);
@@ -383,13 +289,12 @@ void Printer::parseSerial(char* str, const size_t len)
         DBG_LOGI("Printer initialized");
 
         if (str[0] == 'F')
-            event = GET_SETTINGS;
+            getSettings();
         else
         {
-            event = FW_INFO;
+            getFwInfo();
             xSemaphoreGive(readyFlag);
         }
-        xQueueSend(uartTxQueue, &event, portMAX_DELAY);
     }
     else if (strncmp(str, "Marlin ", 7) == 0)
     {
@@ -427,8 +332,7 @@ void Printer::sendLine()
     if (file == nullptr) return;
 
     char* ret = nullptr;
-    do
-    {
+    do {
         ret = fgets(line, 96, file);
     } while (line[0] == ';' && ret != nullptr);
     
@@ -648,6 +552,31 @@ void Printer::cleanFields()
     }
 }
 
+esp_err_t Printer::sendCommand(const char *cmd, size_t len)
+{
+    if (state >= READY)
+    {
+        xSemaphoreTake(readyFlag, portMAX_DELAY);
+        
+        if (uart_write_bytes(uartNum, cmd, len) >= 0)
+            return ESP_OK;
+        else
+            return ESP_FAIL;
+    }
+    else
+        return ESP_ERR_INVALID_STATE;
+}
+
+esp_err_t Printer::getSettings()
+{
+    return sendCommand("M503\n", 5);
+}
+
+esp_err_t Printer::getFwInfo()
+{
+    return sendCommand("M115\n", 5);
+}
+
 uint8_t Printer::getToolNum() const
 {
     if (state >= READY)
@@ -722,4 +651,20 @@ esp_err_t Printer::getExtruderPos(float* pos, uint8_t tool) const
     {
         return ESP_ERR_INVALID_STATE;
     }
+}
+
+esp_err_t Printer::setAutoReportPos(bool enable)
+{
+    if (enable)
+        return sendCommand("M154 S1\n", 8);
+    else
+        return sendCommand("M154 S0\n", 8);
+}
+
+esp_err_t Printer::setAutoReportTemp(bool enable)
+{
+    if (enable)
+        return sendCommand("M155 S1\n", 8);
+    else
+        return sendCommand("M155 S0\n", 8);
 }
