@@ -25,10 +25,11 @@
 #ifndef PRINTER_H
 #define PRINTER_H
 
-#include "stdint.h"
+#include <cstdint>
+#include <string>
+#include <vector>
 #include "driver/uart.h"
 #include "Vector.h"
-#include <string>
 
 enum TxEvent : uint8_t
 {
@@ -52,7 +53,7 @@ enum PState : uint8_t
     PRINTING
 };
 
-class Printer
+class Printer final
 {
 private:
     static bool _init;
@@ -82,25 +83,25 @@ private:
     
     float bedTemp;
     float tarBedTemp;
-    float* currentTemp = nullptr;
-    float* targetTemp = nullptr;
+    std::vector<float> currentTemp;
+    std::vector<float> targetTemp;
 
     Vec3f pos;
-    float* pos_E = nullptr;
+    std::vector<float> pos_E;
 
     Vec3f offset;
-    float* offset_E = nullptr;
+    std::vector<float> offset_E;
 
     Vec3f stpsPerUnit;
-    float* stpsPerUnit_E = nullptr;
+    std::vector<float> stpsPerUnit_E;
 
     Vec3f maxFeedrate;
-    float* maxFeedrate_E = nullptr;
+    std::vector<float> maxFeedrate_E;
 
     Vec3f maxAccel;
-    float* maxAccel_E = nullptr;
+    std::vector<float> maxAccel_E;
 
-    Vec3f* hotendPID;
+    std::vector<Vec3f> hotendPID;
 
     uint8_t feedrate = 100;
 
@@ -114,7 +115,6 @@ private:
     esp_err_t parseTemp(char* str);
     esp_err_t parsePos(char* str);
     void allocateFields();
-    void cleanFields();
 
     esp_err_t sendCommand(const char* cmd, size_t len);
     esp_err_t sendTxEvent(TxEvent event);

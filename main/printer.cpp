@@ -78,6 +78,13 @@ Printer::Printer()
 
 Printer::~Printer()
 {
+    vTaskDelete(uartRxTask);
+
+    vRingbufferDelete(uartTxBuffer);
+
+    vSemaphoreDelete(readyFlag);
+
+    uart_driver_delete(uartNum);
 }
 
 Printer* Printer::instance()
@@ -455,117 +462,29 @@ void Printer::allocateFields()
 {
     if (state != INIT) return;
 
-    // Make sure all memory is freed
-    cleanFields();
-
     // Temperatures
-    currentTemp = (float*)calloc(toolheads, sizeof(float));
-    targetTemp = (float*)calloc(toolheads, sizeof(float));
-    if (currentTemp == nullptr || targetTemp == nullptr)
-    {
-        DBG_LOGE("No memory!");
-    }
+    currentTemp.resize(toolheads);
+    targetTemp.resize(toolheads);
 
     // Position
-    pos_E = (float*)calloc(toolheads, sizeof(float));
-    if (pos_E == nullptr)
-    {
-        DBG_LOGE("No memory!");
-    }
+    pos_E.resize(toolheads);
 
     // Offsets
-    offset_E = (float*)calloc(toolheads, sizeof(float));
-    if (offset_E == nullptr)
-    {
-        DBG_LOGE("No memory!");
-    }
+    offset_E.resize(toolheads);
 
     // Steps per unit
-    stpsPerUnit_E = (float*)calloc(toolheads, sizeof(float));
-    if (stpsPerUnit_E == nullptr)
-    {
-        DBG_LOGE("No memory!");
-    }
+    stpsPerUnit_E.resize(toolheads);
 
     // Max feedrate
-    maxFeedrate_E = (float*)calloc(toolheads, sizeof(float));
-    if (maxFeedrate_E == nullptr)
-    {
-        DBG_LOGE("No memory!");
-    }
+    maxFeedrate_E.resize(toolheads);
 
     // Max acceleration
-    maxAccel_E = (float*)calloc(toolheads, sizeof(float));
-    if (maxAccel_E == nullptr)
-    {
-        DBG_LOGE("No memory!");
-    }
+    maxAccel_E.resize(toolheads);
 
     // PID settings
-    hotendPID = (Vec3f*)calloc(toolheads, sizeof(Vec3f));
-    if (hotendPID == nullptr)
-    {
-        DBG_LOGE("No memory!");
-    }
+    hotendPID.resize(toolheads);
 
     state = READY;
-}
-
-void Printer::cleanFields()
-{
-    // Temperatures
-    if (currentTemp != nullptr)
-    {
-        free(currentTemp);
-        currentTemp = nullptr;
-    }
-    if (targetTemp != nullptr)
-    {
-        free(targetTemp);
-        targetTemp = nullptr;
-    }
-
-    // Position
-    if (pos_E != nullptr)
-    {
-        free(pos_E);
-        pos_E = nullptr;
-    }
-
-    // Offsets
-    if (offset_E != nullptr)
-    {
-        free(offset_E);
-        offset_E = nullptr;
-    }
-
-    // Steps per unit
-    if (stpsPerUnit_E != nullptr)
-    {
-        free(stpsPerUnit_E);
-        stpsPerUnit_E = nullptr;
-    }
-
-    // Max feedrate
-    if (maxFeedrate_E != nullptr)
-    {
-        free(maxFeedrate_E);
-        maxFeedrate_E = nullptr;
-    }
-
-    // Max acceleration
-    if (maxAccel_E != nullptr)
-    {
-        free(maxAccel_E);
-        maxAccel_E = nullptr;
-    }
-
-    // PID settings
-    if (hotendPID != nullptr)
-    {
-        free(hotendPID);
-        hotendPID = nullptr;
-    }
 }
 
 esp_err_t Printer::sendCommand(const char *cmd, size_t len)
