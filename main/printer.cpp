@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 05-03-2023
+ * Last Modified: 10-03-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -47,7 +47,7 @@ Printer::Printer()
     ESP_ERROR_CHECK(uart_set_pin(uartNum, 17, 18, -1, -1));
 
     // Setup UART buffered IO with event queue
-    ESP_ERROR_CHECK(uart_driver_install(uartNum, uartBufferSize, uartBufferSize, RxQueueLen, &uartRxQueue, 0));
+    ESP_ERROR_CHECK(uart_driver_install(uartNum, uartBufferSize, uartBufferSize, RxQueueLen, &uartQueue, 0));
 
     // Flags
     readyFlag = xSemaphoreCreateBinary();
@@ -58,8 +58,8 @@ Printer::Printer()
     }
 
     // Queues
-    uartTxQueue = xQueueCreate(TxQueueLen, sizeof(TxEvent));
-    if (uartTxQueue == nullptr)
+    uartTxBuffer = xRingbufferCreate(TxBuffLen, RINGBUF_TYPE_NOSPLIT);
+    if (uartTxBuffer == nullptr)
     {
         DBG_EARLY_LOGE("Failed to create queues!");
         esp_restart();
@@ -99,9 +99,10 @@ void Printer::serialRxTask(void* arg)
         esp_restart();
     }
 
+    size_t len = 0;
     while (CNC)
     {
-        if(xQueueReceive(CNC->uartRxQueue, (void *)&event, portMAX_DELAY) != pdTRUE)
+        if(xQueueReceive(CNC->uartQueue, (void *)&event, portMAX_DELAY) != pdTRUE)
             continue;
 
         switch(event.type)
@@ -109,7 +110,6 @@ void Printer::serialRxTask(void* arg)
         // Data received
         case UART_DATA:
         {
-            size_t len = 0;
             while ((len = uart_read_bytes(CNC->uartNum, dtmp, CNC->maxLineLen, 0)) > 0)
             {
                 for (size_t i = 0; i < len; i++)
@@ -127,19 +127,37 @@ void Printer::serialRxTask(void* arg)
                     event.size--;
                 }
             }
+
+            if (xSemaphoreTake(CNC->readyFlag, 0) == pdTRUE)
+            {
+                TxPacket *packet = nullptr;
+                while ((packet = (TxPacket *)xRingbufferReceive(CNC->uartTxBuffer, &len, 0)) != nullptr)
+                {
+                    if (packet->id == UART_SEND_CMD)
+                    {
+                        uart_write_bytes(CNC->uartNum, &packet->data, packet->len);
+                    }
+                    else if (packet->id == UART_SEND_LINE)
+                    {
+                        CNC->sendLine();
+                    }
+                        
+                    vRingbufferReturnItem(CNC->uartTxBuffer, packet);
+                }
+            }
             break;
         }
         //Event of HW FIFO overflow detected
         case UART_FIFO_OVF:
             DBG_LOGW("HW fifo overflow");
             uart_flush_input(CNC->uartNum);
-            xQueueReset(CNC->uartRxQueue);
+            xQueueReset(CNC->uartQueue);
             break;
         //Event of UART ring buffer full
         case UART_BUFFER_FULL:
             DBG_LOGW("Ring buffer full");
             uart_flush_input(CNC->uartNum);
-            xQueueReset(CNC->uartRxQueue);
+            xQueueReset(CNC->uartQueue);
             break;
         //Event of UART RX break detected
         case UART_BREAK:
@@ -319,8 +337,7 @@ esp_err_t Printer::sendFile(std::string path)
 
     state = PRINTING;
 
-    TxEvent event = GCODE_LINE;
-    xQueueSend(uartTxQueue, &event, portMAX_DELAY);
+    sendTxEvent(UART_SEND_LINE);
 
     DBG_LOGI("File open");
     return ESP_OK;
@@ -352,11 +369,10 @@ void Printer::sendLine()
     {
         // Send line
         DBG_LOGD("Send line");
-        uart_write_bytes(uartNum, line, strlen(line));
+        sendCommand(line, strlen(line));
         
         // Queue next line
-        TxEvent event = GCODE_LINE;
-        xQueueSend(uartTxQueue, &event, portMAX_DELAY);
+        sendTxEvent(UART_SEND_LINE);
     }
 }
 
@@ -556,12 +572,50 @@ esp_err_t Printer::sendCommand(const char *cmd, size_t len)
 {
     if (state >= READY)
     {
-        xSemaphoreTake(readyFlag, portMAX_DELAY);
-        
-        if (uart_write_bytes(uartNum, cmd, len) >= 0)
-            return ESP_OK;
-        else
+        TxPacket *packet = nullptr;
+        // Acquire memory from ring buffer and send command
+        if (xRingbufferSendAcquire(uartTxBuffer, (void**)&packet, sizeof(TxPacket) + len, portMAX_DELAY) != pdTRUE)
             return ESP_FAIL;
+
+        packet->id = UART_SEND_CMD;
+        memcpy(packet->data, cmd, len);
+        packet->len = len;
+
+        DBG_LOGE_IF(xRingbufferSendComplete(uartTxBuffer, packet) != pdTRUE, "Error sending TX event");
+
+        // Unlock UART queue
+        uart_event_t evt = {};
+        evt.type = UART_DATA;
+        if (xQueueSend(uartQueue, &evt, portMAX_DELAY) != pdTRUE)
+            return ESP_FAIL;
+        
+        return ESP_OK;
+    }
+    else
+        return ESP_ERR_INVALID_STATE;
+}
+
+esp_err_t Printer::sendTxEvent(TxEvent event)
+{
+    if (state >= READY)
+    {
+        TxPacket *packet = nullptr;
+        // Acquire memoty from ring buffer and send command
+        if (xRingbufferSendAcquire(uartTxBuffer, (void**)&packet, sizeof(TxPacket), portMAX_DELAY) != pdTRUE)
+            return ESP_FAIL;
+
+        packet->id = UART_SEND_LINE;
+        packet->len = 0;
+
+        DBG_LOGE_IF(xRingbufferSendComplete(uartTxBuffer, packet) != pdTRUE, "Error sending TX event");
+
+        // Unlock UART queue
+        uart_event_t evt = {};
+        evt.type = UART_DATA;
+        if (xQueueSend(uartQueue, &evt, portMAX_DELAY) != pdTRUE)
+            return ESP_FAIL;
+        
+        return ESP_OK;
     }
     else
         return ESP_ERR_INVALID_STATE;

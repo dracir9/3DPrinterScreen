@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 05-03-2023
+ * Last Modified: 10-03-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -32,7 +32,15 @@
 
 enum TxEvent : uint8_t
 {
-    GCODE_LINE
+    UART_SEND_CMD,
+    UART_SEND_LINE
+};
+
+struct TxPacket
+{
+    TxEvent id;
+    uint16_t len;
+    char data[];
 };
 
 enum PState : uint8_t
@@ -54,10 +62,10 @@ private:
     static const uart_port_t uartNum = UART_NUM_1;
 
     static constexpr size_t RxQueueLen = 10;
-    static constexpr size_t TxQueueLen = 10;
     static constexpr size_t maxLineLen = 96;
-    QueueHandle_t uartRxQueue;
-    QueueHandle_t uartTxQueue;
+    static constexpr size_t TxBuffLen = 256;
+    QueueHandle_t uartQueue;
+    RingbufHandle_t uartTxBuffer;
 
     TaskHandle_t uartRxTask;
 
@@ -109,6 +117,7 @@ private:
     void cleanFields();
 
     esp_err_t sendCommand(const char* cmd, size_t len);
+    esp_err_t sendTxEvent(TxEvent event);
     esp_err_t getSettings();
     esp_err_t getFwInfo();
 
