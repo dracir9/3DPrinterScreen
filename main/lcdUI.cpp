@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 26-02-2023
+ * Last Modified: 10-03-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -51,7 +51,6 @@ lcdUI::~lcdUI()
     vTaskDelete(cardTaskH);
     vTaskDelete(touchTaskH);
     vTaskDelete(updateTaskH);
-    delete base;
 }
 
 lcdUI* lcdUI::instance()
@@ -385,38 +384,35 @@ esp_err_t lcdUI::updateObjects()
     clearBtn.id = 31;
     touchScreen.setButton(&clearBtn, portMAX_DELAY);
 
-    delete base;
-    base = nullptr;
-
     switch (localMenu)
     {
         case menu::black:
-            base = new Black_Scr(this, tft);
+            base = std::make_unique<Black_Scr>(this, tft);
             break;
         case menu::Info:
-            base = new Info_Scr(this, tft, touchScreen);
+            base = std::make_unique<Info_Scr>(this, tft, touchScreen);
             break;
         case menu::main:
             break;
         case menu::FileBrowser:
-            base = new FileBrowser_Scr(this, tft, touchScreen);
+            base = std::make_unique<FileBrowser_Scr>(this, tft, touchScreen);
             break;
         case menu::Config:
-            base = new Config_Scr(this, tft, touchScreen);
+            base = std::make_unique<Config_Scr>(this, tft, touchScreen);
             break;
         case menu::control:
             break;
         case menu::GcodePreview:
-            base = new Preview_Scr(this, tft, touchScreen);
+            base = std::make_unique<Preview_Scr>(this, tft, touchScreen);
             break;
         case menu::DisplayConf:
-            base = new DisplayConf_Scr(this, tft, touchScreen);
+            base = std::make_unique<DisplayConf_Scr>(this, tft, touchScreen);
             break;
         case menu::Print:
-            base = new Print_Scr(this, tft, touchScreen);
+            base = std::make_unique<Print_Scr>(this, tft, touchScreen);
             break;
         case menu::Draw:
-            base = new Draw_Scr(this, tft, touchScreen);
+            base = std::make_unique<Draw_Scr>(this, tft, touchScreen);
             break;
         default:
             base = nullptr;

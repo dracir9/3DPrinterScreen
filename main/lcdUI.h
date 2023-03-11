@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 25-02-2023
+ * Last Modified: 10-03-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -26,6 +26,7 @@
 #define LCD_UI_H
 
 #include <string>
+#include <memory>
 #include "driver/sdmmc_host.h"
 #include "tftLCD.h"
 #include "Screen.h"
@@ -64,7 +65,7 @@ private:
     };
 
     tftLCD tft;
-    Screen* base = nullptr;
+    std::unique_ptr<Screen> base;
     TchScr_Drv touchScreen;
 
     static constexpr gpio_num_t sd_cd_pin = GPIO_NUM_38;
