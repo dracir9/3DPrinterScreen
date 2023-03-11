@@ -7,4 +7,5 @@ idf_component_register(
     INCLUDE_DIRS ""
 )
 
+target_compile_options(${COMPONENT_LIB} PRIVATE -std=gnu++2a)
 #spiffs_create_partition_image(storage ../data FLASH_IN_PROJECT)
