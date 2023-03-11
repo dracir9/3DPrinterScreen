@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 10-03-2023
+ * Last Modified: 11-03-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -334,12 +334,10 @@ esp_err_t Printer::sendFile(std::string path)
 {
     if (state != READY)
         return ESP_ERR_INVALID_STATE;
-    if (file != nullptr)
-        return ESP_ERR_NOT_FINISHED;
         
     filePath = path;
-    file = fopen(filePath.c_str(), "r");
-    DBG_LOGE_AND_RETURN_IF(file == nullptr, ESP_FAIL,
+    file.open(filePath);
+    DBG_LOGE_AND_RETURN_IF(!file.is_open(), ESP_FAIL,
         "Error opening file \"%s\"", filePath.c_str());
 
     state = PRINTING;
@@ -353,26 +351,11 @@ esp_err_t Printer::sendFile(std::string path)
 void Printer::sendLine()
 {
     static char line[96];
-    if (file == nullptr) return;
+    if (!file.is_open()) return;
 
-    char* ret = nullptr;
-    do {
-        ret = fgets(line, 96, file);
-    } while (line[0] == ';' && ret != nullptr);
+    while (file.getline(line, 96) && line[0] == ';');
     
-    if (ret == nullptr)
-    {
-        // Print completed
-        if (feof(file))
-            DBG_LOGI("Print complete!");
-        else if (ferror(file))
-            DBG_LOGE("Error reading file \"%s\"", filePath.c_str());
-
-        fclose(file);
-        file = nullptr;
-        state = READY;
-    }
-    else
+    if (file.good())
     {
         // Send line
         DBG_LOGD("Send line");
@@ -380,6 +363,17 @@ void Printer::sendLine()
         
         // Queue next line
         sendTxEvent(UART_SEND_LINE);
+    }
+    else
+    {
+        // Print completed
+        if (file.eof())
+            DBG_LOGI("Print complete!");
+        else if (file.fail())
+            DBG_LOGE("Error reading file \"%s\"", filePath.c_str());
+
+        file.close();
+        state = READY;
     }
 }
 

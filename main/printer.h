@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 10-03-2023
+ * Last Modified: 11-03-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -28,6 +28,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <fstream>
 #include "driver/uart.h"
 #include "Vector.h"
 
@@ -106,7 +107,7 @@ private:
     uint8_t feedrate = 100;
 
     std::string filePath;
-    FILE* file = nullptr;
+    std::ifstream file;
 
     static void serialRxTask(void* arg);
 
