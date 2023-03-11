@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 21-01-2022
  * -----
- * Last Modified: 25-02-2023
+ * Last Modified: 11-03-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -46,9 +46,9 @@ extern "C" void app_main(void)
         while (true) vTaskDelay(100);
     }
 
-    printf("System ready!\n");
+    DBG_LOGI("System ready!");
 
-    printf("Free Heap at start: %d of %d\n", esp_get_free_heap_size(), ESP.getHeapSize());
+    DBG_LOGD("Free Heap at start: %d of %d\n", esp_get_free_internal_heap_size(), ESP.getHeapSize());
 
     // INITIALIZE SPIFFS STORAGE
     DBG_LOGI("Initializing SPIFFS");
@@ -83,6 +83,8 @@ extern "C" void app_main(void)
 
     lcdUI::instance()->setScreen(lcdUI::Info);
 
+    DBG_LOGD("Free Heap after init: %d of %d", esp_get_free_internal_heap_size(), ESP.getHeapSize());
+    DBG_LOGD("Max continuous segment: %d", heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
     while (1)
     {
         vTaskDelay(1000);
