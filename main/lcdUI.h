@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 10-03-2023
+ * Last Modified: 10-04-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -33,22 +33,34 @@
 #include "TchScr_Drv.h"
 #include "printer.h"
 
+
+/**
+ * ADD NEW SCREEN
+ *  1. Create source and header files under Menu folder
+ *  2. Create new class named xxx_Scr that inherits Screen class publicly
+ *  3. Override the update and render methods
+ *  4. If necessary override the handleTouch method as well
+ *  5. Include the new header in lcdUI.cpp
+ *  6. Add screen name to ScreenType enum
+ *  7. Add a new case in the updateObjects method in the lcdUI class
+ */
+
 class lcdUI
 {
 public:
-    enum menu : uint8_t
+    enum ScreenType : uint8_t
     {
-        none,
-        black,
-        Info,
-        main,
-        Config,
-        FileBrowser,
-        control,
-        GcodePreview,
-        DisplayConf,
-        Print,
-        Draw
+        NONE,
+        BLACK_SCR,
+        INFO_SCR,
+        MAIN_SCR,
+        CONFIG_MENU_SCR,
+        FILE_BROWSER_SRC,
+        CONTROL_SCR,
+        GCODE_PREVIEW_SCR,
+        DISPLAY_CONF,
+        PRINT_SCR,
+        DRAW_SCR
     };
 
 private:
@@ -91,8 +103,8 @@ private:
     xTaskHandle cardTaskH = nullptr;
     SemaphoreHandle_t touchMutex;
 
-    menu menuID = menu::none;
-    menu newMenuID = menu::black;
+    ScreenType menuID = ScreenType::NONE;
+    ScreenType newMenuID = ScreenType::BLACK_SCR;
     int64_t lastRender = 0;
     int64_t updateTime = 0;
 
@@ -114,7 +126,7 @@ public:
 
     static lcdUI* instance();
     esp_err_t begin();
-    void setScreen(const menu screen);
+    void setScreen(const ScreenType screen);
     void endSD();
     bool isSDinit() const;
     esp_err_t setFile(const std::string& file);

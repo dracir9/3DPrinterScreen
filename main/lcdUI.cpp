@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 10-03-2023
+ * Last Modified: 10-04-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -250,7 +250,7 @@ esp_err_t lcdUI::begin()
     return ESP_OK;
 }
 
-void lcdUI::setScreen(const menu screen)
+void lcdUI::setScreen(const ScreenType screen)
 {
     newMenuID = screen;
     xTaskNotifyGive(updateTaskH);
@@ -375,7 +375,9 @@ esp_err_t lcdUI::updateDisplay()
 
 esp_err_t lcdUI::updateObjects()
 {
-    menu localMenu = newMenuID; // Local copy so that it remains unchanged
+    // Local copy to prevent external modifications while creating the new screen
+    // (newMenuID may be changed from other threads)
+    ScreenType localMenu = newMenuID;
     if (menuID == localMenu) return ESP_OK;
     DBG_LOGD("Change screen to ID: %d", localMenu);
 
@@ -386,32 +388,32 @@ esp_err_t lcdUI::updateObjects()
 
     switch (localMenu)
     {
-        case menu::black:
+        case ScreenType::BLACK_SCR:
             base = std::make_unique<Black_Scr>(this, tft);
             break;
-        case menu::Info:
+        case ScreenType::INFO_SCR:
             base = std::make_unique<Info_Scr>(this, tft, touchScreen);
             break;
-        case menu::main:
+        case ScreenType::MAIN_SCR:
             break;
-        case menu::FileBrowser:
+        case ScreenType::FILE_BROWSER_SRC:
             base = std::make_unique<FileBrowser_Scr>(this, tft, touchScreen);
             break;
-        case menu::Config:
+        case ScreenType::CONFIG_MENU_SCR:
             base = std::make_unique<Config_Scr>(this, tft, touchScreen);
             break;
-        case menu::control:
+        case ScreenType::CONTROL_SCR:
             break;
-        case menu::GcodePreview:
+        case ScreenType::GCODE_PREVIEW_SCR:
             base = std::make_unique<Preview_Scr>(this, tft, touchScreen);
             break;
-        case menu::DisplayConf:
+        case ScreenType::DISPLAY_CONF:
             base = std::make_unique<DisplayConf_Scr>(this, tft, touchScreen);
             break;
-        case menu::Print:
+        case ScreenType::PRINT_SCR:
             base = std::make_unique<Print_Scr>(this, tft, touchScreen);
             break;
-        case menu::Draw:
+        case ScreenType::DRAW_SCR:
             base = std::make_unique<Draw_Scr>(this, tft, touchScreen);
             break;
         default:

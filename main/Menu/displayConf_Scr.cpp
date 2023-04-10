@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 11-04-2022
  * -----
- * Last Modified: 15-04-2022
+ * Last Modified: 10-04-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -96,7 +96,7 @@ void DisplayConf_Scr::handleTouch(const TchEvent& event)
     {
         if (event.id == 0)
         {
-            _UI->setScreen(lcdUI::Config);
+            _UI->setScreen(lcdUI::CONFIG_MENU_SCR);
         }
     }
     else if (event.trigger == TrgSrc::HOLD_TICK)

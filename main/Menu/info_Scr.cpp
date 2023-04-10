@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 24-06-2022
+ * Last Modified: 10-04-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -157,7 +157,7 @@ void Info_Scr::handleTouch(const TchEvent& event)
     {
         if (event.id == 0)
         {
-            if (_UI->isSDinit()) _UI->setScreen(lcdUI::FileBrowser);
+            if (_UI->isSDinit()) _UI->setScreen(lcdUI::FILE_BROWSER_SRC);
         }
         else if (event.id == 1)
         {
@@ -165,14 +165,14 @@ void Info_Scr::handleTouch(const TchEvent& event)
         }
         else if (event.id == 2)
         {
-            _UI->setScreen(lcdUI::Config);
+            _UI->setScreen(lcdUI::CONFIG_MENU_SCR);
         }
     }
     else if (event.trigger == TrgSrc::HOLD_STRT)
     {
         if (event.id == 1)
         {
-            _UI->setScreen(lcdUI::Draw);
+            _UI->setScreen(lcdUI::DRAW_SCR);
         }
     }
 }

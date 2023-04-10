@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 12-04-2022
+ * Last Modified: 10-04-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -108,7 +108,7 @@ void FileBrowser_Scr::update(const uint32_t deltaTime, TchScr_Drv& ts)
     }
     else
     {
-        _UI->setScreen(lcdUI::Info);
+        _UI->setScreen(lcdUI::INFO_SCR);
     }
 }
 
@@ -181,7 +181,7 @@ void FileBrowser_Scr::handleTouch(const TchEvent& event)
 
     if (event.id == 0) // Back to Main menu
     {
-        _UI->setScreen(lcdUI::Info);
+        _UI->setScreen(lcdUI::INFO_SCR);
     }
     else if (event.id == 1 && filePage > 0) // Prev page
     {
@@ -470,5 +470,5 @@ bool FileBrowser_Scr::isGcode(const std::string &file)
 void FileBrowser_Scr::sendFile(const std::string &file)
 {
     if (_UI->setFile(path + "/" + file) == ESP_OK)
-        _UI->setScreen(lcdUI::GcodePreview);
+        _UI->setScreen(lcdUI::GCODE_PREVIEW_SCR);
 }
