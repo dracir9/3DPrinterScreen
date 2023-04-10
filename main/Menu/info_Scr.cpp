@@ -25,7 +25,7 @@
 #include "info_Scr.h"
 
 Info_Scr::Info_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts):
-    Screen(UI), cellAdv(416.0f/(items)), cellW(cellAdv-8)
+    Screen(UI)
 {
     tft.fillScreen(TFT_BLACK);
     tft.setTextFont(2);
@@ -161,7 +161,7 @@ void Info_Scr::handleTouch(const TchEvent& event)
         }
         else if (event.id == 1)
         {
-            /* code */
+            _UI->setScreen(lcdUI::CONTROL_SCR);
         }
         else if (event.id == 2)
         {

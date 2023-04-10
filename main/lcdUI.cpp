@@ -34,6 +34,7 @@
 #include "Menu/displayConf_Scr.h"
 #include "Menu/print_Scr.h"
 #include "Menu/draw_Scr.h"
+#include "Menu/control_Scr.h"
 
 bool lcdUI::init;
 lcdUI lcdUI::_instance;
@@ -403,6 +404,7 @@ esp_err_t lcdUI::updateObjects()
             base = std::make_unique<Config_Scr>(this, tft, touchScreen);
             break;
         case ScreenType::CONTROL_SCR:
+            base = std::make_unique<Control_Scr>(this, tft, touchScreen);
             break;
         case ScreenType::GCODE_PREVIEW_SCR:
             base = std::make_unique<Preview_Scr>(this, tft, touchScreen);

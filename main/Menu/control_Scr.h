@@ -1,12 +1,12 @@
 /**
- * @file   info_w.h
+ * @file   control_Scr.h
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
- * Created Date: 22-01-2022
+ * Created Date: 10-04-2023
  * -----
  * Last Modified: 10-04-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
- * @copyright (c) 2022 Ricard Bitriá Ribes
+ * @copyright (c) 2023 Ricard Bitriá Ribes
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,28 +22,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef INFO_SCR_H
-#define INFO_SCR_H
+#ifndef CONTROL_SCR_H
+#define CONTROL_SCR_H
 
 #include "../lcdUI.h"
 
-class Info_Scr final: public Screen
+class Control_Scr final: public Screen
 {
 public:
-    Info_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts);
+    Control_Scr(lcdUI* UI, tftLCD& tft, TchScr_Drv& ts);
 
     void update(uint32_t deltaTime, TchScr_Drv& ts) override;
     void render(tftLCD& tft) override;
     void handleTouch(const TchEvent& event) override;
 
 private:
-    const uint8_t heatbed = 1;//random(0,2);
-    const uint8_t tools = 2;//random(1,6);
-    const uint8_t fans = 2;//random(0, min(8-tools-heatbed, 4));
-    const uint8_t items = heatbed + tools + fans;
-    const float cellAdv = 416.0f/items;
-    const uint16_t cellW = cellAdv-8;
-    int nextP = 0;
 };
 
 #endif
