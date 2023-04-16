@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 10-04-2023
  * -----
- * Last Modified: 10-04-2023
+ * Last Modified: 15-04-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2023 Ricard Bitriá Ribes
@@ -26,6 +26,7 @@
 #define CONTROL_SCR_H
 
 #include "../lcdUI.h"
+#include "Vector.h"
 
 class Control_Scr final: public Screen
 {
@@ -37,6 +38,15 @@ public:
     void handleTouch(const TchEvent& event) override;
 
 private:
+    Vec2h _tchPos;
+    Vec2h _lastTchPos;
+
+    bool xpPressed = false;
+    bool xnPressed = false;
+    bool ypPressed = false;
+    bool ynPressed = false;
+    bool zpPressed = false;
+    bool znPressed = false;
 };
 
 #endif
