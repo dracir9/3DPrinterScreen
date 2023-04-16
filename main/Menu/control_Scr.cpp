@@ -60,7 +60,6 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tft.drawRoundRect(430, 106, 50, 50, 4, TFT_BLUE);
     tft.drawBmpSPIFFS("/spiffs/home_24.bmp", 390, 66);
 
-
     // Return button
     tft.drawRoundRect(320, 270, 160, 50, 4, TFT_ORANGE);
     tft.drawBmpSPIFFS("/spiffs/return_48.bmp", 376, 277);
@@ -92,6 +91,7 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tmpBut.ymax = 103;
     tmpBut.enPressEv = true;
     tmpBut.enHoldEv = true;
+    tmpBut.enReleaseEv = true;
 
     ts.setButton(&tmpBut); // Home axis
 
@@ -102,6 +102,7 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tmpBut.ymax = 103;
     tmpBut.enPressEv = true;
     tmpBut.enHoldEv = true;
+    tmpBut.enReleaseEv = true;
 
     ts.setButton(&tmpBut); // Move X-
 
@@ -112,6 +113,7 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tmpBut.ymax = 103;
     tmpBut.enPressEv = true;
     tmpBut.enHoldEv = true;
+    tmpBut.enReleaseEv = true;
 
     ts.setButton(&tmpBut); // Move X+
 
@@ -122,6 +124,7 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tmpBut.ymax = 156;
     tmpBut.enPressEv = true;
     tmpBut.enHoldEv = true;
+    tmpBut.enReleaseEv = true;
 
     ts.setButton(&tmpBut); // Move Y-
 
@@ -132,6 +135,7 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tmpBut.ymax = 50;
     tmpBut.enPressEv = true;
     tmpBut.enHoldEv = true;
+    tmpBut.enReleaseEv = true;
 
     ts.setButton(&tmpBut); // Move Y+
 
@@ -142,6 +146,7 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tmpBut.ymax = 156;
     tmpBut.enPressEv = true;
     tmpBut.enHoldEv = true;
+    tmpBut.enReleaseEv = true;
 
     ts.setButton(&tmpBut); // Move Z-
 
@@ -152,6 +157,7 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tmpBut.ymax = 50;
     tmpBut.enPressEv = true;
     tmpBut.enHoldEv = true;
+    tmpBut.enReleaseEv = true;
 
     ts.setButton(&tmpBut); // Move Z+
 }
@@ -215,6 +221,17 @@ void Control_Scr::render(tftLCD &tft)
     {
         tft.fillRoundRect(431, 1, 48, 48, 4, TFT_BLACK);
     }
+
+    tft.setTextFont(2);
+    tft.setTextSize(1);
+    tft.setTextPadding(0);
+    tft.setTextDatum(CC_DATUM);
+    tft.drawString("X-", 350, 79);
+    tft.drawString("X+", 456, 79);
+    tft.drawString("Y-", 403, 132);
+    tft.drawString("Y+", 403, 26);
+    tft.drawString("Z-", 456, 132);
+    tft.drawString("Z+", 456, 26);
 }
 
 void Control_Scr::handleTouch(const TchEvent& event)
@@ -256,16 +273,13 @@ void Control_Scr::handleTouch(const TchEvent& event)
         }
         _UI->requestUpdate();
     }
-    else if (event.trigger == TrgSrc::HOLD_END)
+    else if (event.trigger == TrgSrc::HOLD_END || event.trigger == TrgSrc::RELEASE)
     {
         switch (event.id)
         {
         case 0:
-            _UI->setScreen(lcdUI::INFO_SCR);
-            break;
-
-        case 1:
-            _tchPos = event.pos;
+            if (event.trigger == TrgSrc::RELEASE)
+                _UI->setScreen(lcdUI::INFO_SCR);
             break;
 
         case 3:
@@ -296,10 +310,5 @@ void Control_Scr::handleTouch(const TchEvent& event)
             break;
         }
         _UI->requestUpdate();
-    }
-    else if (event.trigger == TrgSrc::RELEASE)
-    {
-        if (event.id == 0)
-            _UI->setScreen(lcdUI::INFO_SCR);
     }
 }
