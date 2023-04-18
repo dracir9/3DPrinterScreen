@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 11-03-2023
+ * Last Modified: 18-04-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -25,6 +25,7 @@
 #include "printer.h"
 #include "dbg_log.h"
 #include <cstring>
+#include <memory>
 #include <freertos/FreeRTOS.h>
 
 bool Printer::_init = false;
@@ -634,4 +635,39 @@ esp_err_t Printer::setAutoReportTemp(bool enable)
         return sendCommand("M155 S1\n", 8);
     else
         return sendCommand("M155 S0\n", 8);
+}
+
+esp_err_t Printer::move(float x, float y, float z, bool isRelative)
+{
+    esp_err_t ret = ESP_OK;
+
+    // Get the required string size
+    int size = snprintf(NULL, 0, "G0 X%.2f Y%.2f Z%.3f\n", x, y, z) + 1;
+
+    if (size <= 0)
+        return ESP_FAIL;
+
+    if (isRelative)
+        ret = sendCommand("G91\n", 4);
+
+    if (ret != ESP_OK)
+        return ret;
+
+    // Allocate new buffer
+    std::unique_ptr<char[]> buf( new char[size] );
+
+    // Fill the actual buffer
+    snprintf(buf.get(), size, "G0 X%.2f Y%.2f Z%.3f\n", x, y, z);
+    
+    ret = sendCommand(buf.get(), size-1);
+    if (ret != ESP_OK)
+        return ret;
+
+    if (isRelative)
+        ret = sendCommand("G90\n", 4);
+    
+    if (ret != ESP_OK)
+        return ret;
+
+    return ret;
 }

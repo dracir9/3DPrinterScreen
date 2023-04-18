@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 10-04-2023
  * -----
- * Last Modified: 16-04-2023
+ * Last Modified: 18-04-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2023 Ricard Bitriá Ribes
@@ -23,6 +23,7 @@
  */
 
 #include "control_Scr.h"
+#include "dbg_log.h"
 
 
 Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
@@ -164,6 +165,36 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
 
 void Control_Scr::update(uint32_t deltaTime, TchScr_Drv &ts)
 {
+    esp_err_t ret = ESP_OK;
+    if (xnPressed)
+    {
+        ret = device->move(-stepSize, 0, 0, true);
+    }
+    else if (xpPressed)
+    {
+        ret = device->move(stepSize, 0, 0, true);
+    }
+    else if (ynPressed)
+    {
+        ret = device->move(0, -stepSize, 0, true);
+    }
+    else if (ypPressed)
+    {
+        ret = device->move(0, stepSize, 0, true);
+    }
+    else if (znPressed)
+    {
+        ret = device->move(0, 0, -zStepSize, true);
+    }
+    else if (zpPressed)
+    {
+        ret = device->move(0, 0, zStepSize, true);
+    }
+
+    if (ret != ESP_OK)
+    {
+        DBG_LOGE("Failed to move the toolhead: %s", esp_err_to_name(ret));
+    }
 }
 
 void Control_Scr::render(tftLCD &tft)

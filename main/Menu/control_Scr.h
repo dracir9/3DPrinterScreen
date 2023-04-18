@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 10-04-2023
  * -----
- * Last Modified: 15-04-2023
+ * Last Modified: 18-04-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2023 Ricard Bitriá Ribes
@@ -27,6 +27,7 @@
 
 #include "../lcdUI.h"
 #include "Vector.h"
+#include "../printer.h"
 
 class Control_Scr final: public Screen
 {
@@ -40,6 +41,11 @@ public:
 private:
     Vec2h _tchPos;
     Vec2h _lastTchPos;
+
+    Printer* device = Printer::instance();
+
+    float stepSize = 5.0f;
+    float zStepSize = 5.0f;
 
     bool xpPressed = false;
     bool xnPressed = false;
