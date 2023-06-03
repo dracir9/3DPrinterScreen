@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 26-02-2023
+ * Last Modified: 03-06-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -80,9 +80,9 @@ private:
     {
         bool absPos = true;
         bool absEPos = true;
-        Vec3f currentPos = Vec3f();
-        Vec3f nextPos = Vec3f();
-        Vec3f offset = Vec3f();
+        Vec3f currentPos = Vec3f(0);
+        Vec3f nextPos = Vec3f(0);
+        Vec3f offset = Vec3f(0);
         float currentE = 0.0f;
         float nextE = 0.0f;
         float offsetE = 0.0f;

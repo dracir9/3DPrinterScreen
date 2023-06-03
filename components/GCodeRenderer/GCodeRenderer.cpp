@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 27-02-2023
+ * Last Modified: 03-06-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -85,7 +85,7 @@ int16_t GCodeRenderer::GCache::addPoint(Vec3f &vec, Vec3f &oldV)
     {
         nextChunk();
         numBytes = GChunk::headBytes();
-        oldV = Vec3f();
+        oldV = Vec3f(0);
     }
     uint16_t newBytes = chunk.addPoint(vec, oldV);
     size += newBytes;
@@ -684,7 +684,7 @@ esp_err_t GCodeRenderer::readTmp()
     DBG_LOGW_IF(uxQueueSpacesAvailable(vectRetQueue) != 0, "vectRetQueue not full");
     DBG_LOGW_IF(uxQueueMessagesWaiting(vectorQueue) != 0, "vectorQueue not empty");
 
-    Vec3f point = Vec3f();
+    Vec3f point = Vec3f(0);
     int32_t filePtr = 0;
     while (eState == RENDER && filePtr < filesize)
     {
@@ -781,7 +781,7 @@ void GCodeRenderer::processGcode()
     JobData job;
     VectorData moveBuffer;
     moveBuffer.size = -1;
-    Vec3f lastPoint = Vec3f();
+    Vec3f lastPoint = Vec3f(0);
     isShell = true;
 
     // Checking
@@ -863,7 +863,7 @@ void GCodeRenderer::processGcode()
 esp_err_t GCodeRenderer::generatePath()
 {
     VectorData moveBuffer;
-    Vec3f lastPos = Vec3f();
+    Vec3f lastPos = Vec3f(0);
     Boundary limits = {
         .Xmax = Vec3f(0.0f, 0.0f, -infinityf()),
         .Xmin = Vec3f(0.0f, 0.0f, infinityf()),
@@ -958,7 +958,7 @@ esp_err_t GCodeRenderer::renderMesh()
 {
     VectorData moveBuffer;
     Vec3f start = Vec3f(infinityf(), 0.0f, 0.0f);
-    Vec3f end = Vec3f();
+    Vec3f end = Vec3f(0);
     bool draw = false;
 
     // Clear buffers
