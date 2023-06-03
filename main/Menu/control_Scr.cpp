@@ -228,27 +228,38 @@ void Control_Scr::update(uint32_t deltaTime, TchScr_Drv &ts)
     esp_err_t ret = ESP_OK;
     if (xnPressed)
     {
-        ret = device->move(-stepSize, 0, 0, true);
+        ret = _printer->move(-stepSize, 0, 0, true);
     }
     else if (xpPressed)
     {
-        ret = device->move(stepSize, 0, 0, true);
+        ret = _printer->move(stepSize, 0, 0, true);
     }
     else if (ynPressed)
     {
-        ret = device->move(0, -stepSize, 0, true);
+        ret = _printer->move(0, -stepSize, 0, true);
     }
     else if (ypPressed)
     {
-        ret = device->move(0, stepSize, 0, true);
+        ret = _printer->move(0, stepSize, 0, true);
     }
     else if (znPressed)
     {
-        ret = device->move(0, 0, -zStepSize, true);
+        ret = _printer->move(0, 0, -zStepSize, true);
     }
     else if (zpPressed)
     {
-        ret = device->move(0, 0, zStepSize, true);
+        ret = _printer->move(0, 0, zStepSize, true);
+    }
+
+    if (ret != ESP_OK)
+    {
+        DBG_LOGE("Failed to move the toolhead: %s", esp_err_to_name(ret));
+    }
+
+    if (_tchPos != _lastTchPos)
+    {
+        _lastTchPos = _tchPos;
+        ret = _printer->move(0, 0, 0, false);
     }
 
     if (ret != ESP_OK)
@@ -312,6 +323,8 @@ void Control_Scr::render(tftLCD &tft)
     {
         tft.fillRoundRect(431, 1, 48, 48, 4, TFT_BLACK);
     }
+
+    tft.fillCircle(_lastTchPos.x, _lastTchPos.y, 4, TFT_YELLOW);
 
     tft.setTextFont(2);
     tft.setTextSize(1);
