@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 10-04-2023
  * -----
- * Last Modified: 19-04-2023
+ * Last Modified: 10-06-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2023 Ricard Bitriá Ribes
@@ -36,87 +36,66 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     
     tft.setTextColor(TFT_WHITE);
 
-    // Move area
-    tft.drawRoundRect(0, 0, 320, 320, 4, TFT_GREEN);
-    tft.drawString("Press to move", 160, 160);
-    tft.setTextDatum(BL_DATUM);
-    tft.drawString("(0,0)", 2, 318);
-
-    tft.setTextDatum(BR_DATUM);
-    tft.drawString("(250,0)", 318, 318);
-
-    tft.setTextDatum(TL_DATUM);
-    tft.drawString("(0,210)", 2, 2);
-
-    tft.setTextDatum(TR_DATUM);
-    tft.drawString("(250,210)", 318, 2);
+    // Bottom buttons
+    tft.drawBmpSPIFFS("/spiffs/return_48.bmp", 53, 272);
+    tft.drawRoundRect(0, 256, 155, 64, 4, TFT_ORANGE);
+    tft.drawBmpSPIFFS("/spiffs/move_48.bmp", 216, 264);
+    tft.drawRoundRect(163, 256, 154, 64, 4, TFT_ORANGE);
+    tft.drawBmpSPIFFS("/spiffs/settings_48.bmp", 378, 264);
+    tft.drawRoundRect(325, 256, 155, 64, 4, TFT_ORANGE);
 
     // Joystick
-    tft.drawRoundRect(324, 53 , 50, 50, 4, TFT_RED);
-    tft.drawRoundRect(377, 0  , 50, 50, 4, TFT_GREEN);
-    tft.drawRoundRect(377, 53 , 50, 50, 4, TFT_WHITE);
-    tft.drawRoundRect(377, 106, 50, 50, 4, TFT_GREEN);
-    tft.drawRoundRect(430, 0  , 50, 50, 4, TFT_BLUE);
-    tft.drawRoundRect(430, 53 , 50, 50, 4, TFT_RED);
-    tft.drawRoundRect(430, 106, 50, 50, 4, TFT_BLUE);
-    tft.drawBmpSPIFFS("/spiffs/home_24.bmp", 390, 66);
-
-    // Return button
-    tft.drawRoundRect(320, 270, 160, 50, 4, TFT_ORANGE);
-    tft.drawBmpSPIFFS("/spiffs/return_48.bmp", 376, 277);
+    tft.drawRoundRect(0, 85 , 80, 80, 4, TFT_RED);
+    tft.drawRoundRect(85, 0  , 80, 80, 4, TFT_GREEN);
+    tft.drawRoundRect(85, 85 , 80, 80, 4, TFT_WHITE);
+    tft.drawRoundRect(85, 170, 80, 80, 4, TFT_GREEN);
+    tft.drawRoundRect(170, 0  , 80, 80, 4, TFT_BLUE);
+    tft.drawRoundRect(170, 85 , 80, 80, 4, TFT_RED);
+    tft.drawRoundRect(170, 170, 80, 80, 4, TFT_BLUE);
+    tft.drawBmpSPIFFS("/spiffs/home_24.bmp", 113, 113);
 
     // Step Size
     tft.setTextDatum(CC_DATUM);
-    tft.drawString("XY Step", 403, 172);
-    tft.drawString("Z Step", 403, 225);
+    tft.drawString("XY Step", 403, 156);
+    tft.drawString("Z Step", 403, 209);
 
     tft.setTextFont(4);
-    tft.drawRoundRect(324, 164, 50, 50, 4, TFT_CYAN);
-    tft.drawString("-", 350, 190);
-    tft.drawRoundRect(430, 164, 50, 50, 4, TFT_CYAN);
-    tft.drawString("+", 456, 190);
+    tft.drawRoundRect(324, 148, 50, 50, 4, TFT_CYAN);
+    tft.drawString("-", 350, 174);
+    tft.drawRoundRect(430, 148, 50, 50, 4, TFT_CYAN);
+    tft.drawString("+", 456, 174);
 
-    tft.drawRoundRect(324, 217 , 50, 50, 4, TFT_CYAN);
-    tft.drawString("-", 350, 243);
-    tft.drawRoundRect(430, 217, 50, 50, 4, TFT_CYAN);
-    tft.drawString("+", 456, 243);
+    tft.drawRoundRect(324, 201 , 50, 50, 4, TFT_CYAN);
+    tft.drawString("-", 350, 227);
+    tft.drawRoundRect(430, 201, 50, 50, 4, TFT_CYAN);
+    tft.drawString("+", 456, 227);
 
     Button tmpBut;
     tmpBut.id = 0;
-    tmpBut.xmin = 320;
-    tmpBut.xmax = 480;
-    tmpBut.ymin = 270;
+    tmpBut.xmin = 0;
+    tmpBut.xmax = 160;
+    tmpBut.ymin = 256;
     tmpBut.ymax = 320;
     tmpBut.enReleaseEv = true;
     
     ts.setButton(&tmpBut); // Back to Info screen
 
-    tmpBut.id = 1;
-    tmpBut.xmin = 0;
-    tmpBut.xmax = 320;
-    tmpBut.ymin = 0;
-    tmpBut.ymax = 320;
-    tmpBut.enPressEv = true;
-    tmpBut.enReleaseEv = false;
-
-    ts.setButton(&tmpBut); // Move area
-
     tmpBut.id = 2;
-    tmpBut.xmin = 377;
-    tmpBut.xmax = 427;
-    tmpBut.ymin = 53;
-    tmpBut.ymax = 103;
+    tmpBut.xmin = 85;
+    tmpBut.xmax = 165;
+    tmpBut.ymin = 85;
+    tmpBut.ymax = 165;
     tmpBut.enPressEv = true;
     tmpBut.enHoldEv = true;
     tmpBut.enReleaseEv = true;
 
-    ts.setButton(&tmpBut); // Home axis
+    ts.setButton(&tmpBut); // Home all axis
 
     tmpBut.id = 3;
-    tmpBut.xmin = 324;
-    tmpBut.xmax = 374;
-    tmpBut.ymin = 53;
-    tmpBut.ymax = 103;
+    tmpBut.xmin = 0;
+    tmpBut.xmax = 80;
+    tmpBut.ymin = 85;
+    tmpBut.ymax = 165;
     tmpBut.enPressEv = true;
     tmpBut.enHoldEv = true;
     tmpBut.enReleaseEv = true;
@@ -124,10 +103,10 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     ts.setButton(&tmpBut); // Move X-
 
     tmpBut.id = 4;
-    tmpBut.xmin = 430;
-    tmpBut.xmax = 480;
-    tmpBut.ymin = 53;
-    tmpBut.ymax = 103;
+    tmpBut.xmin = 170;
+    tmpBut.xmax = 250;
+    tmpBut.ymin = 85;
+    tmpBut.ymax = 165;
     tmpBut.enPressEv = true;
     tmpBut.enHoldEv = true;
     tmpBut.enReleaseEv = true;
@@ -135,10 +114,10 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     ts.setButton(&tmpBut); // Move X+
 
     tmpBut.id = 5;
-    tmpBut.xmin = 377;
-    tmpBut.xmax = 427;
-    tmpBut.ymin = 106;
-    tmpBut.ymax = 156;
+    tmpBut.xmin = 85;
+    tmpBut.xmax = 165;
+    tmpBut.ymin = 170;
+    tmpBut.ymax = 250;
     tmpBut.enPressEv = true;
     tmpBut.enHoldEv = true;
     tmpBut.enReleaseEv = true;
@@ -146,10 +125,10 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     ts.setButton(&tmpBut); // Move Y-
 
     tmpBut.id = 6;
-    tmpBut.xmin = 377;
-    tmpBut.xmax = 427;
+    tmpBut.xmin = 85;
+    tmpBut.xmax = 165;
     tmpBut.ymin = 0;
-    tmpBut.ymax = 50;
+    tmpBut.ymax = 80;
     tmpBut.enPressEv = true;
     tmpBut.enHoldEv = true;
     tmpBut.enReleaseEv = true;
@@ -157,10 +136,10 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     ts.setButton(&tmpBut); // Move Y+
 
     tmpBut.id = 7;
-    tmpBut.xmin = 430;
-    tmpBut.xmax = 480;
-    tmpBut.ymin = 106;
-    tmpBut.ymax = 156;
+    tmpBut.xmin = 170;
+    tmpBut.xmax = 250;
+    tmpBut.ymin = 170;
+    tmpBut.ymax = 250;
     tmpBut.enPressEv = true;
     tmpBut.enHoldEv = true;
     tmpBut.enReleaseEv = true;
@@ -168,10 +147,10 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     ts.setButton(&tmpBut); // Move Z-
 
     tmpBut.id = 8;
-    tmpBut.xmin = 430;
-    tmpBut.xmax = 480;
+    tmpBut.xmin = 170;
+    tmpBut.xmax = 250;
     tmpBut.ymin = 0;
-    tmpBut.ymax = 50;
+    tmpBut.ymax = 80;
     tmpBut.enPressEv = true;
     tmpBut.enHoldEv = true;
     tmpBut.enReleaseEv = true;
@@ -255,95 +234,83 @@ void Control_Scr::update(uint32_t deltaTime, TchScr_Drv &ts)
     {
         DBG_LOGE("Failed to move the toolhead: %s", esp_err_to_name(ret));
     }
-
-    if (_tchPos != _lastTchPos)
-    {
-        _lastTchPos = _tchPos;
-        ret = _printer->move(0, 0, 0, false);
-    }
-
-    if (ret != ESP_OK)
-    {
-        DBG_LOGE("Failed to move the toolhead: %s", esp_err_to_name(ret));
-    }
 }
 
 void Control_Scr::render(tftLCD &tft)
 {
     if (xnPressed)
     {
-        tft.fillRoundRect(325, 54, 48, 48, 4, TFT_RED);
+        tft.fillRoundRect(1, 86, 78, 78, 4, TFT_RED);
     }
     else
     {
-        tft.fillRoundRect(325, 54, 48, 48, 4, TFT_BLACK);
+        tft.fillRoundRect(1, 86, 78, 78, 4, TFT_BLACK);
     }
 
     if (xpPressed)
     {
-        tft.fillRoundRect(431, 54, 48, 48, 4, TFT_RED);
+        tft.fillRoundRect(171, 86, 78, 78, 4, TFT_RED);
     }
     else
     {
-        tft.fillRoundRect(431, 54, 48, 48, 4, TFT_BLACK);
+        tft.fillRoundRect(171, 86, 78, 78, 4, TFT_BLACK);
     }
 
     if (ynPressed)
     {
-        tft.fillRoundRect(378, 107, 48, 48, 4, TFT_GREEN);
+        tft.fillRoundRect(86, 171, 78, 78, 4, TFT_GREEN);
     }
     else
     {
-        tft.fillRoundRect(378, 107, 48, 48, 4, TFT_BLACK);
+        tft.fillRoundRect(86, 171, 78, 78, 4, TFT_BLACK);
     }
 
     if (ypPressed)
     {
-        tft.fillRoundRect(378, 1, 48, 48, 4, TFT_GREEN);
+        tft.fillRoundRect(86, 1, 78, 78, 4, TFT_GREEN);
     }
     else
     {
-        tft.fillRoundRect(378, 1, 48, 48, 4, TFT_BLACK);
+        tft.fillRoundRect(86, 1, 78, 78, 4, TFT_BLACK);
     }
     
     if (znPressed)
     {
-        tft.fillRoundRect(431, 107, 48, 48, 4, TFT_BLUE);
+        tft.fillRoundRect(171, 171, 78, 78, 4, TFT_BLUE);
     }
     else
     {
-        tft.fillRoundRect(431, 107, 48, 48, 4, TFT_BLACK);
+        tft.fillRoundRect(171, 171, 78, 78, 4, TFT_BLACK);
     }
 
     if (zpPressed)
     {
-        tft.fillRoundRect(431, 1, 48, 48, 4, TFT_BLUE);
+        tft.fillRoundRect(171, 1, 78, 78, 4, TFT_BLUE);
     }
     else
     {
-        tft.fillRoundRect(431, 1, 48, 48, 4, TFT_BLACK);
+        tft.fillRoundRect(171, 1, 78, 78, 4, TFT_BLACK);
     }
 
-    tft.fillCircle(_lastTchPos.x, _lastTchPos.y, 4, TFT_YELLOW);
-
-    tft.setTextFont(2);
+    tft.setTextFont(4);
     tft.setTextSize(1);
     tft.setTextPadding(0);
     tft.setTextDatum(CC_DATUM);
-    tft.drawString("X-", 350, 79);
-    tft.drawString("X+", 456, 79);
-    tft.drawString("Y-", 403, 132);
-    tft.drawString("Y+", 403, 26);
-    tft.drawString("Z-", 456, 132);
-    tft.drawString("Z+", 456, 26);
+    tft.drawString("X-", 40, 125);
+    tft.drawString("X+", 210, 125);
+    tft.drawString("Y-", 125, 210);
+    tft.drawString("Y+", 125, 40);
+    tft.drawString("Z-", 210, 210);
+    tft.drawString("Z+", 210, 40);
 
+    tft.setTextFont(2);
     tft.setTextPadding(50);
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.drawString(String(stepSize, 1), 403, 190);
+    tft.drawString(String(stepSize, 1), 403, 174);
     if (zStepSize < 10.0f)
-        tft.drawString(String(zStepSize, 3), 403, 243);
+        tft.drawString(String(zStepSize, 3), 403, 227);
     else
-        tft.drawString(String(zStepSize, 1), 403, 243);
+        tft.drawString(String(zStepSize, 1), 403, 227);
 }
 
 void Control_Scr::handleTouch(const TchEvent& event)
@@ -352,10 +319,6 @@ void Control_Scr::handleTouch(const TchEvent& event)
     {
         switch (event.id)
         {
-        case 1:
-            _tchPos = event.pos;
-            break;
-
         case 3:
             xnPressed = true;
             break;

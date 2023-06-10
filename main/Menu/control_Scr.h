@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 10-04-2023
  * -----
- * Last Modified: 19-04-2023
+ * Last Modified: 10-06-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2023 Ricard Bitriá Ribes
@@ -39,9 +39,6 @@ public:
     void handleTouch(const TchEvent& event) override;
 
 private:
-    Vec2h _tchPos;
-    Vec2h _lastTchPos;
-
     Printer* _printer = Printer::instance();
 
     float stepSize = 5.0f;
