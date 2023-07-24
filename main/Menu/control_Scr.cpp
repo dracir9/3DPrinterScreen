@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 10-04-2023
  * -----
- * Last Modified: 10-06-2023
+ * Last Modified: 24-07-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2023 Ricard Bitriá Ribes
@@ -37,12 +37,13 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tft.setTextColor(TFT_WHITE);
 
     // Bottom buttons
-    tft.drawBmpSPIFFS("/spiffs/return_48.bmp", 53, 272);
-    tft.drawRoundRect(0, 256, 155, 64, 4, TFT_ORANGE);
-    tft.drawBmpSPIFFS("/spiffs/move_48.bmp", 216, 264);
-    tft.drawRoundRect(163, 256, 154, 64, 4, TFT_ORANGE);
+    tft.drawBmpSPIFFS("/spiffs/return_48.bmp", 33, 272);
+    tft.drawRoundRect(0, 256, 114, 64, 4, TFT_ORANGE);
+    tft.drawBmpSPIFFS("/spiffs/move_48.bmp", 155, 264);
+    tft.drawRoundRect(122, 256, 114, 64, 4, TFT_ORANGE);
     tft.drawBmpSPIFFS("/spiffs/settings_48.bmp", 378, 264);
-    tft.drawRoundRect(325, 256, 155, 64, 4, TFT_ORANGE);
+    tft.drawRoundRect(244, 256, 114, 64, 4, TFT_ORANGE);
+    tft.drawRoundRect(366, 256, 114, 64, 4, TFT_ORANGE);
 
     // Joystick
     tft.drawRoundRect(0, 85 , 80, 80, 4, TFT_RED);
@@ -73,7 +74,7 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     Button tmpBut;
     tmpBut.id = 0;
     tmpBut.xmin = 0;
-    tmpBut.xmax = 160;
+    tmpBut.xmax = 114;
     tmpBut.ymin = 256;
     tmpBut.ymax = 320;
     tmpBut.enReleaseEv = true;
