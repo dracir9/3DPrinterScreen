@@ -22,11 +22,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "control_Scr.h"
+#include "extrude_Scr.h"
 #include "dbg_log.h"
 
 
-Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
+Extrude_Scr::Extrude_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     Screen(UI)
 {
     tft.setTextFont(2);
@@ -44,16 +44,6 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tft.drawBmpSPIFFS("/spiffs/settings_48.bmp", 378, 264);
     tft.drawRoundRect(244, 256, 114, 64, 4, TFT_ORANGE);
     tft.drawRoundRect(366, 256, 114, 64, 4, TFT_ORANGE);
-
-    // Joystick
-    tft.drawRoundRect(0, 85 , 80, 80, 4, TFT_RED);
-    tft.drawRoundRect(85, 0  , 80, 80, 4, TFT_GREEN);
-    tft.drawRoundRect(85, 85 , 80, 80, 4, TFT_WHITE);
-    tft.drawRoundRect(85, 170, 80, 80, 4, TFT_GREEN);
-    tft.drawRoundRect(170, 0  , 80, 80, 4, TFT_BLUE);
-    tft.drawRoundRect(170, 85 , 80, 80, 4, TFT_RED);
-    tft.drawRoundRect(170, 170, 80, 80, 4, TFT_BLUE);
-    tft.drawBmpSPIFFS("/spiffs/home_24.bmp", 113, 113);
 
     // Step Size
     tft.setTextDatum(CC_DATUM);
@@ -81,82 +71,23 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     
     ts.setButton(&tmpBut); // Back to Info screen
 
+    tmpBut.id = 1;
+    tmpBut.xmin = 122;
+    tmpBut.xmax = 236;
+    tmpBut.ymin = 256;
+    tmpBut.ymax = 320;
+    tmpBut.enReleaseEv = true;
+
+    ts.setButton(&tmpBut); // Move control
+
     tmpBut.id = 2;
-    tmpBut.xmin = 85;
-    tmpBut.xmax = 165;
-    tmpBut.ymin = 85;
-    tmpBut.ymax = 165;
-    tmpBut.enPressEv = true;
-    tmpBut.enHoldEv = true;
+    tmpBut.xmin = 366;
+    tmpBut.xmax = 480;
+    tmpBut.ymin = 256;
+    tmpBut.ymax = 320;
     tmpBut.enReleaseEv = true;
 
-    ts.setButton(&tmpBut); // Home all axis
-
-    tmpBut.id = 3;
-    tmpBut.xmin = 0;
-    tmpBut.xmax = 80;
-    tmpBut.ymin = 85;
-    tmpBut.ymax = 165;
-    tmpBut.enPressEv = true;
-    tmpBut.enHoldEv = true;
-    tmpBut.enReleaseEv = true;
-
-    ts.setButton(&tmpBut); // Move X-
-
-    tmpBut.id = 4;
-    tmpBut.xmin = 170;
-    tmpBut.xmax = 250;
-    tmpBut.ymin = 85;
-    tmpBut.ymax = 165;
-    tmpBut.enPressEv = true;
-    tmpBut.enHoldEv = true;
-    tmpBut.enReleaseEv = true;
-
-    ts.setButton(&tmpBut); // Move X+
-
-    tmpBut.id = 5;
-    tmpBut.xmin = 85;
-    tmpBut.xmax = 165;
-    tmpBut.ymin = 170;
-    tmpBut.ymax = 250;
-    tmpBut.enPressEv = true;
-    tmpBut.enHoldEv = true;
-    tmpBut.enReleaseEv = true;
-
-    ts.setButton(&tmpBut); // Move Y-
-
-    tmpBut.id = 6;
-    tmpBut.xmin = 85;
-    tmpBut.xmax = 165;
-    tmpBut.ymin = 0;
-    tmpBut.ymax = 80;
-    tmpBut.enPressEv = true;
-    tmpBut.enHoldEv = true;
-    tmpBut.enReleaseEv = true;
-
-    ts.setButton(&tmpBut); // Move Y+
-
-    tmpBut.id = 7;
-    tmpBut.xmin = 170;
-    tmpBut.xmax = 250;
-    tmpBut.ymin = 170;
-    tmpBut.ymax = 250;
-    tmpBut.enPressEv = true;
-    tmpBut.enHoldEv = true;
-    tmpBut.enReleaseEv = true;
-
-    ts.setButton(&tmpBut); // Move Z-
-
-    tmpBut.id = 8;
-    tmpBut.xmin = 170;
-    tmpBut.xmax = 250;
-    tmpBut.ymin = 0;
-    tmpBut.ymax = 80;
-    tmpBut.enPressEv = true;
-    tmpBut.enHoldEv = true;
-    tmpBut.enReleaseEv = true;
-
-    ts.setButton(&tmpBut); // Move Z+
+    ts.setButton(&tmpBut); // Temperature control
 
     tmpBut.id = 9;
     tmpBut.xmin = 324;
@@ -201,57 +132,11 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tmpBut.enReleaseEv = true;
 
     ts.setButton(&tmpBut); // Z Step +
-
-    tmpBut.id = 13;
-    tmpBut.xmin = 244;
-    tmpBut.xmax = 358;
-    tmpBut.ymin = 256;
-    tmpBut.ymax = 320;
-    tmpBut.enPressEv = false;
-    tmpBut.enHoldEv = false;
-    tmpBut.enReleaseEv = true;
-
-    ts.setButton(&tmpBut); // Extruder control
-
-    tmpBut.id = 14;
-    tmpBut.xmin = 366;
-    tmpBut.xmax = 480;
-    tmpBut.ymin = 256;
-    tmpBut.ymax = 320;
-    tmpBut.enPressEv = false;
-    tmpBut.enHoldEv = false;
-    tmpBut.enReleaseEv = true;
-
-    ts.setButton(&tmpBut); // Temperature control
 }
 
-void Control_Scr::update(uint32_t deltaTime, TchScr_Drv &ts)
+void Extrude_Scr::update(uint32_t deltaTime, TchScr_Drv &ts)
 {
     esp_err_t ret = ESP_OK;
-    if (xnPressed)
-    {
-        ret = _printer->move(-stepSize, 0, 0, true);
-    }
-    else if (xpPressed)
-    {
-        ret = _printer->move(stepSize, 0, 0, true);
-    }
-    else if (ynPressed)
-    {
-        ret = _printer->move(0, -stepSize, 0, true);
-    }
-    else if (ypPressed)
-    {
-        ret = _printer->move(0, stepSize, 0, true);
-    }
-    else if (znPressed)
-    {
-        ret = _printer->move(0, 0, -zStepSize, true);
-    }
-    else if (zpPressed)
-    {
-        ret = _printer->move(0, 0, zStepSize, true);
-    }
 
     if (ret != ESP_OK)
     {
@@ -259,72 +144,10 @@ void Control_Scr::update(uint32_t deltaTime, TchScr_Drv &ts)
     }
 }
 
-void Control_Scr::render(tftLCD &tft)
+void Extrude_Scr::render(tftLCD &tft)
 {
-    if (xnPressed)
-    {
-        tft.fillRoundRect(1, 86, 78, 78, 4, TFT_RED);
-    }
-    else
-    {
-        tft.fillRoundRect(1, 86, 78, 78, 4, TFT_BLACK);
-    }
-
-    if (xpPressed)
-    {
-        tft.fillRoundRect(171, 86, 78, 78, 4, TFT_RED);
-    }
-    else
-    {
-        tft.fillRoundRect(171, 86, 78, 78, 4, TFT_BLACK);
-    }
-
-    if (ynPressed)
-    {
-        tft.fillRoundRect(86, 171, 78, 78, 4, TFT_GREEN);
-    }
-    else
-    {
-        tft.fillRoundRect(86, 171, 78, 78, 4, TFT_BLACK);
-    }
-
-    if (ypPressed)
-    {
-        tft.fillRoundRect(86, 1, 78, 78, 4, TFT_GREEN);
-    }
-    else
-    {
-        tft.fillRoundRect(86, 1, 78, 78, 4, TFT_BLACK);
-    }
-    
-    if (znPressed)
-    {
-        tft.fillRoundRect(171, 171, 78, 78, 4, TFT_BLUE);
-    }
-    else
-    {
-        tft.fillRoundRect(171, 171, 78, 78, 4, TFT_BLACK);
-    }
-
-    if (zpPressed)
-    {
-        tft.fillRoundRect(171, 1, 78, 78, 4, TFT_BLUE);
-    }
-    else
-    {
-        tft.fillRoundRect(171, 1, 78, 78, 4, TFT_BLACK);
-    }
-
-    tft.setTextFont(4);
     tft.setTextSize(1);
-    tft.setTextPadding(0);
     tft.setTextDatum(CC_DATUM);
-    tft.drawString("X-", 40, 125);
-    tft.drawString("X+", 210, 125);
-    tft.drawString("Y-", 125, 210);
-    tft.drawString("Y+", 125, 40);
-    tft.drawString("Z-", 210, 210);
-    tft.drawString("Z+", 210, 40);
 
     tft.setTextFont(2);
     tft.setTextPadding(50);
@@ -336,69 +159,16 @@ void Control_Scr::render(tftLCD &tft)
         tft.drawString(String(zStepSize, 1), 403, 227);
 }
 
-void Control_Scr::handleTouch(const TchEvent& event)
+void Extrude_Scr::handleTouch(const TchEvent& event)
 {
     if (event.trigger == TrgSrc::PRESS)
     {
-        switch (event.id)
-        {
-        case 3:
-            xnPressed = true;
-            break;
-
-        case 4:
-            xpPressed = true;
-            break;
-
-        case 5:
-            ynPressed = true;
-            break;
-
-        case 6:
-            ypPressed = true;
-            break;
-
-        case 7:
-            znPressed = true;
-            break;
-
-        case 8:
-            zpPressed = true;
-            break;
-
-        default:
-            return;
-        }
         _UI->requestUpdate();
     }
     else if (event.trigger == TrgSrc::HOLD_END || event.trigger == TrgSrc::RELEASE)
     {
         switch (event.id)
         {
-        case 3:
-            xnPressed = false;
-            break;
-
-        case 4:
-            xpPressed = false;
-            break;
-
-        case 5:
-            ynPressed = false;
-            break;
-
-        case 6:
-            ypPressed = false;
-            break;
-
-        case 7:
-            znPressed = false;
-            break;
-
-        case 8:
-            zpPressed = false;
-            break;
-
         case 9:
             if (stepSize == 5.0f)
                 stepSize = 1.0f;
@@ -468,11 +238,11 @@ void Control_Scr::handleTouch(const TchEvent& event)
                 _UI->setScreen(lcdUI::INFO_SCR);
                 break;
             
-            case 13:
-                _UI->setScreen(lcdUI::EXTRUDE_SCR);
+            case 1:
+                _UI->setScreen(lcdUI::CONTROL_SCR);
                 break;
 
-            case 14:
+            case 2:
                 // TODO: Temperature screen
                 break;
 
