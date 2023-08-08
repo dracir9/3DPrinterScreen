@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 10-04-2023
  * -----
- * Last Modified: 02-08-2023
+ * Last Modified: 08-08-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2023 Ricard Bitriá Ribes
@@ -41,9 +41,14 @@ Extrude_Scr::Extrude_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tft.drawRoundRect(0, 256, 114, 64, 4, TFT_ORANGE);
     tft.drawBmpSPIFFS("/spiffs/move_48.bmp", 155, 264);
     tft.drawRoundRect(122, 256, 114, 64, 4, TFT_ORANGE);
-    tft.drawBmpSPIFFS("/spiffs/settings_48.bmp", 378, 264);
+    tft.drawBmpSPIFFS("/spiffs/extruder_32.bmp", 285, 272);
     tft.drawRoundRect(244, 256, 114, 64, 4, TFT_ORANGE);
+    tft.drawBmpSPIFFS("/spiffs/term_48.bmp", 399, 264);
     tft.drawRoundRect(366, 256, 114, 64, 4, TFT_ORANGE);
+
+    // Extruders
+    tft.drawBmpSPIFFS("/spiffs/extruder_32.bmp", 37, 109);
+    tft.drawBmpSPIFFS("/spiffs/extruder_32.bmp", 128, 109);
 
     // Step Size
     tft.setTextDatum(CC_DATUM);
