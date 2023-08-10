@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 10-04-2023
  * -----
- * Last Modified: 07-08-2023
+ * Last Modified: 10-08-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2023 Ricard Bitriá Ribes
@@ -71,6 +71,31 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tft.drawString("-", 350, 227);
     tft.drawRoundRect(430, 201, 50, 50, 4, TFT_CYAN);
     tft.drawString("+", 456, 227);
+
+    // Position
+    tft.setTextFont(2);
+    tft.setTextSize(1);
+    tft.setTextPadding(0);
+    tft.setTextDatum(CC_DATUM);
+    tft.drawRoundRect(280, 0, 200, 50, 4, TFT_GREEN);
+    tft.drawString("X", 313, 16);
+    tft.drawString("Y", 380, 16);
+    tft.drawString("Z", 447, 16);
+
+    tft.setTextPadding(60);
+    tft.drawString(String(999.0f), 313, 32);
+    tft.drawString(String(999.0f), 380, 32);
+    tft.drawString(String(999.0f), 447, 32);
+
+    // Home XY only
+    tft.drawRoundRect(315, 59, 80, 80, 4, TFT_WHITE);
+    tft.drawBmpSPIFFS("/spiffs/home_24.bmp", 343, 87);
+    tft.drawString("Home XY", 355, 125);
+
+    // Home Z only
+    tft.drawRoundRect(400, 59, 80, 80, 4, TFT_WHITE);
+    tft.drawBmpSPIFFS("/spiffs/home_24.bmp", 428, 87);
+    tft.drawString("Home Z", 440, 125);
 
     Button tmpBut;
     tmpBut.id = 0;
@@ -335,6 +360,29 @@ void Control_Scr::render(tftLCD &tft)
         tft.drawString(String(zStepSize, 3), 403, 227);
     else
         tft.drawString(String(zStepSize, 1), 403, 227);
+
+    // Update position
+    tft.setTextFont(2);
+    tft.setTextSize(1);
+    tft.setTextPadding(0);
+    tft.setTextDatum(CC_DATUM);
+    tft.setTextPadding(60);
+
+    Vec3f pos;
+    if (_printer->getPosition(&pos) == ESP_OK)
+    {
+        tft.drawString(String(pos.x), 313, 32);
+        tft.drawString(String(pos.y), 380, 32);
+        tft.drawString(String(pos.z), 447, 32);
+    }
+    else
+    {
+        tft.drawString("?", 313, 32);
+        tft.drawString("?", 380, 32);
+        tft.drawString("?", 447, 32);
+    }
+
+    _UI->requestUpdate();
 }
 
 void Control_Scr::handleTouch(const TchEvent& event)
