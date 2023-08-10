@@ -259,7 +259,7 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tmpBut.enHoldEv = false;
     tmpBut.enReleaseEv = true;
 
-    ts.setButton(&tmpBut); // Temperature control
+    ts.setButton(&tmpBut); // Home XY
 
     tmpBut.id = 16;
     tmpBut.xmin = 400;
@@ -270,7 +270,7 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tmpBut.enHoldEv = false;
     tmpBut.enReleaseEv = true;
 
-    ts.setButton(&tmpBut); // Temperature control
+    ts.setButton(&tmpBut); // Home Z
 }
 
 void Control_Scr::update(uint32_t deltaTime, TchScr_Drv &ts)
@@ -540,7 +540,7 @@ void Control_Scr::handleTouch(const TchEvent& event)
                 break;
 
             case 2:
-                // TODO: Home All axis
+                _printer->homeAxis();
                 break;
             
             case 13:
@@ -552,11 +552,11 @@ void Control_Scr::handleTouch(const TchEvent& event)
                 break;
 
             case 15:
-                // TODO: Home XY
+                _printer->homeAxis(true, true, false);
                 break;
 
             case 16:
-                // TODO: Home Z
+                _printer->homeAxis(false, false, true);
                 break;
 
             default:
