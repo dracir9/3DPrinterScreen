@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 18-04-2023
+ * Last Modified: 10-08-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -669,5 +669,29 @@ esp_err_t Printer::move(float x, float y, float z, bool isRelative)
     if (ret != ESP_OK)
         return ret;
 
+    return ret;
+}
+
+esp_err_t Printer::homeAxis(bool homeX, bool homeY, bool homeZ)
+{
+    std::string cmd = "G28 ";
+    if (homeX)
+    {
+        cmd += 'X';
+    }
+    
+    if (homeY)
+    {
+        cmd += 'Y';
+    }
+
+    if (homeZ)
+    {
+        cmd += 'Z';
+    }
+
+    cmd += '\n';
+
+    esp_err_t ret = sendCommand(cmd.c_str(), cmd.length());
     return ret;
 }
