@@ -117,7 +117,7 @@ private:
     esp_err_t parsePos(char* str);
     void allocateFields();
 
-    esp_err_t sendCommand(const char* cmd, size_t len);
+    esp_err_t sendCommand(const char* cmd);
     esp_err_t sendTxEvent(TxEvent event);
     esp_err_t getSettings();
     esp_err_t getFwInfo();

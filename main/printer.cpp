@@ -360,7 +360,7 @@ void Printer::sendLine()
     {
         // Send line
         DBG_LOGD("Send line");
-        sendCommand(line, strlen(line));
+        sendCommand(line);
         
         // Queue next line
         sendTxEvent(UART_SEND_LINE);
@@ -482,10 +482,12 @@ void Printer::allocateFields()
     state = READY;
 }
 
-esp_err_t Printer::sendCommand(const char *cmd, size_t len)
+esp_err_t Printer::sendCommand(const char *cmd)
 {
     if (state >= READY)
     {
+        size_t len = strlen(cmd);
+
         TxPacket *packet = nullptr;
         // Acquire memory from ring buffer and send command
         if (xRingbufferSendAcquire(uartTxBuffer, (void**)&packet, sizeof(TxPacket) + len, portMAX_DELAY) != pdTRUE)
@@ -537,12 +539,12 @@ esp_err_t Printer::sendTxEvent(TxEvent event)
 
 esp_err_t Printer::getSettings()
 {
-    return sendCommand("M503\n", 5);
+    return sendCommand("M503\n");
 }
 
 esp_err_t Printer::getFwInfo()
 {
-    return sendCommand("M115\n", 5);
+    return sendCommand("M115\n");
 }
 
 uint8_t Printer::getToolNum() const
@@ -624,17 +626,17 @@ esp_err_t Printer::getExtruderPos(float* pos, uint8_t tool) const
 esp_err_t Printer::setAutoReportPos(bool enable)
 {
     if (enable)
-        return sendCommand("M154 S1\n", 8);
+        return sendCommand("M154 S1\n");
     else
-        return sendCommand("M154 S0\n", 8);
+        return sendCommand("M154 S0\n");
 }
 
 esp_err_t Printer::setAutoReportTemp(bool enable)
 {
     if (enable)
-        return sendCommand("M155 S1\n", 8);
+        return sendCommand("M155 S1\n");
     else
-        return sendCommand("M155 S0\n", 8);
+        return sendCommand("M155 S0\n");
 }
 
 esp_err_t Printer::move(float x, float y, float z, bool isRelative)
@@ -648,7 +650,7 @@ esp_err_t Printer::move(float x, float y, float z, bool isRelative)
         return ESP_FAIL;
 
     if (isRelative)
-        ret = sendCommand("G91\n", 4);
+        ret = sendCommand("G91\n");
 
     if (ret != ESP_OK)
         return ret;
@@ -659,12 +661,12 @@ esp_err_t Printer::move(float x, float y, float z, bool isRelative)
     // Fill the actual buffer
     snprintf(buf.get(), size, "G0 X%.2f Y%.2f Z%.3f\n", x, y, z);
     
-    ret = sendCommand(buf.get(), size-1);
+    ret = sendCommand(buf.get());
     if (ret != ESP_OK)
         return ret;
 
     if (isRelative)
-        ret = sendCommand("G90\n", 4);
+        ret = sendCommand("G90\n");
     
     if (ret != ESP_OK)
         return ret;
@@ -692,6 +694,6 @@ esp_err_t Printer::homeAxis(bool homeX, bool homeY, bool homeZ)
 
     cmd += '\n';
 
-    esp_err_t ret = sendCommand(cmd.c_str(), cmd.length());
+    esp_err_t ret = sendCommand(cmd.c_str());
     return ret;
 }
