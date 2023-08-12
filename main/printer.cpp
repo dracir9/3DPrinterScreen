@@ -698,12 +698,24 @@ esp_err_t Printer::homeAxis(bool homeX, bool homeY, bool homeZ)
     return ret;
 }
 
-esp_err_t Printer::extrude(float e, bool isRelative)
+esp_err_t Printer::extrude(uint8_t tool, float e, bool isRelative)
 {
     esp_err_t ret = ESP_OK;
 
-    std::string cmd = "G1 E";
+    if (tool > toolheads)
+    {
+        tool = toolheads-1;
+    }
 
+    std::string cmd = "T";
+    cmd += std::to_string(tool);
+    cmd += '\n';
+    
+    ret = sendCommand(cmd.c_str());
+    if (ret != ESP_OK)
+        return ret;
+
+    cmd = "G1 E";
     cmd += std::to_string(e);
     cmd += '\n';
 

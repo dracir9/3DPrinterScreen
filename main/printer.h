@@ -146,7 +146,7 @@ public:
     esp_err_t move(float x, float y, float z, bool isRelative);
     esp_err_t homeAxis(bool homeX = true, bool homeY = true, bool homeZ = true);
 
-    esp_err_t extrude(float e, bool isRelative);
+    esp_err_t extrude(uint8_t tool, float e, bool isRelative);
 };
 
 #endif // PRINTER_H
