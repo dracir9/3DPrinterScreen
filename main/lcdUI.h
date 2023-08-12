@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 24-07-2023
+ * Last Modified: 12-08-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -58,6 +58,7 @@ public:
         FILE_BROWSER_SRC,
         CONTROL_SCR,
         EXTRUDE_SCR,
+        HEATERS_SCR,
         GCODE_PREVIEW_SCR,
         DISPLAY_CONF,
         PRINT_SCR,

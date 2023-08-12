@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 25-07-2023
+ * Last Modified: 12-08-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -36,6 +36,7 @@
 #include "Menu/draw_Scr.h"
 #include "Menu/control_Scr.h"
 #include "Menu/extrude_Scr.h"
+#include "Menu/heaters_Scr.h"
 
 bool lcdUI::init;
 lcdUI lcdUI::_instance;
@@ -408,7 +409,10 @@ esp_err_t lcdUI::updateObjects()
             base = std::make_unique<Control_Scr>(this, tft, touchScreen);
             break;
         case ScreenType::EXTRUDE_SCR:
-            base = std::make_unique<Extrude_Scr>(this, tft, touchScreen);
+            base = std::make_unique<Heaters_Scr>(this, tft, touchScreen);
+            break;
+        case ScreenType::HEATERS_SCR:
+            base = std::make_unique<Heaters_Scr>(this, tft, touchScreen);
             break;
         case ScreenType::GCODE_PREVIEW_SCR:
             base = std::make_unique<Preview_Scr>(this, tft, touchScreen);
