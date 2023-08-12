@@ -41,7 +41,7 @@ Control_Scr::Control_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tft.drawRoundRect(0, 256, 114, 64, 4, TFT_ORANGE);
     tft.drawBmpSPIFFS("/spiffs/move_48.bmp", 155, 264);
     tft.drawRoundRect(122, 256, 114, 64, 4, TFT_ORANGE);
-    tft.drawBmpSPIFFS("/spiffs/extruder_32.bmp", 285, 272);
+    tft.drawBmpSPIFFS("/spiffs/extruder_48.bmp", 277, 264);
     tft.drawRoundRect(244, 256, 114, 64, 4, TFT_ORANGE);
     tft.drawBmpSPIFFS("/spiffs/term_48.bmp", 399, 264);
     tft.drawRoundRect(366, 256, 114, 64, 4, TFT_ORANGE);

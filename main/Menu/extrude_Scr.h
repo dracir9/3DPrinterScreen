@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 10-04-2023
  * -----
- * Last Modified: 25-07-2023
+ * Last Modified: 10-08-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2023 Ricard Bitriá Ribes
@@ -42,7 +42,6 @@ private:
     Printer* _printer = Printer::instance();
 
     float stepSize = 5.0f;
-    float zStepSize = 5.0f;
 };
 
 #endif

@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 10-04-2023
  * -----
- * Last Modified: 08-08-2023
+ * Last Modified: 12-08-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2023 Ricard Bitriá Ribes
@@ -41,30 +41,45 @@ Extrude_Scr::Extrude_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tft.drawRoundRect(0, 256, 114, 64, 4, TFT_ORANGE);
     tft.drawBmpSPIFFS("/spiffs/move_48.bmp", 155, 264);
     tft.drawRoundRect(122, 256, 114, 64, 4, TFT_ORANGE);
-    tft.drawBmpSPIFFS("/spiffs/extruder_32.bmp", 285, 272);
+    tft.drawBmpSPIFFS("/spiffs/extruder_48.bmp", 277, 264);
     tft.drawRoundRect(244, 256, 114, 64, 4, TFT_ORANGE);
     tft.drawBmpSPIFFS("/spiffs/term_48.bmp", 399, 264);
     tft.drawRoundRect(366, 256, 114, 64, 4, TFT_ORANGE);
 
     // Extruders
-    tft.drawBmpSPIFFS("/spiffs/extruder_32.bmp", 37, 109);
-    tft.drawBmpSPIFFS("/spiffs/extruder_32.bmp", 128, 109);
+    int32_t extruders = _printer->getToolNum();
+
+    if (extruders == 0)
+        extruders = 2;
+    
+    float spacing = (480.0f - 50.0f) / (extruders + 1);
+
+    
+    for (int32_t i = 0; i < extruders; i++)
+    {
+        tft.drawRoundRect((i+1)*spacing - 40, 0, 80, 80, 4, TFT_WHITE);
+        tft.drawBmpSPIFFS("/spiffs/arrowT_48.bmp", (i+1)*spacing - 20, 16);
+        tft.drawBmpSPIFFS("/spiffs/extruder_48.bmp", (i+1)*spacing - 40, 104);
+        tft.setTextDatum(CC_DATUM);
+        tft.setTextColor(TFT_BLACK);
+        tft.drawString(String(i+1), (i+1)*spacing-15, 118);
+        tft.setTextDatum(CL_DATUM);
+        tft.setTextColor(TFT_WHITE);
+        tft.drawString("000.0", (i+1)*spacing+5, 145);
+        tft.drawRoundRect((i+1)*spacing - 40, 170, 80, 80, 4, TFT_WHITE);
+        tft.drawBmpSPIFFS("/spiffs/arrowB_48.bmp", (i+1)*spacing - 20, 186);
+    }
 
     // Step Size
     tft.setTextDatum(CC_DATUM);
-    tft.drawString("XY Step", 403, 156);
-    tft.drawString("Z Step", 403, 209);
+    tft.setTextColor(TFT_WHITE);
+    tft.drawString("Step", 455, 120);
 
     tft.setTextFont(4);
-    tft.drawRoundRect(324, 148, 50, 50, 4, TFT_CYAN);
-    tft.drawString("-", 350, 174);
-    tft.drawRoundRect(430, 148, 50, 50, 4, TFT_CYAN);
-    tft.drawString("+", 456, 174);
-
-    tft.drawRoundRect(324, 201 , 50, 50, 4, TFT_CYAN);
-    tft.drawString("-", 350, 227);
-    tft.drawRoundRect(430, 201, 50, 50, 4, TFT_CYAN);
-    tft.drawString("+", 456, 227);
+    tft.drawRoundRect(430, 51, 50, 50, 4, TFT_CYAN);
+    tft.drawString("+", 456, 76);
+    tft.drawRoundRect(430, 155, 50, 50, 4, TFT_CYAN);
+    tft.drawString("-", 456, 180);
 
     Button tmpBut;
     tmpBut.id = 0;
@@ -115,28 +130,6 @@ Extrude_Scr::Extrude_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tmpBut.enReleaseEv = true;
 
     ts.setButton(&tmpBut); // Step +
-
-    tmpBut.id = 11;
-    tmpBut.xmin = 324;
-    tmpBut.xmax = 374;
-    tmpBut.ymin = 217;
-    tmpBut.ymax = 257;
-    tmpBut.enPressEv = false;
-    tmpBut.enHoldEv = false;
-    tmpBut.enReleaseEv = true;
-
-    ts.setButton(&tmpBut); // Z Step -
-
-    tmpBut.id = 12;
-    tmpBut.xmin = 430;
-    tmpBut.xmax = 480;
-    tmpBut.ymin = 217;
-    tmpBut.ymax = 257;
-    tmpBut.enPressEv = false;
-    tmpBut.enHoldEv = false;
-    tmpBut.enReleaseEv = true;
-
-    ts.setButton(&tmpBut); // Z Step +
 }
 
 void Extrude_Scr::update(uint32_t deltaTime, TchScr_Drv &ts)
@@ -157,11 +150,7 @@ void Extrude_Scr::render(tftLCD &tft)
     tft.setTextFont(2);
     tft.setTextPadding(50);
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.drawString(String(stepSize, 1), 403, 174);
-    if (zStepSize < 10.0f)
-        tft.drawString(String(zStepSize, 3), 403, 227);
-    else
-        tft.drawString(String(zStepSize, 1), 403, 227);
+    tft.drawString(String(stepSize, 1), 455, 136);
 }
 
 void Extrude_Scr::handleTouch(const TchEvent& event)
@@ -175,60 +164,21 @@ void Extrude_Scr::handleTouch(const TchEvent& event)
         switch (event.id)
         {
         case 9:
-            if (stepSize == 5.0f)
+            if (stepSize == 1.0f)
+                stepSize = 0.1f;
+            else if (stepSize == 5.0f)
                 stepSize = 1.0f;
             else if (stepSize == 10.0f)
                 stepSize = 5.0f;
-            else if (stepSize == 50.0f)
-                stepSize = 10.0f;
-            else if (stepSize == 100.0f)
-                stepSize = 50.0f;
             break;
 
         case 10:
-            if (stepSize == 1.0f)
+            if (stepSize == 0.1f)
+                stepSize = 1.0f;
+            else if (stepSize == 1.0f)
                 stepSize = 5.0f;
             else if (stepSize == 5.0f)
                 stepSize = 10.0f;
-            else if (stepSize == 10.0f)
-                stepSize = 50.0f;
-            else if (stepSize == 50.0f)
-                stepSize = 100.0f;
-            break;
-            break;
-
-        case 11:
-            if (zStepSize == 0.01f)
-                zStepSize = 0.001f;
-            else if (zStepSize == 0.1f)
-                zStepSize = 0.01f;
-            else if (zStepSize == 1.0f)
-                zStepSize = 0.1f;
-            else if (zStepSize == 5.0f)
-                zStepSize = 1.0f;
-            else if (zStepSize == 10.0f)
-                zStepSize = 5.0f;
-            else if (zStepSize == 50.0f)
-                zStepSize = 10.0f;
-            else if (zStepSize == 100.0f)
-                zStepSize = 50.0f;
-            break;
-
-        case 12:
-            if (zStepSize == 0.001f)
-                zStepSize = 0.01f;
-            else if (zStepSize == 0.01f)
-                zStepSize = 0.1f;
-            else if (zStepSize == 0.1f)
-                zStepSize = 1.0f;
-            else if (zStepSize == 1.0f)
-                zStepSize = 5.0f;
-            else if (zStepSize == 5.0f)
-                zStepSize = 10.0f;
-            else if (zStepSize == 10.0f)
-                zStepSize = 50.0f;
-            else if (zStepSize == 50.0f)
-                zStepSize = 100.0f;
             break;
         
         default:
