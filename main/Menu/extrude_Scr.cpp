@@ -167,12 +167,26 @@ void Extrude_Scr::render(tftLCD &tft)
 
     float spacing = (480.0f - 50.0f) / (numTools + 1);
 
+    tft.setTextDatum(CL_DATUM);
+    tft.setTextFont(2);
     for (int32_t i = 0; i < numTools; i++)
     {
-        tft.setTextDatum(CL_DATUM);
-        tft.setTextFont(2);
+        tft.setTextColor(TFT_WHITE, TFT_BLACK);
         tft.drawString(String(pos_E[i], 1), (i+1)*spacing+5, 145);
-        tft.drawRoundRect((i+1)*spacing - 40, 170, 80, 80, 4, TFT_WHITE);
+
+        float temperature = _printer->getToolTemp(i);
+
+        if (temperature < 150.0f)
+            tft.setTextColor(TFT_CYAN, TFT_BLACK);
+        else if (temperature < 200.0f)
+            tft.setTextColor(TFT_WHITE, TFT_BLACK);
+        else
+            tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+
+        String tempTxt = String(temperature, 0);
+        tempTxt += ' ';
+        tempTxt += _printer->getTempUnit();
+        tft.drawString(tempTxt, (i+1)*spacing, 110);
     }
 }
 

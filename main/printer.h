@@ -139,6 +139,7 @@ public:
     esp_err_t getPosition(Vec3f* vec) const;
     esp_err_t getExtruderPos(float* pos, uint8_t tool) const;
     float getFeedrate() const;
+    char getTempUnit()const;
 
     esp_err_t setAutoReportPos(bool enable);
     esp_err_t setAutoReportTemp(bool enable);

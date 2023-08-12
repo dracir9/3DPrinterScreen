@@ -623,6 +623,11 @@ esp_err_t Printer::getExtruderPos(float* pos, uint8_t tool) const
     }
 }
 
+char Printer::getTempUnit() const
+{
+    return tempUnit;
+}
+
 esp_err_t Printer::setAutoReportPos(bool enable)
 {
     if (enable)
