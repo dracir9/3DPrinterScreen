@@ -40,6 +40,8 @@ public:
 private:
     Printer* _printer = Printer::instance();
 
+    static constexpr float buttSize = 80.0f;
+
     uint8_t numTools = 2;
     float stepSize = 5.0f;
     std::vector<float> pos_E;

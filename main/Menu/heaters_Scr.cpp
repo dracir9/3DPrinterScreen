@@ -48,8 +48,6 @@ Heaters_Scr::Heaters_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     tft.drawBmpSPIFFS("/spiffs/term_48.bmp", 399, 264);
     tft.drawRoundRect(366, 256, 114, 64, 4, TFT_ORANGE);
 
-    tft.drawRect(0, 0, 50, 50, TFT_PINK);
-
     // Step Size
     tft.drawString("Step", 455, 120);
 
@@ -112,27 +110,51 @@ Heaters_Scr::Heaters_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
         numTools = 2;
     
     pos_E.resize(numTools);
-    float spacing = (480.0f - 50.0f) / (numTools + 1);
+
+    float spacing = ((480.0f - 50.0f) - (numTools+1)*buttSize) / (numTools + 2);
     
-    for (int32_t i = 0; i < numTools; i++)
+    for (int32_t i = 0; i <= numTools; i++)
     {
-        tft.drawRoundRect((i+1)*spacing - 40, 0, 80, 80, 4, TFT_WHITE);
-        tft.drawBmpSPIFFS("/spiffs/arrowT_48.bmp", (i+1)*spacing - 20, 16);
-        tft.drawBmpSPIFFS("/spiffs/extruder_48.bmp", (i+1)*spacing - 40, 104);
-        tft.setTextDatum(CC_DATUM);
-        tft.setTextColor(TFT_BLACK);
-        tft.setTextFont(4);
-        tft.drawString(String(i+1), (i+1)*spacing-16, 118);
-        tft.setTextDatum(CL_DATUM);
-        tft.setTextColor(TFT_WHITE);
-        tft.setTextFont(2);
-        tft.drawString("000.0", (i+1)*spacing+5, 145);
-        tft.drawRoundRect((i+1)*spacing - 40, 170, 80, 80, 4, TFT_WHITE);
-        tft.drawBmpSPIFFS("/spiffs/arrowB_48.bmp", (i+1)*spacing - 20, 186);
+        if (i < numTools)
+        {        
+            tft.drawRoundRect(spacing*(i+1) + buttSize*i, 0, buttSize, buttSize, 4, TFT_WHITE);
+            tft.drawBmpSPIFFS("/spiffs/arrowT_48.bmp", spacing*(i+1) + buttSize*i +20, 16);
+
+            tft.drawBmpSPIFFS("/spiffs/extruder_48.bmp", spacing*(i+1) + buttSize*i, 104);
+            tft.setTextDatum(CC_DATUM);
+            tft.setTextColor(TFT_BLACK);
+            tft.setTextFont(4);
+            tft.drawString(String(i+1), spacing*(i+1) + buttSize*i +24, 118);
+            tft.setTextDatum(CL_DATUM);
+            tft.setTextColor(TFT_WHITE);
+            tft.setTextFont(2);
+            tft.drawString("000.0", spacing*(i+1) + buttSize*i +45, 145);
+
+            tft.drawRoundRect(spacing*(i+1) + buttSize*i, 170, buttSize, buttSize, 4, TFT_WHITE);
+            tft.drawBmpSPIFFS("/spiffs/arrowB_48.bmp", spacing*(i+1) + buttSize*i +20, 186);
+        }
+        else
+        {
+            tft.drawRoundRect(spacing*(i+1) + buttSize*i, 0, buttSize, buttSize, 4, TFT_WHITE);
+            tft.drawBmpSPIFFS("/spiffs/arrowT_48.bmp", spacing*(i+1) + buttSize*i +20, 16);
+
+            tft.drawBmpSPIFFS("/spiffs/heatbed_32.bmp", spacing*(i+1) + buttSize*i, 112);
+            tft.setTextDatum(CC_DATUM);
+            tft.setTextColor(TFT_BLACK);
+            tft.setTextFont(4);
+            tft.drawString(String(i+1), spacing*(i+1) + buttSize*i +24, 118);
+            tft.setTextDatum(CL_DATUM);
+            tft.setTextColor(TFT_WHITE);
+            tft.setTextFont(2);
+            tft.drawString("000.0", spacing*(i+1) + buttSize*i +45, 145);
+
+            tft.drawRoundRect(spacing*(i+1) + buttSize*i, 170, buttSize, buttSize, 4, TFT_WHITE);
+            tft.drawBmpSPIFFS("/spiffs/arrowB_48.bmp", spacing*(i+1) + buttSize*i +20, 186);
+        }
 
         tmpBut.id = 5+i*2;
-        tmpBut.xmin = (i+1)*spacing - 40;
-        tmpBut.xmax = (i+1)*spacing + 40;
+        tmpBut.xmin = spacing*(i+1) + buttSize*i;
+        tmpBut.xmax = spacing*(i+1) + buttSize*i + buttSize;
         tmpBut.ymin = 0;
         tmpBut.ymax = 80;
         tmpBut.enReleaseEv = true;
@@ -140,8 +162,8 @@ Heaters_Scr::Heaters_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
         ts.setButton(&tmpBut); // Step -
 
         tmpBut.id = 6+i*2;
-        tmpBut.xmin = (i+1)*spacing - 40;
-        tmpBut.xmax = (i+1)*spacing + 40;
+        tmpBut.xmin = spacing*(i+1) + buttSize*i;
+        tmpBut.xmax = spacing*(i+1) + buttSize*i + buttSize;
         tmpBut.ymin = 170;
         tmpBut.ymax = 250;
         tmpBut.enReleaseEv = true;
@@ -170,14 +192,14 @@ void Heaters_Scr::render(tftLCD &tft)
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.drawString(String(stepSize, 1), 455, 136);
 
-    float spacing = (480.0f - 50.0f) / (numTools + 1);
+    float spacing = ((480.0f - 50.0f) - (numTools+1)*buttSize) / (numTools + 2);
 
     tft.setTextDatum(CL_DATUM);
     tft.setTextFont(2);
     for (int32_t i = 0; i < numTools; i++)
     {
         tft.setTextColor(TFT_WHITE, TFT_BLACK);
-        tft.drawString(String(pos_E[i], 1), (i+1)*spacing+5, 145);
+        tft.drawString(String(pos_E[i], 1), spacing*(i+1) + buttSize*i +45, 145);
 
         float temperature = _printer->getToolTemp(i);
 
@@ -191,7 +213,7 @@ void Heaters_Scr::render(tftLCD &tft)
         String tempTxt = String(temperature, 0);
         tempTxt += ' ';
         tempTxt += _printer->getTempUnit();
-        tft.drawString(tempTxt, (i+1)*spacing, 110);
+        tft.drawString(tempTxt, spacing*(i+1) + buttSize*i + 40, 110);
     }
 }
 
