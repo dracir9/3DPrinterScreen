@@ -38,12 +38,17 @@ Heaters_Scr::Heaters_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     // Bottom buttons
     tft.drawBmpSPIFFS("/spiffs/return_48.bmp", 33, 272);
     tft.drawRoundRect(0, 256, 114, 64, 4, TFT_ORANGE);
+
     tft.drawBmpSPIFFS("/spiffs/move_48.bmp", 155, 264);
     tft.drawRoundRect(122, 256, 114, 64, 4, TFT_ORANGE);
+
     tft.drawBmpSPIFFS("/spiffs/extruder_48.bmp", 277, 264);
     tft.drawRoundRect(244, 256, 114, 64, 4, TFT_ORANGE);
+
     tft.drawBmpSPIFFS("/spiffs/term_48.bmp", 399, 264);
     tft.drawRoundRect(366, 256, 114, 64, 4, TFT_ORANGE);
+
+    tft.drawRect(0, 0, 50, 50, TFT_PINK);
 
     // Step Size
     tft.drawString("Step", 455, 120);
@@ -74,13 +79,13 @@ Heaters_Scr::Heaters_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
     ts.setButton(&tmpBut); // Move control
 
     tmpBut.id = 2;
-    tmpBut.xmin = 366;
-    tmpBut.xmax = 480;
+    tmpBut.xmin = 244;
+    tmpBut.xmax = 358;
     tmpBut.ymin = 256;
     tmpBut.ymax = 320;
     tmpBut.enReleaseEv = true;
 
-    ts.setButton(&tmpBut); // Temperature control
+    ts.setButton(&tmpBut); // Extruder control
 
     tmpBut.id = 3;
     tmpBut.xmin = 430;
@@ -205,7 +210,7 @@ void Heaters_Scr::handleTouch(const TchEvent& event)
             break;
 
         case 2:
-            // TODO: Temperature screen
+            _UI->setScreen(lcdUI::EXTRUDE_SCR);
             break;
             
         case 3:

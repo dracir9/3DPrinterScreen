@@ -205,7 +205,7 @@ void Extrude_Scr::handleTouch(const TchEvent& event)
             break;
 
         case 2:
-            // TODO: Temperature screen
+            _UI->setScreen(lcdUI::HEATERS_SCR);
             break;
             
         case 3:

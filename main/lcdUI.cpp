@@ -409,7 +409,7 @@ esp_err_t lcdUI::updateObjects()
             base = std::make_unique<Control_Scr>(this, tft, touchScreen);
             break;
         case ScreenType::EXTRUDE_SCR:
-            base = std::make_unique<Heaters_Scr>(this, tft, touchScreen);
+            base = std::make_unique<Extrude_Scr>(this, tft, touchScreen);
             break;
         case ScreenType::HEATERS_SCR:
             base = std::make_unique<Heaters_Scr>(this, tft, touchScreen);
