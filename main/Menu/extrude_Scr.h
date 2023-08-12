@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 10-04-2023
  * -----
- * Last Modified: 10-08-2023
+ * Last Modified: 12-08-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2023 Ricard Bitriá Ribes
@@ -41,7 +41,9 @@ public:
 private:
     Printer* _printer = Printer::instance();
 
+    uint8_t numTools = 2;
     float stepSize = 5.0f;
+    std::vector<float> pos_E;
 };
 
 #endif
