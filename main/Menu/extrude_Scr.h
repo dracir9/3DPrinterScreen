@@ -1,7 +1,7 @@
 /**
- * @file   control_Scr.h
+ * @file   extrude_Scr.h
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
- * Created Date: 10-04-2023
+ * Created Date: 24-07-2023
  * -----
  * Last Modified: 12-08-2023
  * Modified By: Ricard Bitriá Ribes
@@ -26,7 +26,6 @@
 #define EXTRUDE_SCR_H
 
 #include "../lcdUI.h"
-#include "Vector.h"
 #include "../printer.h"
 
 class Extrude_Scr final: public Screen
