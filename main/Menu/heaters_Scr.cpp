@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 12-08-2023
  * -----
- * Last Modified: 12-08-2023
+ * Last Modified: 13-08-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2023 Ricard Bitriá Ribes
@@ -108,11 +108,10 @@ Heaters_Scr::Heaters_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
 
     if (numTools == 0)
         numTools = 2;
-    
-    pos_E.resize(numTools);
 
     float spacing = ((480.0f - 50.0f) - (numTools+1)*buttSize) / (numTools + 2);
     
+    tft.setTextFont(2);
     for (int32_t i = 0; i <= numTools; i++)
     {
         if (i < numTools)
@@ -120,15 +119,11 @@ Heaters_Scr::Heaters_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
             tft.drawRoundRect(spacing*(i+1) + buttSize*i, 0, buttSize, buttSize, 4, TFT_WHITE);
             tft.drawBmpSPIFFS("/spiffs/arrowT_48.bmp", spacing*(i+1) + buttSize*i +20, 16);
 
-            tft.drawBmpSPIFFS("/spiffs/extruder_48.bmp", spacing*(i+1) + buttSize*i, 104);
-            tft.setTextDatum(CC_DATUM);
+            tft.drawBmpSPIFFS("/spiffs/extruder_32.bmp", spacing*(i+1) + buttSize*i +24, 112);
             tft.setTextColor(TFT_BLACK);
-            tft.setTextFont(4);
-            tft.drawString(String(i+1), spacing*(i+1) + buttSize*i +24, 118);
-            tft.setTextDatum(CL_DATUM);
+            tft.drawString(String(i+1), spacing*(i+1) + buttSize*i +40, 120);
             tft.setTextColor(TFT_WHITE);
-            tft.setTextFont(2);
-            tft.drawString("000.0", spacing*(i+1) + buttSize*i +45, 145);
+            tft.drawString("000.0", spacing*(i+1) + buttSize*i +40, 155);
 
             tft.drawRoundRect(spacing*(i+1) + buttSize*i, 170, buttSize, buttSize, 4, TFT_WHITE);
             tft.drawBmpSPIFFS("/spiffs/arrowB_48.bmp", spacing*(i+1) + buttSize*i +20, 186);
@@ -138,15 +133,10 @@ Heaters_Scr::Heaters_Scr(lcdUI * UI, tftLCD & tft, TchScr_Drv & ts):
             tft.drawRoundRect(spacing*(i+1) + buttSize*i, 0, buttSize, buttSize, 4, TFT_WHITE);
             tft.drawBmpSPIFFS("/spiffs/arrowT_48.bmp", spacing*(i+1) + buttSize*i +20, 16);
 
-            tft.drawBmpSPIFFS("/spiffs/heatbed_32.bmp", spacing*(i+1) + buttSize*i, 112);
-            tft.setTextDatum(CC_DATUM);
-            tft.setTextColor(TFT_BLACK);
-            tft.setTextFont(4);
-            tft.drawString(String(i+1), spacing*(i+1) + buttSize*i +24, 118);
-            tft.setTextDatum(CL_DATUM);
+            tft.drawBmpSPIFFS("/spiffs/heatbed_32.bmp", spacing*(i+1) + buttSize*i +24, 112);
             tft.setTextColor(TFT_WHITE);
-            tft.setTextFont(2);
-            tft.drawString("000.0", spacing*(i+1) + buttSize*i +45, 145);
+
+            tft.drawString("000.0", spacing*(i+1) + buttSize*i +40, 155);
 
             tft.drawRoundRect(spacing*(i+1) + buttSize*i, 170, buttSize, buttSize, 4, TFT_WHITE);
             tft.drawBmpSPIFFS("/spiffs/arrowB_48.bmp", spacing*(i+1) + buttSize*i +20, 186);
@@ -194,14 +184,26 @@ void Heaters_Scr::render(tftLCD &tft)
 
     float spacing = ((480.0f - 50.0f) - (numTools+1)*buttSize) / (numTools + 2);
 
-    tft.setTextDatum(CL_DATUM);
-    tft.setTextFont(2);
-    for (int32_t i = 0; i < numTools; i++)
+    String tempTxt;
+    float temperature;
+    for (int32_t i = 0; i <= numTools; i++)
     {
-        tft.setTextColor(TFT_WHITE, TFT_BLACK);
-        tft.drawString(String(pos_E[i], 1), spacing*(i+1) + buttSize*i +45, 145);
+        if (i < numTools)
+        {            
+            tempTxt = String(_printer->getTarToolTemp(i), 0);
+            temperature = _printer->getTarToolTemp(i);
+        }
+        else
+        {
+            tempTxt = String(_printer->getTarBedTemp(), 0);
+            temperature = _printer->getTarBedTemp();
+        }
+        
+        tempTxt += ' ';
+        tempTxt += _printer->getTempUnit();
 
-        float temperature = _printer->getToolTemp(i);
+        tft.setTextColor(TFT_WHITE, TFT_BLACK);
+        tft.drawString(tempTxt, spacing*(i+1) + buttSize*i +40, 155);
 
         if (temperature < 150.0f)
             tft.setTextColor(TFT_CYAN, TFT_BLACK);
@@ -210,10 +212,10 @@ void Heaters_Scr::render(tftLCD &tft)
         else
             tft.setTextColor(TFT_ORANGE, TFT_BLACK);
 
-        String tempTxt = String(temperature, 0);
+        tempTxt = String(temperature, 0);
         tempTxt += ' ';
         tempTxt += _printer->getTempUnit();
-        tft.drawString(tempTxt, spacing*(i+1) + buttSize*i + 40, 110);
+        tft.drawString(tempTxt, spacing*(i+1) + buttSize*i + 40, 100);
     }
 }
 
@@ -236,38 +238,49 @@ void Heaters_Scr::handleTouch(const TchEvent& event)
             break;
             
         case 3:
-            if (stepSize == 0.1f)
-                stepSize = 1.0f;
-            else if (stepSize == 1.0f)
+            if (stepSize == 1.0f)
                 stepSize = 5.0f;
             else if (stepSize == 5.0f)
                 stepSize = 10.0f;
+            else if (stepSize == 10.0f)
+                stepSize = 50.0f;
             break;
 
         case 4:
-            if (stepSize == 1.0f)
-                stepSize = 0.1f;
-            else if (stepSize == 5.0f)
+            if (stepSize == 5.0f)
                 stepSize = 1.0f;
             else if (stepSize == 10.0f)
                 stepSize = 5.0f;
+            else if (stepSize == 50.0f)
+                stepSize = 10.0f;
             break;
         
         default:
         {
             uint8_t tool = (event.id - 5)/2;
+            esp_err_t ret = ESP_OK;
+            float temp;
             if (tool < numTools)
             {
                 if ((event.id-5) % 2 == 0)
-                {
-                    _printer->extrude(tool, -stepSize, true);
-                    pos_E[tool] -= stepSize;
-                }
+                    temp = _printer->getTarToolTemp(tool) + stepSize;
                 else
-                {
-                    _printer->extrude(tool, stepSize, true);
-                    pos_E[tool] += stepSize;
-                }
+                    temp = _printer->getTarToolTemp(tool) - stepSize;
+
+                ret = _printer->setToolTemp(tool, temp);
+                
+                DBG_LOGE_IF(ret != ESP_OK, "Failed to set tool %o target temperature to %f", tool, temp);
+            }
+            else if (tool == numTools)
+            {
+                if ((event.id-5) % 2 == 0)
+                    temp = _printer->getTarBedTemp() + stepSize;
+                else
+                    temp = _printer->getTarBedTemp() - stepSize;
+
+                ret = _printer->setBedTemp(temp);
+
+                DBG_LOGE_IF(ret != ESP_OK, "Failed to set bed target temperature to %f", temp);
             }
             break;
         }
