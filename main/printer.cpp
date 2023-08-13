@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 12-08-2023
+ * Last Modified: 13-08-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -642,6 +642,46 @@ esp_err_t Printer::setAutoReportTemp(bool enable)
         return sendCommand("M155 S1\n");
     else
         return sendCommand("M155 S0\n");
+}
+
+esp_err_t Printer::setToolTemp(uint8_t tool, float temp)
+{
+    esp_err_t ret = ESP_OK;
+
+    if (tool >= toolheads) tool = toolheads - 1;
+
+    temp = roundf(temp);
+
+    std::string cmd = "M104 T";
+    cmd += std::to_string(tool);
+    cmd += ' S';
+    cmd += std::to_string(temp);
+    cmd += '\n';
+
+    ret = sendCommand(cmd.c_str());
+
+    if (ret == ESP_OK)
+        targetTemp[tool] = temp;
+
+    return ret;
+}
+
+esp_err_t Printer::setBedTemp(float temp)
+{
+    esp_err_t ret = ESP_OK;
+
+    temp = roundf(temp);
+
+    std::string cmd = "M140 S";
+    cmd += std::to_string(temp);
+    cmd += '\n';
+
+    ret = sendCommand(cmd.c_str());
+
+    if (ret == ESP_OK)
+        tarBedTemp = temp;
+
+    return ret;
 }
 
 esp_err_t Printer::move(float x, float y, float z, bool isRelative)

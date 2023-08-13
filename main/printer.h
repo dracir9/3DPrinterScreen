@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 12-08-2023
+ * Last Modified: 13-08-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -143,6 +143,9 @@ public:
 
     esp_err_t setAutoReportPos(bool enable);
     esp_err_t setAutoReportTemp(bool enable);
+
+    esp_err_t setToolTemp(uint8_t tool, float temp);
+    esp_err_t setBedTemp(float temp);
 
     esp_err_t move(float x, float y, float z, bool isRelative);
     esp_err_t homeAxis(bool homeX = true, bool homeY = true, bool homeZ = true);
