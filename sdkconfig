@@ -1436,6 +1436,15 @@ CONFIG_TFT_RST=9
 # end of Control Pin configuration
 
 #
+# Parallel DMA configuration
+#
+CONFIG_DMA_FREQUENCY=4000000
+CONFIG_DMA_MAX_TX_SIZE=65536
+# CONFIG_DMA_FAST_TRANSFER is not set
+CONFIG_DMA_SWAP_BYTES=y
+# end of Parallel DMA configuration
+
+#
 # Fonts
 #
 CONFIG_TFT_LOAD_GLCD=y
