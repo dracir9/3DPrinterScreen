@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 11-04-2022
  * -----
- * Last Modified: 10-04-2023
+ * Last Modified: 24-08-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -81,13 +81,9 @@ void DisplayConf_Scr::render(tftLCD& tft)
     tft.setTextPadding(40);
     tft.drawString(String(sliderX*100/190) + String(" %"), 229, 75);
 
-    tft.img.setColorDepth(16);
-    tft.img.createSprite(200, 40);
-    //tft.img.fillSprite(TFT_BLACK);
-    tft.img.fillRect(5, 20, 190, 2, TFT_WHITE);
-    tft.img.fillRoundRect(sliderX, 0, 10, 40, 4, TFT_WHITE);
-    tft.img.pushSprite(261, 55);
-    tft.img.deleteSprite();
+    tft.fillRect(261, 55, 200, 40, TFT_BLACK);
+    tft.fillRect(266, 74, 190, 2, TFT_WHITE);
+    tft.fillRoundRect(261+sliderX, 55, 10, 40, 4, TFT_WHITE);
 }
 
 void DisplayConf_Scr::handleTouch(const TchEvent& event)

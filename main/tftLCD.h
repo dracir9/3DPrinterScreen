@@ -38,8 +38,6 @@ public:
     void drawStringWr(const char *str, int32_t x, int32_t y, uint16_t w, uint16_t h);
 
     void drawBmpSPIFFS(const char *filename, int16_t x, int16_t y);
-
-    tftSprite img = tftSprite(this);
 };
 
 #endif
