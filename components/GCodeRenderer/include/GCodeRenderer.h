@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 07-12-2021
  * -----
- * Last Modified: 03-06-2023
+ * Last Modified: 26-08-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2021 Ricard Bitriá Ribes
@@ -48,7 +48,7 @@ struct FileInfo
 class GCodeRenderer
 {
 public:
-    constexpr static int32_t cacheLen = 7500000;
+    constexpr static int32_t cacheLen = 7000000;
     constexpr static uint8_t rQueueLen = 2;
     constexpr static int32_t bufferLen = 4096;
     constexpr static uint8_t vecQueueLen = 2;

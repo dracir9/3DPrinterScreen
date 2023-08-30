@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 12-08-2023
+ * Last Modified: 30-08-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -44,7 +44,7 @@ constexpr TchCalib lcdUI::calib;
 constexpr char lcdUI::mount_point[];
 
 lcdUI::lcdUI() :
-    touchScreen(UART_NUM_2)
+    frame(&tft), touchScreen(UART_NUM_2)
 {
     init = true;
 }
@@ -188,6 +188,12 @@ esp_err_t lcdUI::begin()
     tft.begin();
     tft.setRotation(1);
     tft.fillScreen(TFT_RED);
+
+    if (frame.createSprite(tft.width(), tft.height()) == nullptr)
+    {
+        DBG_LOGE("Failed to create Sprite");
+        return ESP_FAIL;
+    }
 
     // Crete semaphores
     touchMutex = xSemaphoreCreateMutex();

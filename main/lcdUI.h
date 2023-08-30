@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 22-01-2022
  * -----
- * Last Modified: 12-08-2023
+ * Last Modified: 26-08-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -79,6 +79,7 @@ private:
     };
 
     tftLCD tft;
+    tftSprite frame;
     std::unique_ptr<Screen> base;
     TchScr_Drv touchScreen;
 
