@@ -3,7 +3,7 @@
  * @author Ricard Bitriá Ribes (https://github.com/dracir9)
  * Created Date: 28-04-2022
  * -----
- * Last Modified: 13-08-2023
+ * Last Modified: 30-08-2023
  * Modified By: Ricard Bitriá Ribes
  * -----
  * @copyright (c) 2022 Ricard Bitriá Ribes
@@ -35,7 +35,7 @@ Printer::Printer()
 {
     // Initialize comunication
     uart_config_t uart_config = {};
-        uart_config.baud_rate = 115200;
+        uart_config.baud_rate = 250000;
         uart_config.data_bits = UART_DATA_8_BITS;
         uart_config.parity = UART_PARITY_DISABLE;
         uart_config.stop_bits = UART_STOP_BITS_1;
@@ -305,9 +305,9 @@ void Printer::parseSerial(char* str, const size_t len)
         else
             printf(">|%s\n", str);
     }
-    else if (strcmp(str, "start") == 0 || strncmp(str, "FIRMWARE_NAME:Marlin", 20) == 0)
+    else if (strcmp(str, "start") == 0 || strcmp(str, "External Reset") == 0 || strncmp(str, "FIRMWARE_NAME:Marlin", 20) == 0)
     {
-        if (state == OFFLINE || str[0] == 's')
+        if (state == OFFLINE || str[0] == 's' || str[0] == 'E')
             state = READ_CNFG;
         else
             return;
@@ -654,7 +654,7 @@ esp_err_t Printer::setToolTemp(uint8_t tool, float temp)
 
     std::string cmd = "M104 T";
     cmd += std::to_string(tool);
-    cmd += ' S';
+    cmd += " S";
     cmd += std::to_string(temp);
     cmd += '\n';
 
